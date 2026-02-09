@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Silvera Philippines - Luxury Filipino Shopping</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { 'display': ['Playfair Display', 'serif'], 'sans': ['Inter', 'sans-serif'] },
+                    colors: {
+                        gold: { 400: '#D4AF37', 500: '#C5A028', 600: '#B8960A' },
+                        luxury: { 900: '#2d1b4e', 800: '#3d2a5e', 700: '#4d3a6e' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .font-display { font-family: 'Playfair Display', serif; }
+        
+        /* Premium Video Hero */
+        .hero-video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
+        .hero-overlay { position: absolute; inset: 0; background: linear-gradient(135deg, rgba(45,27,78,0.85) 0%, rgba(124,58,237,0.4) 50%, rgba(236,72,153,0.3) 100%); z-index: 1; }
+        
+        /* Premium 3D Canvas */
+        #hero-3d { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+        
+        /* Gold Accent */
+        .gold-text { background: linear-gradient(135deg, #D4AF37 0%, #F4E4BA 50%, #D4AF37 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .gold-border { border-image: linear-gradient(135deg, #D4AF37, #F4E4BA, #D4AF37) 1; }
+        
+        /* Premium Cards */
+        .luxury-card { background: linear-gradient(145deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); }
+        .premium-shadow { box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.1); }
+        
+        /* Animated Gradient Border */
+        .gradient-border { position: relative; }
+        .gradient-border::before { content: ''; position: absolute; inset: -2px; background: linear-gradient(45deg, #7c3aed, #ec4899, #D4AF37, #7c3aed); border-radius: inherit; z-index: -1; animation: rotateBorder 3s linear infinite; background-size: 400%; }
+        @keyframes rotateBorder { 0% { background-position: 0% 50%; } 100% { background-position: 400% 50%; } }
+        
+        /* Marquee */
+        .marquee { overflow: hidden; }
+        .marquee-content { display: flex; animation: marquee 30s linear infinite; }
+        @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+        
+        /* Luxury Button */
+        .btn-luxury { position: relative; overflow: hidden; }
+        .btn-luxury::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent); transition: left 0.5s; }
+        .btn-luxury:hover::before { left: 100%; }
+        
+        /* Floating Elements */
+        .float-slow { animation: floatSlow 8s ease-in-out infinite; }
+        .float-medium { animation: floatMedium 6s ease-in-out infinite; }
+        @keyframes floatSlow { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-30px) rotate(5deg); } }
+        @keyframes floatMedium { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-20px) rotate(-5deg); } }
+        
+        /* Premium Image Treatment */
+        .img-premium { filter: contrast(1.1) saturate(1.1); }
+        
+        /* Scroll Reveal */
+        .reveal { opacity: 0; transform: translateY(50px); transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
+        .reveal.active { opacity: 1; transform: translateY(0); }
+
+        /* Ensure overlays don't cover content */
+        .hero-overlay { pointer-events: none; }
+        #hero-3d { pointer-events: none; }
+    </style>
+</head>
+<body class="bg-luxury-900 text-white">
+
+    <!-- Premium Hero with Video Background -->
+    <section class="relative min-h-screen flex items-center overflow-hidden">
+        <!-- Video Background -->
+        <video class="hero-video" autoplay muted loop playsinline>
+            <source src="https://assets.mixkit.co/videos/preview/mixkit-woman-shopping-in-a-clothing-store-34420-large.mp4" type="video/mp4">
+        </video>
+        <div class="hero-overlay"></div>
+        
+        <!-- 3D Canvas -->
+        <canvas id="hero-3d"></canvas>
+        
+        <!-- Floating Silvera Logo -->
+        <div class="absolute inset-0 z-3 pointer-events-none overflow-hidden flex items-center justify-center">
+            <img src="assets/images/silvera_logo.PNG" alt="Silvera Logo" class="w-64 h-auto opacity-20 absolute float-slow">
+        </div>
+        
+        <!-- Hero Content -->
+        <div class="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 pt-32 pb-32">
+            <div class="max-w-3xl">
+                <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/10 mb-8">
+                    <span class="w-2 h-2 bg-gold-400 rounded-full animate-pulse"></span>
+                    <span class="text-sm text-white/80">Premium Filipino Craftsmanship</span>
+                </div>
+                
+                <h1 class="font-display text-5xl md:text-7xl lg:text-8xl font-semibold leading-[0.9] mb-8">
+                    <span class="block">Discover</span>
+                    <span class="block gold-text">Luxury</span>
+                    <span class="block text-white/90">Redefined</span>
+                </h1>
+                
+                <p class="text-lg md:text-xl text-white/60 max-w-xl mb-12 leading-relaxed">
+                    Experience the finest curated collection of premium Filipino products. Where tradition meets contemporary elegance.
+                </p>
+                
+                <div class="flex flex-wrap gap-4">
+                    <a href="/authentication-splash.html" class="group btn-luxury inline-flex items-center gap-3 bg-white text-luxury-900 px-8 py-4 rounded-full font-semibold transition hover:shadow-2xl hover:shadow-white/20">
+                        Log In to Shop
+                        <span class="w-8 h-8 rounded-full bg-luxury-900 text-white flex items-center justify-center group-hover:translate-x-1 transition">
+                            <i data-feather="arrow-right" class="w-4 h-4"></i>
+                        </span>
+                    </a>
+                    <a href="/reviews-and-ratings.html" class="inline-flex items-center gap-3 px-8 py-4 rounded-full border border-white/20 text-white font-semibold hover:bg-white/10 transition">
+                        <i data-feather="star" class="w-4 h-4"></i>
+                        Customer Reviews
+                    </a>
+                </div>
+                
+                <!-- Trust Badges -->
+                <div class="flex items-center gap-8 mt-16 pt-8 border-t border-white/10">
+                    <div class="text-center">
+                        <p class="text-3xl font-display font-semibold gold-text">10K+</p>
+                        <p class="text-xs text-white/40 uppercase tracking-wider">Happy Clients</p>
+                    </div>
+                    <div class="w-px h-12 bg-white/10"></div>
+                    <div class="text-center">
+                        <p class="text-3xl font-display font-semibold gold-text">500+</p>
+                        <p class="text-xs text-white/40 uppercase tracking-wider">Products</p>
+                    </div>
+                    <div class="w-px h-12 bg-white/10"></div>
+                    <div class="text-center">
+                        <p class="text-3xl font-display font-semibold gold-text">4.9★</p>
+                        <p class="text-xs text-white/40 uppercase tracking-wider">Rating</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Scroll Indicator -->
+        <div class="absolute bottom-8 left-1/2 -translate-x-1/2 z-10">
+            <div class="flex flex-col items-center gap-2 text-white/40">
+                <span class="text-xs uppercase tracking-widest">Scroll</span>
+                <div class="w-5 h-8 rounded-full border border-white/20 flex items-start justify-center p-1">
+                    <div class="w-1 h-2 bg-white/60 rounded-full animate-bounce"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Marquee Brands -->
+    <section class="py-6 bg-luxury-800 border-y border-white/5">
+        <div class="marquee">
+            <div class="marquee-content">
+                <span class="mx-12 text-2xl font-display text-white/20">SILVERA</span>
+                <span class="mx-12 text-white/10">★</span>
+                <span class="mx-12 text-2xl font-display text-white/20">PREMIUM</span>
+                <span class="mx-12 text-white/10">★</span>
+                <span class="mx-12 text-2xl font-display text-white/20">FILIPINO</span>
+                <span class="mx-12 text-white/10">★</span>
+                <span class="mx-12 text-2xl font-display text-white/20">LUXURY</span>
+                <span class="mx-12 text-white/10">★</span>
+                <span class="mx-12 text-2xl font-display text-white/20">HANDCRAFTED</span>
+                <span class="mx-12 text-white/10">★</span>
+                <span class="mx-12 text-2xl font-display text-white/20">SILVERA</span>
+                <span class="mx-12 text-white/10">★</span>
+                <span class="mx-12 text-2xl font-display text-white/20">PREMIUM</span>
+                <span class="mx-12 text-white/10">★</span>
+                <span class="mx-12 text-2xl font-display text-white/20">FILIPINO</span>
+                <span class="mx-12 text-white/10">★</span>
+                <span class="mx-12 text-2xl font-display text-white/20">LUXURY</span>
+                <span class="mx-12 text-white/10">★</span>
+                <span class="mx-12 text-2xl font-display text-white/20">HANDCRAFTED</span>
+                <span class="mx-12 text-white/10">★</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Premium Categories -->
+    <section id="categories" class="py-24 bg-luxury-900">
+        <div class="max-w-7xl mx-auto px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <p class="text-gold-400 text-sm uppercase tracking-[0.3em] mb-4">Curated Collections</p>
+                <h2 class="font-display text-4xl md:text-5xl font-semibold">Shop by Category</h2>
+            </div>
+            
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+                <a href="/shop.html?cat=fashion" class="category-link group relative aspect-[3/4] rounded-2xl overflow-hidden reveal">
+                    <img src="https://images.pexels.com/photos/5632399/pexels-photo-5632399.jpeg?auto=compress&cs=tinysrgb&w=600" alt="Fashion" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 img-premium">
+                    <div class="absolute inset-0 bg-gradient-to-t from-luxury-900 via-transparent to-transparent"></div>
+                    <div class="absolute inset-0 bg-purple-600/0 group-hover:bg-purple-600/20 transition-colors duration-500"></div>
+                    <div class="absolute bottom-0 left-0 right-0 p-6">
+                        <h3 class="font-display text-2xl font-semibold mb-1">Fashion</h3>
+                        <p class="text-white/60 text-sm">120+ Items</p>
+                    </div>
+                </a>
+                <a href="/shop.html?cat=electronics" class="category-link group relative aspect-[3/4] rounded-2xl overflow-hidden reveal" style="animation-delay: 0.1s">
+                    <img src="https://images.pexels.com/photos/3945667/pexels-photo-3945667.jpeg?auto=compress&cs=tinysrgb&w=600" alt="Electronics" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 img-premium">
+                    <div class="absolute inset-0 bg-gradient-to-t from-luxury-900 via-transparent to-transparent"></div>
+                    <div class="absolute inset-0 bg-pink-600/0 group-hover:bg-pink-600/20 transition-colors duration-500"></div>
+                    <div class="absolute bottom-0 left-0 right-0 p-6">
+                        <h3 class="font-display text-2xl font-semibold mb-1">Electronics</h3>
+                        <p class="text-white/60 text-sm">85+ Items</p>
+                    </div>
+                </a>
+                <a href="/shop.html?cat=home" class="category-link group relative aspect-[3/4] rounded-2xl overflow-hidden reveal" style="animation-delay: 0.2s">
+                    <img src="https://images.pexels.com/photos/6580227/pexels-photo-6580227.jpeg?auto=compress&cs=tinysrgb&w=600" alt="Home" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 img-premium">
+                    <div class="absolute inset-0 bg-gradient-to-t from-luxury-900 via-transparent to-transparent"></div>
+                    <div class="absolute inset-0 bg-gold-400/0 group-hover:bg-gold-400/20 transition-colors duration-500"></div>
+                    <div class="absolute bottom-0 left-0 right-0 p-6">
+                        <h3 class="font-display text-2xl font-semibold mb-1">Home & Living</h3>
+                        <p class="text-white/60 text-sm">200+ Items</p>
+                    </div>
+                </a>
+                <a href="/shop.html?cat=beauty" class="category-link group relative aspect-[3/4] rounded-2xl overflow-hidden reveal" style="animation-delay: 0.3s">
+                    <img src="https://images.pexels.com/photos/3785147/pexels-photo-3785147.jpeg?auto=compress&cs=tinysrgb&w=600" alt="Beauty" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 img-premium">
+                    <div class="absolute inset-0 bg-gradient-to-t from-luxury-900 via-transparent to-transparent"></div>
+                    <div class="absolute inset-0 bg-purple-600/0 group-hover:bg-purple-600/20 transition-colors duration-500"></div>
+                    <div class="absolute bottom-0 left-0 right-0 p-6">
+                        <h3 class="font-display text-2xl font-semibold mb-1">Beauty</h3>
+                        <p class="text-white/60 text-sm">95+ Items</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- Premium Promo Banner -->
+    <section class="py-24 relative overflow-hidden">
+        <div class="absolute inset-0">
+            <img src="https://images.pexels.com/photos/5632386/pexels-photo-5632386.jpeg?auto=compress&cs=tinysrgb&w=1600" alt="Sale" class="w-full h-full object-cover img-premium">
+            <div class="absolute inset-0 bg-gradient-to-r from-luxury-900 via-luxury-900/80 to-transparent"></div>
+        </div>
+        <div class="relative max-w-7xl mx-auto px-6 lg:px-8">
+            <div class="max-w-xl reveal">
+                <p class="text-gold-400 text-sm uppercase tracking-[0.3em] mb-4">Limited Time</p>
+                <h2 class="font-display text-5xl md:text-6xl font-semibold mb-6">Grand Opening<br><span class="gold-text">Sale</span></h2>
+                <p class="text-white/60 text-lg mb-8">Get up to 30% off on selected premium items. Use code <span class="font-mono bg-white/10 px-3 py-1 rounded text-gold-400">SILVERA2026</span></p>
+                <a href="/shop.html" class="shop-link btn-luxury inline-flex items-center gap-3 bg-gradient-to-r from-gold-400 to-gold-600 text-luxury-900 px-8 py-4 rounded-full font-semibold transition hover:shadow-2xl hover:shadow-gold-400/30">
+                    Shop Now
+                    <i data-feather="arrow-right" class="w-5 h-5"></i>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Why Silvera -->
+    <section id="about" class="py-24 bg-luxury-900">
+        <div class="max-w-7xl mx-auto px-6 lg:px-8">
+            <div class="text-center mb-16 reveal">
+                <p class="text-gold-400 text-sm uppercase tracking-[0.3em] mb-4">The Silvera Experience</p>
+                <h2 class="font-display text-4xl md:text-5xl font-semibold">Why Choose Us</h2>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="luxury-card rounded-2xl p-8 text-center reveal">
+                    <div class="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-purple-600/20 to-pink-600/20 flex items-center justify-center">
+                        <img src="https://img.icons8.com/3d-fluency/94/guarantee.png" alt="Quality" class="w-12 h-12">
+                    </div>
+                    <h3 class="font-display text-xl font-semibold mb-3">Premium Quality</h3>
+                    <p class="text-white/50 leading-relaxed">Every product is meticulously curated and quality-checked to ensure excellence.</p>
+                </div>
+                <div class="luxury-card rounded-2xl p-8 text-center reveal" style="animation-delay: 0.1s">
+                    <div class="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-gold-400/20 to-gold-600/20 flex items-center justify-center">
+                        <img src="https://img.icons8.com/3d-fluency/94/delivery.png" alt="Delivery" class="w-12 h-12">
+                    </div>
+                    <h3 class="font-display text-xl font-semibold mb-3">Express Delivery</h3>
+                    <p class="text-white/50 leading-relaxed">Fast and secure nationwide shipping with real-time tracking.</p>
+                </div>
+                <div class="luxury-card rounded-2xl p-8 text-center reveal" style="animation-delay: 0.2s">
+                    <div class="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-green-600/20 to-emerald-600/20 flex items-center justify-center">
+                        <img src="https://img.icons8.com/3d-fluency/94/shield.png" alt="Secure" class="w-12 h-12">
+                    </div>
+                    <h3 class="font-display text-xl font-semibold mb-3">Secure Payment</h3>
+                    <p class="text-white/50 leading-relaxed">Multiple payment options including GCash, Maya, and COD.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Newsletter -->
+    <section class="py-24 bg-gradient-to-b from-luxury-900 to-luxury-800">
+        <div class="max-w-3xl mx-auto px-6 lg:px-8 text-center reveal">
+            <p class="text-gold-400 text-sm uppercase tracking-[0.3em] mb-4">Stay Updated</p>
+            <h2 class="font-display text-3xl md:text-4xl font-semibold mb-6">Join Our Exclusive List</h2>
+            <p class="text-white/50 mb-8">Be the first to know about new collections, exclusive offers, and insider updates.</p>
+            <form class="flex flex-col sm:flex-row gap-4 max-w-lg mx-auto">
+                <input type="email" placeholder="Enter your email" class="flex-1 px-6 py-4 bg-white/5 border border-white/10 rounded-full text-white placeholder-white/30 focus:outline-none focus:border-gold-400 transition">
+                <button type="submit" class="btn-luxury px-8 py-4 bg-gradient-to-r from-gold-400 to-gold-600 text-luxury-900 font-semibold rounded-full transition hover:shadow-xl hover:shadow-gold-400/20">
+                    Subscribe
+                </button>
+            </form>
+        </div>
+    </section>
+
+    <!-- Premium Footer -->
+    <footer class="py-16 bg-luxury-800 border-t border-white/5">
+        <div class="max-w-7xl mx-auto px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-12 mb-12">
+                <div>
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
+                            <span class="font-display text-lg font-bold">S</span>
+                        </div>
+                        <span class="font-display text-lg font-semibold">SILVERA</span>
+                    </div>
+                    <p class="text-white/40 text-sm leading-relaxed mb-6">Premium Filipino products, curated with excellence and delivered with care.</p>
+                    <div class="flex gap-3">
+                        <a href="#" class="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition"><i data-feather="facebook" class="w-4 h-4 text-white/60"></i></a>
+                        <a href="#" class="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition"><i data-feather="instagram" class="w-4 h-4 text-white/60"></i></a>
+                        <a href="#" class="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition"><i data-feather="twitter" class="w-4 h-4 text-white/60"></i></a>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">Shop</h4>
+                    <ul class="space-y-3 text-white/40 text-sm">
+                        <li><a href="/shop.html" class="shop-link hover:text-gold-400 transition">All Products</a></li>
+                        <li><a href="/shop.html?cat=fashion" class="shop-link hover:text-gold-400 transition">Fashion</a></li>
+                        <li><a href="/shop.html?cat=electronics" class="shop-link hover:text-gold-400 transition">Electronics</a></li>
+                        <li><a href="/shop.html?cat=home" class="shop-link hover:text-gold-400 transition">Home & Living</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">Support</h4>
+                    <ul class="space-y-3 text-white/40 text-sm">
+                        <li><a href="#" class="hover:text-gold-400 transition">Contact Us</a></li>
+                        <li><a href="#" class="hover:text-gold-400 transition">FAQs</a></li>
+                        <li><a href="#" class="hover:text-gold-400 transition">Shipping Info</a></li>
+                        <li><a href="#" class="hover:text-gold-400 transition">Returns</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">Contact</h4>
+                    <ul class="space-y-3 text-white/40 text-sm">
+                        <li>📧 support@silvera.shop</li>
+                        <li>📱 +63 917 123 4567</li>
+                        <li>📍 Makati City, Philippines</li>
+                    </ul>
+                    <div class="flex flex-wrap gap-2 mt-6">
+                        <span class="px-3 py-1 bg-white/5 rounded text-xs text-white/40">GCash</span>
+                        <span class="px-3 py-1 bg-white/5 rounded text-xs text-white/40">Maya</span>
+                        <span class="px-3 py-1 bg-white/5 rounded text-xs text-white/40">COD</span>
+                    </div>
+                </div>
+            </div>
+            <div class="pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4">
+                <p class="text-white/30 text-sm">© 2026 Silvera Philippines. Powered by InnovateHub.</p>
+                <div class="flex gap-6 text-sm text-white/30">
+                    <a href="#" class="hover:text-gold-400 transition">Privacy</a>
+                    <a href="#" class="hover:text-gold-400 transition">Terms</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        feather.replace();
+
+        // ========== AUTHENTICATION CHECK ==========
+        function isAuthenticated() {
+            return localStorage.getItem('auth_token') !== null;
+        }
+
+        function requireLogin(e) {
+            e.preventDefault();
+            if (!isAuthenticated()) {
+                window.location.href = '/authentication-log-in.html';
+                return false;
+            }
+            return true;
+        }
+
+        // Protect all shopping links on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            // Protect shop links
+            document.querySelectorAll('.shop-link, .category-link').forEach(link => {
+                if (!isAuthenticated()) {
+                    link.onclick = requireLogin;
+                }
+            });
+
+            // Protect cart link
+            const cartLink = document.querySelector('a[href="/cart.html"]');
+            if (cartLink && !isAuthenticated()) {
+                cartLink.onclick = requireLogin;
+            }
+
+            // Show/hide login button based on auth status
+            const loginBtn = document.querySelector('a[href="/authentication-log-in.html"]');
+            if (isAuthenticated() && loginBtn) {
+                loginBtn.innerHTML = '<i data-feather="user" class="w-4 h-4"></i> Profile';
+                loginBtn.href = '/my-profile.html';
+                loginBtn.onclick = null; // Remove requireLogin
+            }
+        });
+
+        // ========== THREE.JS PREMIUM 3D ==========
+        (function init3D() {
+            const canvas = document.getElementById('hero-3d');
+            if (!canvas) return;
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            
+            // Premium particles
+            const particlesGeometry = new THREE.BufferGeometry();
+            const count = 1000;
+            const positions = new Float32Array(count * 3);
+            const colors = new Float32Array(count * 3);
+            for (let i = 0; i < count * 3; i += 3) {
+                positions[i] = (Math.random() - 0.5) * 20;
+                positions[i + 1] = (Math.random() - 0.5) * 20;
+                positions[i + 2] = (Math.random() - 0.5) * 10;
+                const color = new THREE.Color();
+                color.setHSL(0.75 + Math.random() * 0.1, 0.8, 0.6);
+                colors[i] = color.r;
+                colors[i + 1] = color.g;
+                colors[i + 2] = color.b;
+            }
+            particlesGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            particlesGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+            const particlesMaterial = new THREE.PointsMaterial({ size: 0.02, vertexColors: true, transparent: true, opacity: 0.8 });
+            const particles = new THREE.Points(particlesGeometry, particlesMaterial);
+            scene.add(particles);
+            
+            // Luxury ring
+            const ringGeometry = new THREE.TorusGeometry(3, 0.02, 16, 100);
+            const ringMaterial = new THREE.MeshBasicMaterial({ color: 0xD4AF37, transparent: true, opacity: 0.3 });
+            const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+            ring.position.z = -5;
+            scene.add(ring);
+            
+            camera.position.z = 5;
+            let mouseX = 0, mouseY = 0;
+            document.addEventListener('mousemove', (e) => {
+                mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+                mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+            });
+            
+            function animate() {
+                requestAnimationFrame(animate);
+                particles.rotation.y += 0.0005;
+                particles.rotation.x += 0.0002;
+                ring.rotation.x += 0.002;
+                ring.rotation.y += 0.001;
+                camera.position.x += (mouseX * 0.5 - camera.position.x) * 0.02;
+                camera.position.y += (-mouseY * 0.5 - camera.position.y) * 0.02;
+                renderer.render(scene, camera);
+            }
+            animate();
+            
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        })();
+        
+        // ========== SCROLL REVEAL ==========
+        const reveals = document.querySelectorAll('.reveal');
+        const revealOnScroll = () => {
+            reveals.forEach(el => {
+                const top = el.getBoundingClientRect().top;
+                if (top < window.innerHeight - 100) el.classList.add('active');
+            });
+        };
+        window.addEventListener('scroll', revealOnScroll);
+        revealOnScroll();
+        
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+        }
+    </script>
+    <script src="assets/js/shared-utilities.js"></script>
+</body>
+</html>

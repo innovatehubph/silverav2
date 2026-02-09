@@ -1,0 +1,7 @@
+@import "tailwindcss";
+
+@supports (selector(::-webkit-scrollbar)) {
+  body {
+    scrollbar-width: thin;
+  }
+}

@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Silvera Philippines - Premium Online Shopping</title>
+
+    <!--CSS Files-->
+    <link href="assets/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.3/font/bootstrap-icons.css">
+    <link href="assets/css/style.css" rel="stylesheet"/>
+  </head>
+  <body>
+
+    <!--page loader-->
+    <div class="loader-wrapper">
+      <div class="d-flex justify-content-center align-items-center position-absolute top-50 start-50 translate-middle">
+        <div class="spinner-border text-white" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    </div>
+   <!--end loader-->
+
+   <!--start wrapper-->
+    <div class="wrapper">
+
+      <!--start to header-->
+      <header class="top-header fixed-top border-bottom d-flex align-items-center">
+        <nav class="navbar navbar-expand w-100 p-0 gap-3 align-items-center">
+            <div class="nav-button" onclick="history.back()"><a href="javascript:;"><i class="bi bi-arrow-left"></i></a></div>
+            <div class="account-verification">
+              <h6 class="mb-0 fw-bold text-white" id="pageTitle">PIN Setup</h6>
+            </div>
+        </nav>
+       </header>
+        <!--end to header-->
+
+      <!--start to page content-->
+       <div class="page-content">
+
+         <div class="login-body">
+            <!-- PIN Setup Section -->
+            <div id="pinSection">
+              <h5 class="fw-bold">Set Up Your PIN</h5>
+              <p class="mb-0">Create a 4-6 digit PIN for secure transactions</p>
+              <form class="mt-5" id="pinForm">
+                <div class="mb-3">
+                  <label class="form-label fw-bold text-white">PIN (4-6 digits)</label>
+                  <input type="password" class="form-control form-control-lg rounded-3" id="pinInput" placeholder="••••" inputmode="numeric" maxlength="6" required>
+                  <small class="text-muted">• Must be 4-6 digits only</small>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label fw-bold text-white">Confirm PIN</label>
+                  <input type="password" class="form-control form-control-lg rounded-3" id="confirmPinInput" placeholder="••••" inputmode="numeric" maxlength="6" required>
+                </div>
+
+                <small class="text-muted d-block mb-4">
+                  ✓ Keep your PIN confidential<br>
+                  ✓ Don't share with anyone<br>
+                  ✓ You can change it later in settings
+                </small>
+
+                <div class="mb-3 d-grid">
+                  <button type="button" class="btn btn-dark btn-ecomm rounded-3" onclick="setupPIN()">
+                    <span id="setupBtnText">Create PIN</span>
+                    <span id="setupBtnSpinner" class="spinner-border spinner-border-sm ms-2" role="status" style="display:none;">
+                      <span class="visually-hidden">Loading...</span>
+                    </span>
+                  </button>
+                </div>
+
+                <div class="text-center">
+                  <a href="javascript:;" class="text-primary small" onclick="skipPINSetup()">Skip for now</a>
+                </div>
+              </form>
+
+              <!-- Alert Messages -->
+              <div id="alertContainer" class="mt-4"></div>
+            </div>
+
+            <!-- OTP Verification Section (Hidden) -->
+            <div id="otpSection" style="display:none;">
+              <h5 class="fw-bold">Verify Code</h5>
+              <p class="mb-0">Kindly Enter the 6 digits verification code</p>
+              <div class="pt-5">
+                <form class="mt-5">
+                  <div class="verification-controls d-flex align-items-center justify-content-center gap-3 mb-5">
+                    <div class="">
+                      <input type="text" class="form-control form-control-lg rounded-3" id="otp1" placeholder="0" maxlength="1" inputmode="numeric">
+                    </div>
+                    <div class="">
+                      <input type="text" class="form-control form-control-lg rounded-3" id="otp2" placeholder="0" maxlength="1" inputmode="numeric">
+                    </div>
+                    <div class="">
+                      <input type="text" class="form-control form-control-lg rounded-3" id="otp3" placeholder="0" maxlength="1" inputmode="numeric">
+                    </div>
+                    <div class="">
+                      <input type="text" class="form-control form-control-lg rounded-3" id="otp4" placeholder="0" maxlength="1" inputmode="numeric">
+                    </div>
+                    <div class="">
+                      <input type="text" class="form-control form-control-lg rounded-3" id="otp5" placeholder="0" maxlength="1" inputmode="numeric">
+                    </div>
+                    <div class="">
+                      <input type="text" class="form-control form-control-lg rounded-3" id="otp6" placeholder="0" maxlength="1" inputmode="numeric">
+                    </div>
+                  </div>
+                  <div class="mb-0 d-grid">
+                    <button type="button" class="btn btn-dark btn-ecomm rounded-3" onclick="verifyOTP()">Verify</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+         </div>
+
+       </div>
+     <!--end to page content-->
+
+
+     <!--start to footer-->
+    <footer class="page-footer fixed-bottom border-top d-flex align-items-center justify-content-center">
+      <p class="mb-0 rounded-0" id="footerText">have't recived the code? <a href="javascript:;" class="text-danger" onclick="resendOTP()">Resend</a></p>
+    </footer>
+    <!--end to footer-->
+    
+
+    </div>
+   <!--end wrapper-->
+
+
+    <!--JS Files-->
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/js/show-hide-password.js"></script>
+    <script src="assets/js/loader.js"></script>
+<script src="assets/js/shared-utilities.js"></script>
+    <script src="assets/js/authentication-otp-verification-dynamic.js"></script>
+
+  
+
+
+  </body>
+<script>'undefined'=== typeof _trfq || (window._trfq = []);'undefined'=== typeof _trfd && (window._trfd=[]),_trfd.push({'tccl.baseHost':'secureserver.net'},{'ap':'cpsh-oh'},{'server':'p3plzcpnl509132'},{'dcenter':'p3'},{'cp_id':'10399385'},{'cp_cl':'8'}) // Monitoring performance to make your website faster. If you want to opt-out, please contact web hosting support.</script><script src='https://img1.wsimg.com/traffic-assets/js/tccl.min.js'></script></html>

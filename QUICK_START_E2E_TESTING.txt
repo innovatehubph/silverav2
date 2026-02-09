@@ -1,0 +1,67 @@
+╔════════════════════════════════════════════════════════════════════╗
+║                    QUICK START - E2E TESTING                      ║
+║                   SilveraV2 v2.0.1 (2026-02-09)                   ║
+╚════════════════════════════════════════════════════════════════════╝
+
+1️⃣  ACCESS THE SYSTEM
+   URL: https://silveraph.shop
+   Direct IP: http://37.44.244.226:3865
+
+2️⃣  LOGIN WITH TEST ACCOUNT
+   Email:    boss@silveraph.shop
+   Password: ***REMOVED***
+
+3️⃣  TEST ENDPOINTS
+   
+   Health Check:
+   curl https://silveraph.shop/api/health
+   
+   Products List:
+   curl https://silveraph.shop/api/products
+   
+   Login API:
+   curl -X POST https://silveraph.shop/api/auth/login \
+     -H "Content-Type: application/json" \
+     -d '{"email":"boss@silveraph.shop","password":"***REMOVED***"}'
+
+4️⃣  VERIFY TEST DATA
+   ✓ 10 Products available
+   ✓ Admin user configured
+   ✓ All APIs responsive
+   ✓ Database populated
+
+5️⃣  MONITOR SYSTEM
+   View logs:
+   pm2 logs silverav2
+   
+   Check status:
+   pm2 status | grep silverav2
+   
+   Check Nginx:
+   systemctl status nginx
+
+═════════════════════════════════════════════════════════════════════
+
+TEST SCENARIOS READY:
+  ✓ Authentication (Login/Logout)
+  ✓ Product Browsing
+  ✓ Shopping Cart
+  ✓ Checkout
+  ✓ Admin Panel
+  ✓ Error Handling
+  ✓ Responsive Design
+
+═════════════════════════════════════════════════════════════════════
+
+FILES REFERENCE:
+  Documentation: /root/silverav2/SYSTEM_READY_FOR_TESTING_20260209.md
+  E2E Guide:     /root/silverav2/E2E_TESTING_READY.md
+  Config:        /root/silverav2/.env
+  Database:      /root/silverav2/silvera.db
+  Nginx Config:  /etc/nginx/sites-available/silveraph.shop
+
+═════════════════════════════════════════════════════════════════════
+
+✅ SYSTEM STATUS: READY FOR END-TO-END TESTING
+
+═════════════════════════════════════════════════════════════════════
