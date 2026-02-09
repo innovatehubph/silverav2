@@ -4,7 +4,6 @@ npm-debug.log
 .env.backup
 .git
 .gitignore
-README.md
 *.md
 !README.md
 .nyc_output
@@ -18,3 +17,5 @@ playwright.config.ts
 *.db
 *.db.backup-*
 /data/
+# Source template files not needed in production
+source/
