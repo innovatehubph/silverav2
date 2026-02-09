@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: silverav2-app
+    restart: unless-stopped
+    ports:
+      - "3865:3865"
+    environment:
+      - NODE_ENV=production
+      - PORT=3865
+      - DATABASE_PATH=/data/silvera.db
+      - JWT_SECRET=${JWT_SECRET}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_SECURE=${SMTP_SECURE}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - SMTP_FROM=${SMTP_FROM}
+      - NEXUSPAY_BASE_URL=${NEXUSPAY_BASE_URL}
+      - NEXUSPAY_USERNAME=${NEXUSPAY_USERNAME}
+      - NEXUSPAY_PASSWORD=${NEXUSPAY_PASSWORD}
+      - NEXUSPAY_MERCHANT_ID=${NEXUSPAY_MERCHANT_ID}
+      - NEXUSPAY_KEY=${NEXUSPAY_KEY}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - ADMIN_EMAIL=${ADMIN_EMAIL}
+    volumes:
+      - silverav2-data:/data
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3865/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - silverav2-network
+
+volumes:
+  silverav2-data:
+    driver: local
+
+networks:
+  silverav2-network:
+    driver: overlay
