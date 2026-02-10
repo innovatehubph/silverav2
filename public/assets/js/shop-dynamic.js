@@ -16,8 +16,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // Load cart badge
-  await loadCartBadge();
+  // Load cart badge (supports both guest and authenticated)
+  await loadCartBadgeWithGuest();
 
   // Get category filter from URL parameters
   const urlParams = new URLSearchParams(window.location.search);
@@ -111,6 +111,21 @@ function displayProducts(products) {
       ? Math.round(((product.price - product.sale_price) / product.price) * 100)
       : 0;
 
+    // Get product image
+    let productImage = 'assets/images/product-images/01.webp';
+    if (product.images) {
+      try {
+        const images = JSON.parse(product.images);
+        if (Array.isArray(images) && images.length > 0) {
+          productImage = images[0];
+        }
+      } catch (e) {
+        if (typeof product.images === 'string' && product.images.startsWith('http')) {
+          productImage = product.images;
+        }
+      }
+    }
+
     const col = document.createElement('div');
     col.className = 'col';
     col.setAttribute('data-product-id', product.id);
@@ -119,9 +134,9 @@ function displayProducts(products) {
       <div class="card rounded-0 border-0">
         <div class="position-relative overflow-hidden">
           <a href="product-details.html?id=${product.id}">
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); height: 150px; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; text-align: center; padding: 20px;">
-              ${escapeHtml(product.name)}
-            </div>
+            <img src="${productImage}" alt="${escapeHtml(product.name)}" 
+              style="width: 100%; height: 150px; object-fit: cover;" 
+              onerror="this.src='assets/images/product-images/01.webp'">
           </a>
           <div class="similar-products position-absolute bottom-0 end-0 me-3 mb-3">
             <a href="javascript:;" onclick="toggleWishlist(${product.id})">
@@ -211,13 +226,21 @@ function filterProducts() {
 // Add to cart from shop page
 async function addToCartQuick(productId) {
   const token = localStorage.getItem('auth_token');
-
-  if (!token) {
-    alert('Please login to add items to cart');
-    window.location.href = '/authentication-log-in.html';
+  const product = currentProducts.find(p => p.id === productId);
+  
+  if (!product) {
+    alert('Product not found');
     return;
   }
 
+  if (!token) {
+    // Guest user - add to localStorage cart
+    addToGuestCart(product, 1);
+    alert('Product added to cart! (Guest mode)');
+    return;
+  }
+
+  // Authenticated user - add to server cart
   try {
     const response = await fetch('/api/cart', {
       method: 'POST',

@@ -102,6 +102,12 @@
 <script src="assets/js/shared-utilities.js"></script>
 
     <script>
+      // Check if already logged in - redirect to home
+      const token = localStorage.getItem('auth_token');
+      if (token) {
+        window.location.href = '/home.html';
+      }
+
       // Registration Form Handler
       const signupForm = document.getElementById('signupForm');
       const signupBtn = document.getElementById('signupBtn');
