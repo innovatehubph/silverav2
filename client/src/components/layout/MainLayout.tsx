@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ShoppingBag, User, Menu, X, Search } from 'lucide-react';
 import { useCartStore, useAuthStore } from '../../stores';
 
@@ -10,7 +10,10 @@ interface MainLayoutProps {
 export default function MainLayout({ children }: MainLayoutProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const { getTotalItems } = useCartStore();
   const { isAuthenticated, user, logout } = useAuthStore();
 
@@ -29,6 +32,15 @@ export default function MainLayout({ children }: MainLayoutProps) {
   ];
 
   const isActive = (path: string) => location.pathname === path;
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/shop?search=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery('');
+      setIsSearchOpen(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -72,10 +84,32 @@ export default function MainLayout({ children }: MainLayoutProps) {
             </nav>
 
             {/* Actions */}
-            <div className="flex items-center gap-4">
-              <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                <Search className="w-5 h-5 text-gray-700" />
-              </button>
+            <div className="flex items-center gap-2 md:gap-4">
+              {/* Search */}
+              <form onSubmit={handleSearch} className="relative">
+                <div className={`flex items-center transition-all duration-300 ${
+                  isSearchOpen ? 'w-48 md:w-64' : 'w-10'
+                }`}>
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onFocus={() => setIsSearchOpen(true)}
+                    onBlur={() => !searchQuery && setIsSearchOpen(false)}
+                    placeholder="Search products..."
+                    className={`absolute right-10 w-full input-field py-2 transition-all duration-300 ${
+                      isSearchOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
+                    }`}
+                  />
+                  <button
+                    type="submit"
+                    className="p-2 hover:bg-gray-100 rounded-full transition-colors relative z-10"
+                    onClick={() => !isSearchOpen && setIsSearchOpen(true)}
+                  >
+                    <Search className="w-5 h-5 text-gray-700" />
+                  </button>
+                </div>
+              </form>
 
               <Link
                 to="/cart"
@@ -145,6 +179,22 @@ export default function MainLayout({ children }: MainLayoutProps) {
         {isMenuOpen && (
           <div className="md:hidden absolute top-full left-0 right-0 bg-white shadow-lg animate-fade-in">
             <nav className="container-custom py-4 flex flex-col gap-2">
+              {/* Mobile Search */}
+              <form onSubmit={handleSearch} className="mb-4">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search products..."
+                    className="flex-1 input-field"
+                  />
+                  <button type="submit" className="btn-primary px-4">
+                    <Search className="w-5 h-5" />
+                  </button>
+                </div>
+              </form>
+
               {navLinks.map((link) =>
                 (!link.auth || isAuthenticated) ? (
                   <Link
@@ -167,14 +217,14 @@ export default function MainLayout({ children }: MainLayoutProps) {
                   <Link
                     to="/login"
                     onClick={() => setIsMenuOpen(false)}
-                    className="btn-primary text-center"
+                    className="btn-primary text-center block"
                   >
                     Sign In
                   </Link>
                   <Link
                     to="/register"
                     onClick={() => setIsMenuOpen(false)}
-                    className="btn-outline text-center mt-2"
+                    className="btn-outline text-center mt-2 block"
                   >
                     Create Account
                   </Link>
@@ -227,7 +277,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
           </div>
           
           <div className="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400">
-            <p>© 2025 Silvera Philippines. All rights reserved.</p>
+            <p>© 2026 Silvera Philippines. All rights reserved.</p>
           </div>
         </div>
       </footer>

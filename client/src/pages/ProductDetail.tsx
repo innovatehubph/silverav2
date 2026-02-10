@@ -1,3 +1,239 @@
+import { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { ShoppingCart, Heart, Share2, Star, ArrowLeft, Plus, Minus } from 'lucide-react';
+import { toast } from 'sonner';
+import { productsApi } from '../utils/api';
+import { useCartStore } from '../stores';
+import { parseProductImages, getDiscountPercentage } from '../utils/product';
+import type { Product } from '../types';
+
 export default function ProductDetail() {
-  return <div className="container-custom py-8"><h1 className="section-title">Product Detail</h1></div>;
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const [product, setProduct] = useState<Product | null>(null);
+  const [quantity, setQuantity] = useState(1);
+  const [activeImage, setActiveImage] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const { addItem } = useCartStore();
+
+  useEffect(() => {
+    if (id) {
+      loadProduct(parseInt(id));
+    }
+  }, [id]);
+
+  const loadProduct = async (productId: number) => {
+    try {
+      setIsLoading(true);
+      const response = await productsApi.getById(productId);
+      setProduct(response.data);
+    } catch (error) {
+      console.error('Failed to load product:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAddToCart = () => {
+    if (product) {
+      addItem(product, quantity);
+      toast.success('Added to cart!');
+    }
+  };
+
+  const handleBuyNow = () => {
+    if (product) {
+      addItem(product, quantity);
+      navigate('/checkout');
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="container-custom py-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="skeleton h-96 rounded-xl"></div>
+          <div className="space-y-4">
+            <div className="skeleton h-8 w-3/4"></div>
+            <div className="skeleton h-6 w-1/4"></div>
+            <div className="skeleton h-24"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="container-custom py-16 text-center">
+        <h1 className="section-title">Product Not Found</h1>
+        <button onClick={() => navigate('/shop')} className="btn-primary mt-4">
+          Back to Shop
+        </button>
+      </div>
+    );
+  }
+
+  const images = parseProductImages(product.images);
+  const discountPercentage = getDiscountPercentage(product.price, product.sale_price);
+
+  return (
+    <div className="container-custom py-8 animate-fade-in">
+      <button
+        onClick={() => navigate(-1)}
+        className="flex items-center gap-2 text-gray-600 hover:text-primary-600 mb-6"
+      >
+        <ArrowLeft className="w-5 h-5" />
+        Back
+      </button>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
+        {/* Image Gallery */}
+        <div>
+          <div className="relative aspect-square rounded-2xl overflow-hidden bg-gray-100">
+            <img
+              src={images[activeImage]}
+              alt={product.name}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = 'assets/images/product-images/01.webp';
+              }}
+            />
+            {discountPercentage > 0 && (
+              <span className="absolute top-4 left-4 badge-gold text-lg px-4 py-2">
+                -{discountPercentage}%
+              </span>
+            )}
+          </div>
+          
+          {images.length > 1 && (
+            <div className="flex gap-2 mt-4 overflow-x-auto">
+              {images.map((img, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setActiveImage(idx)}
+                  className={`w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 border-2 transition-all ${
+                    activeImage === idx ? 'border-primary-600' : 'border-transparent'
+                  }`}
+                >
+                  <img src={img} alt="" className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Product Info */}
+        <div className="space-y-6">
+          <div>
+            <p className="text-gray-500 text-sm mb-2">{product.category_name || 'Category'}</p>
+            <h1 className="text-3xl md:text-4xl font-serif font-bold text-gray-900">
+              {product.name}
+            </h1>
+            
+            <div className="flex items-center gap-2 mt-2">
+              <div className="flex">
+                {[1,2,3,4,5].map((star) => (
+                  <Star key={star} className="w-5 h-5 fill-gold-400 text-gold-400" />
+                ))}
+              </div>
+              <span className="text-gray-500">(24 reviews)</span>
+            </div>
+          </div>
+
+          <div className="flex items-baseline gap-3">
+            <span className="text-4xl font-bold text-gray-900">
+              ₱{(product.sale_price || product.price).toFixed(2)}
+            </span>
+            {product.sale_price && product.price !== product.sale_price && (
+              <span className="text-xl text-gray-400 line-through">
+                ₱{product.price.toFixed(2)}
+              </span>
+            )}
+          </div>
+
+          <p className="text-gray-600 leading-relaxed">
+            {product.description || 'Premium quality product with excellent craftsmanship. Made with the finest materials for lasting durability and style.'}
+          </p>
+
+          {/* Quantity */}
+          <div className="flex items-center gap-4">
+            <span className="text-gray-700 font-medium">Quantity:</span>
+            <div className="flex items-center border rounded-lg">
+              <button
+                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                className="p-3 hover:bg-gray-100"
+              >
+                <Minus className="w-4 h-4" />
+              </button>
+              <span className="w-12 text-center font-medium">{quantity}</span>
+              <button
+                onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
+                className="p-3 hover:bg-gray-100"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
+            <span className="text-gray-500 text-sm">
+              {product.stock} items available
+            </span>
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-4 pt-4">
+            <button
+              onClick={handleAddToCart}
+              className="flex-1 btn-primary flex items-center justify-center gap-2"
+            >
+              <ShoppingCart className="w-5 h-5" />
+              Add to Cart
+            </button>
+            
+            <button
+              onClick={handleBuyNow}
+              className="flex-1 btn-secondary flex items-center justify-center gap-2"
+            >
+              Buy Now
+            </button>
+          </div>
+
+          {/* Secondary Actions */}
+          <div className="flex gap-4 pt-2">
+            <button className="flex items-center gap-2 text-gray-600 hover:text-red-500 transition-colors">
+              <Heart className="w-5 h-5" />
+              Add to Wishlist
+            </button>
+            <button className="flex items-center gap-2 text-gray-600 hover:text-primary-600 transition-colors">
+              <Share2 className="w-5 h-5" />
+              Share
+            </button>
+          </div>
+
+          {/* Features */}
+          <div className="border-t pt-6 mt-6">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
+                  <span className="text-primary-600 text-lg">🚚</span>
+                </div>
+                <div>
+                  <p className="font-medium">Free Shipping</p>
+                  <p className="text-sm text-gray-500">On orders over ₱1,000</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
+                  <span className="text-primary-600 text-lg">↩️</span>
+                </div>
+                <div>
+                  <p className="font-medium">Easy Returns</p>
+                  <p className="text-sm text-gray-500">30-day return policy</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }

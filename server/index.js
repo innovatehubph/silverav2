@@ -123,6 +123,45 @@ db.exec(`
     key TEXT PRIMARY KEY,
     value TEXT
   );
+
+  CREATE TABLE IF NOT EXISTS reviews (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    product_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    rating INTEGER NOT NULL CHECK(rating >= 1 AND rating <= 5),
+    title TEXT,
+    comment TEXT,
+    verified_purchase BOOLEAN DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (product_id) REFERENCES products(id),
+    FOREIGN KEY (user_id) REFERENCES users(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS addresses (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    label TEXT DEFAULT 'Home',
+    name TEXT,
+    phone TEXT,
+    address_line TEXT,
+    city TEXT,
+    province TEXT,
+    zip_code TEXT,
+    is_default BOOLEAN DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS notifications (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    type TEXT DEFAULT 'info',
+    title TEXT,
+    message TEXT,
+    is_read BOOLEAN DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+  );
 `);
 
 // Seed admin user if not exists
@@ -236,8 +275,8 @@ const apiLimiter = rateLimit({
 // Apply rate limiting to API routes
 app.use('/api/', apiLimiter);
 
-// Static files
-app.use(express.static(path.join(__dirname, '../public')));
+// Static files - serve production build from client/dist
+app.use(express.static(path.join(__dirname, '../client/dist')));
 app.use('/admin', express.static(path.join(__dirname, '../admin')));
 
 // ==================== VALIDATION HELPERS ====================
@@ -579,20 +618,19 @@ app.put('/api/users/profile', auth, (req, res) => {
   try {
     const { name, phone } = req.body;
 
-    // Validate input
-    if (!name || !phone) {
-      return res.status(400).json({ error: 'Name and phone are required' });
+    if (!name) {
+      return res.status(400).json({ error: 'Name is required' });
     }
 
     const result = db.prepare('UPDATE users SET name = ?, phone = ? WHERE id = ?')
-      .run(name.trim(), phone.trim(), req.user.id);
+      .run(name.trim(), (phone || '').trim(), req.user.id);
 
     if (result.changes === 0) {
       return res.status(404).json({ error: 'User not found' });
     }
 
     const updatedUser = db.prepare('SELECT id, email, name, phone, role FROM users WHERE id = ?').get(req.user.id);
-    res.json(updatedUser);
+    res.json({ user: updatedUser });
   } catch (e) {
     res.status(500).json({ error: 'Failed to update profile' });
   }
@@ -1573,7 +1611,7 @@ app.get('*', (req, res) => {
   if (req.path.startsWith('/admin')) {
     res.sendFile(path.join(__dirname, '../admin/index.html'));
   } else {
-    res.sendFile(path.join(__dirname, '../public/home.html'));
+    res.sendFile(path.join(__dirname, '../client/dist/index.html'));
   }
 });
 

@@ -21,6 +21,14 @@ export const useCartStore = create<CartStore>()(
       isLoading: false,
 
       addItem: (product, quantity = 1, size = 'M') => {
+        // Check authentication before adding to cart
+        const authToken = localStorage.getItem('auth_token');
+        if (!authToken) {
+          // Redirect to splash flow
+          window.location.href = '/login';
+          return;
+        }
+        
         set((state) => {
           const existingItem = state.items.find(
             (item) => item.product_id === product.id && item.size === size
