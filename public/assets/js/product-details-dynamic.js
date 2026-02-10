@@ -8,13 +8,13 @@ let selectedQuantity = 1;
 
 // ==================== INITIALIZATION ====================
 document.addEventListener('DOMContentLoaded', async () => {
-  // Verify authentication first
-  if (!checkAuthenticationRequired()) {
-    return;
+  // Product page is PUBLIC - no auth required to view products
+  // But we still check for user greeting and cart if logged in
+  const token = localStorage.getItem('auth_token');
+  if (token) {
+    updateUserGreeting();
+    await loadCartBadge();
   }
-
-  updateUserGreeting();
-  await loadCartBadge();
 
   // Extract product ID from URL query parameter
   const urlParams = new URLSearchParams(window.location.search);
@@ -35,14 +35,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 // ==================== LOAD PRODUCT DETAILS ====================
 async function loadProductDetails(productId) {
   try {
-    const token = localStorage.getItem('auth_token');
-
-    const response = await fetch(`/api/products/${productId}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    });
+    // Make request without auth header for public product viewing
+    const response = await fetch(`/api/products/${productId}`);
 
     if (!response.ok) {
       throw new Error(`Failed to load product: ${response.status}`);
@@ -56,7 +50,7 @@ async function loadProductDetails(productId) {
 
     // Populate product information
     updateProductDisplay();
-    // NOTE: updateProductImages() already handles Slick reinitialization, so we don't call initializeImageSlider() again
+    updateProductImages();
 
   } catch (error) {
     console.error('Error loading product details:', error);

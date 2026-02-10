@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  app:
+    image: silverav2:latest
+    container_name: silverav2-app
+    restart: unless-stopped
+    ports:
+      - "3865:3865"
+    environment:
+      - NODE_ENV=production
+      - PORT=3865
+      - DATABASE_PATH=/data/silvera.db
+      - JWT_SECRET=***REMOVED***
+      - SMTP_HOST=smtp.hostinger.com
+      - SMTP_PORT=465
+      - SMTP_SECURE=true
+      - SMTP_USER=admin@innovatehub.ph
+      - SMTP_PASSWORD=***REMOVED***
+      - SMTP_FROM=admin@innovatehub.ph
+      - NEXUSPAY_BASE_URL=https://nexuspay.cloud/api
+      - NEXUSPAY_USERNAME=bossmarc
+      - NEXUSPAY_PASSWORD=***REMOVED***
+      - NEXUSPAY_MERCHANT_ID=u89aHfkyPCvMtV5Y
+      - NEXUSPAY_KEY=***REMOVED***
+      - ADMIN_EMAIL=boss@silveraph.shop
+      - ADMIN_PASSWORD=***REMOVED***
+    volumes:
+      - silverav2-data:/data
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.silverav2.rule=Host(`silvera.innoserver.cloud`)"
+      - "traefik.http.routers.silverav2.entrypoints=websecure"
+      - "traefik.http.routers.silverav2.tls.certresolver=letsencrypt"
+      - "traefik.http.services.silverav2.loadbalancer.server.port=3865"
+    networks:
+      - dokploy-network
+
+volumes:
+  silverav2-data:
+    driver: local
+
+networks:
+  dokploy-network:
+    external: true
+    name: dokploy-network

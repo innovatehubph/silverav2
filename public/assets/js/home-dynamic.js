@@ -1,15 +1,14 @@
 // Dynamic Home Page - Load real data from API instead of mocks
 
 document.addEventListener('DOMContentLoaded', async () => {
-  const token = localStorage.getItem('auth_token');
+  // Home page is PUBLIC - no auth required
+  // Update greeting if user is logged in
+  updateUserGreeting();
+  
+  // Load cart badge (supports both guest and authenticated)
+  await loadCartBadgeWithGuest();
 
-  // Check authentication
-  if (!token) {
-    window.location.href = '/authentication-log-in.html';
-    return;
-  }
-
-  // Load all dynamic content
+  // Load all dynamic content for everyone (guests and users)
   await loadTrendingProducts();
   await loadClientReviews();
   await loadFeaturedProducts();
@@ -31,15 +30,19 @@ async function loadTrendingProducts() {
     products.slice(0, 6).forEach(product => {
       const col = document.createElement('div');
       col.className = 'col d-flex';
+      
+      // Get product image
+      const productImage = getProductImage(product);
+      
       col.innerHTML = `
         <div class="card rounded-0 w-100 rounded-3 overflow-hidden">
           <a href="product-details.html?id=${product.id}">
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); height: 200px; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; text-align: center; padding: 20px;">
-              ${product.name}
-            </div>
+            <img src="${productImage}" alt="${escapeHtml(product.name)}" 
+              style="width: 100%; height: 200px; object-fit: cover;" 
+              onerror="this.src='assets/images/product-images/01.webp'">
           </a>
           <div class="card-body text-center">
-            <p class="mb-0 fw-bold">${product.name}</p>
+            <p class="mb-0 fw-bold">${escapeHtml(product.name)}</p>
             <p class="mb-0 text-muted" style="font-size: 12px;">₱${product.sale_price || product.price}</p>
           </div>
         </div>
@@ -54,7 +57,7 @@ async function loadTrendingProducts() {
 // Load Client Reviews (Product Reviews from Database)
 async function loadClientReviews() {
   try {
-    const response = await fetch('/api/products/11/reviews');
+    const response = await fetch('/api/products/1/reviews');
     if (!response.ok) throw new Error('Failed to load reviews');
 
     const reviews = await response.json();
@@ -120,16 +123,17 @@ async function loadFeaturedProducts() {
       const fashionProducts = products.filter(p => p.category_id === 1).slice(0, 6);
       shoesContainer.innerHTML = '';
       fashionProducts.forEach(product => {
+        const productImage = getProductImage(product);
         const item = document.createElement('div');
         item.className = 'card rounded-3 overflow-hidden';
         item.innerHTML = `
           <a href="product-details.html?id=${product.id}">
-            <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); height: 200px; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; text-align: center; padding: 20px;">
-              ${product.name}
-            </div>
+            <img src="${productImage}" alt="${escapeHtml(product.name)}" 
+              style="width: 100%; height: 200px; object-fit: cover;" 
+              onerror="this.src='assets/images/product-images/01.webp'">
           </a>
           <div class="card-body text-center">
-            <p class="mb-0 fw-bold" style="font-size: 14px;">${product.name}</p>
+            <p class="mb-0 fw-bold" style="font-size: 14px;">${escapeHtml(product.name)}</p>
             <p class="mb-0" style="font-size: 12px; color: #666;">₱${product.sale_price || product.price}</p>
           </div>
         `;
@@ -143,16 +147,17 @@ async function loadFeaturedProducts() {
       const electronicsProducts = products.filter(p => p.category_id === 2).slice(0, 8);
       brandsContainer.innerHTML = '';
       electronicsProducts.forEach(product => {
+        const productImage = getProductImage(product);
         const item = document.createElement('div');
         item.className = 'card rounded-3 overflow-hidden';
         item.innerHTML = `
           <a href="product-details.html?id=${product.id}">
-            <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); height: 150px; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; text-align: center; padding: 20px;">
-              ${product.name}
-            </div>
+            <img src="${productImage}" alt="${escapeHtml(product.name)}" 
+              style="width: 100%; height: 150px; object-fit: cover;" 
+              onerror="this.src='assets/images/product-images/01.webp'">
           </a>
           <div class="card-body text-center">
-            <p class="mb-0" style="font-size: 12px; font-weight: 600;">${product.name}</p>
+            <p class="mb-0" style="font-size: 12px; font-weight: 600;">${escapeHtml(product.name)}</p>
           </div>
         `;
         brandsContainer.appendChild(item);
@@ -165,16 +170,17 @@ async function loadFeaturedProducts() {
       const accessoryProducts = products.filter(p => p.category_id === 3 || p.category_id === 4).slice(0, 6);
       accessoriesContainer.innerHTML = '';
       accessoryProducts.forEach(product => {
+        const productImage = getProductImage(product);
         const item = document.createElement('div');
         item.className = 'card rounded-3 overflow-hidden';
         item.innerHTML = `
           <a href="product-details.html?id=${product.id}">
-            <div style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); height: 200px; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; text-align: center; padding: 20px;">
-              ${product.name}
-            </div>
+            <img src="${productImage}" alt="${escapeHtml(product.name)}" 
+              style="width: 100%; height: 200px; object-fit: cover;" 
+              onerror="this.src='assets/images/product-images/01.webp'">
           </a>
           <div class="card-body text-center">
-            <p class="mb-0 fw-bold" style="font-size: 14px;">${product.name}</p>
+            <p class="mb-0 fw-bold" style="font-size: 14px;">${escapeHtml(product.name)}</p>
             <p class="mb-0" style="font-size: 12px; color: #666;">₱${product.sale_price || product.price}</p>
           </div>
         `;
@@ -184,4 +190,30 @@ async function loadFeaturedProducts() {
   } catch (error) {
     console.error('Error loading featured products:', error);
   }
+}
+
+// Escape HTML to prevent XSS
+function escapeHtml(text) {
+  if (!text) return '';
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// Get product image helper
+function getProductImage(product) {
+  if (!product.images) return 'assets/images/product-images/01.webp';
+  
+  try {
+    const images = JSON.parse(product.images);
+    if (Array.isArray(images) && images.length > 0) {
+      return images[0];
+    }
+  } catch (e) {
+    if (typeof product.images === 'string' && product.images.startsWith('http')) {
+      return product.images;
+    }
+  }
+  
+  return 'assets/images/product-images/01.webp';
 }

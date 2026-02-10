@@ -97,6 +97,12 @@
 <script src="assets/js/shared-utilities.js"></script>
 
     <script>
+      // Check if already logged in - redirect to home
+      const token = localStorage.getItem('auth_token');
+      if (token) {
+        window.location.href = '/home.html';
+      }
+
       const loginForm = document.getElementById('loginForm');
       const emailInput = document.getElementById('floatingInputEmail');
       const passwordInput = document.getElementById('floatingInputPassword');
@@ -139,6 +145,9 @@
           // Store token and user info
           localStorage.setItem('auth_token', data.token);
           localStorage.setItem('user', JSON.stringify(data.user));
+
+          // Sync guest cart to server if exists
+          await syncGuestCartToServer(data.token);
 
           // Redirect based on role
           if (data.user.role === 'admin') {
