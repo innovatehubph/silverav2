@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock } from 'lucide-react';
+import { toast } from 'sonner';
 import { useAuthStore } from '../stores';
 import { authApi } from '../utils/api';
 
@@ -27,7 +28,7 @@ export default function Login() {
       navigate('/');
     } catch (error) {
       console.error('Login failed:', error);
-      alert('Login failed. Please check your credentials.');
+      toast.error('Login failed. Please check your credentials.');
     }
   };
 
@@ -73,7 +74,11 @@ export default function Login() {
           </button>
         </form>
 
-        <p className="text-center mt-6 text-gray-600">
+        <p className="text-center mt-4">
+          <Link to="/forgot-password" className="text-sm text-primary-600 hover:underline">Forgot password?</Link>
+        </p>
+
+        <p className="text-center mt-4 text-gray-600">
           Don't have an account?{' '}
           <Link to="/register" className="text-primary-600 hover:underline">Sign up</Link>
         </p>

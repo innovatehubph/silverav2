@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { User, Mail, Lock } from 'lucide-react';
+import { toast } from 'sonner';
 import { useAuthStore } from '../stores';
 import { authApi } from '../utils/api';
 
@@ -28,7 +29,7 @@ export default function Register() {
       navigate('/');
     } catch (error) {
       console.error('Registration failed:', error);
-      alert('Registration failed. Please try again.');
+      toast.error('Registration failed. Please try again.');
     }
   };
 

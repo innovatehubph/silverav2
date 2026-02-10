@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ShoppingCart, Heart } from 'lucide-react';
 import { useCartStore } from '../../stores';
+import { parseProductImages, getDiscountPercentage } from '../../utils/product';
 import type { Product } from '../../types';
 
 interface ProductCardProps {
@@ -11,24 +12,8 @@ interface ProductCardProps {
 export default function ProductCard({ product, showWishlist = true }: ProductCardProps) {
   const { addItem } = useCartStore();
 
-  // Parse images
-  let imageUrl = 'assets/images/product-images/01.webp';
-  if (product.images) {
-    try {
-      const images = JSON.parse(product.images as string);
-      if (Array.isArray(images) && images.length > 0) {
-        imageUrl = images[0];
-      }
-    } catch {
-      if (typeof product.images === 'string' && product.images.startsWith('http')) {
-        imageUrl = product.images;
-      }
-    }
-  }
-
-  const discountPercentage = product.sale_price && product.price
-    ? Math.round(((product.price - product.sale_price) / product.price) * 100)
-    : 0;
+  const imageUrl = parseProductImages(product.images)[0];
+  const discountPercentage = getDiscountPercentage(product.price, product.sale_price);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -45,7 +30,11 @@ export default function ProductCard({ product, showWishlist = true }: ProductCar
             alt={product.name}
             className="w-full h-48 md:h-64 object-cover transform group-hover:scale-105 transition-transform duration-500"
             onError={(e) => {
-              (e.target as HTMLImageElement).src = 'assets/images/product-images/01.webp';
+              const img = e.target as HTMLImageElement;
+              if (!img.dataset.fallback) {
+                img.dataset.fallback = '1';
+                img.src = '/assets/images/product-images/01.webp';
+              }
             }}
           />
           

@@ -1,13 +1,26 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, ShoppingBag, Truck, Shield, Star } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { productsApi } from '../utils/api';
 import type { Product } from '../types';
 import ProductCard from '../components/product/ProductCard';
+import HeroSection from '../sections/HeroSection';
+import CategorySection from '../sections/CategorySection';
+import HowItWorksSection from '../sections/HowItWorksSection';
+
+// Fallback category display images (used when no matching product found from API)
+const categoryFallbackImages: Record<string, string> = {
+  apparel: '/images/shirt_apparel.jpg',
+  footwear: '/images/shoe_footwear.jpg',
+  accessories: '/images/wallet_smallleather.jpg',
+  dresses: '/images/dress_apparel.jpg',
+};
 
 export default function Home() {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [trendingProducts, setTrendingProducts] = useState<Product[]>([]);
+  const [categoryProducts, setCategoryProducts] = useState<(Product | null)[]>([null, null, null, null]);
+  const [heroProduct, setHeroProduct] = useState<Product | undefined>();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -18,11 +31,21 @@ export default function Home() {
     try {
       setIsLoading(true);
       const response = await productsApi.getAll({ limit: 50 });
-      const products = response.data;
-      
-      // Filter featured and trending
-      setFeaturedProducts(products.filter((p: Product) => p.featured).slice(0, 4));
+      const products: Product[] = response.data;
+
+      const featured = products.filter((p) => p.featured);
+      setFeaturedProducts(featured.slice(0, 4));
       setTrendingProducts(products.slice(0, 8));
+
+      // Use the first featured product for the hero section
+      if (featured.length > 0) setHeroProduct(featured[0]);
+
+      // Pick one product per category for the category sections
+      const categories = ['Apparel', 'Footwear', 'Accessories', 'Dresses'];
+      const picked = categories.map(cat =>
+        products.find(p => p.category_name?.toLowerCase() === cat.toLowerCase()) || null
+      );
+      setCategoryProducts(picked);
     } catch (error) {
       console.error('Failed to load products:', error);
     } finally {
@@ -32,63 +55,60 @@ export default function Home() {
 
   return (
     <div className="animate-fade-in">
-      {/* Hero Section */}
-      <section className="relative bg-gradient-luxury text-white py-20 md:py-32 overflow-hidden">
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1920')] bg-cover bg-center" />
-        </div>
-        
-        <div className="container-custom relative z-10">
-          <div className="max-w-2xl animate-slide-up">
-            <p className="text-gold-400 font-medium mb-4 tracking-wide">PREMIUM SHOPPING</p>
-            <h1 className="text-4xl md:text-6xl font-serif font-bold mb-6 leading-tight">
-              Elevate Your
-              <br />
-              <span className="text-gradient">Lifestyle</span>
-            </h1>
-            <p className="text-lg md:text-xl text-gray-300 mb-8">
-              Discover premium products curated for the modern Filipino. Quality meets elegance at Silvera.
-            </p>
-            
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Link to="/shop" className="btn-secondary inline-flex items-center justify-center gap-2">
-                Shop Now
-                <ArrowRight className="w-5 h-5" />
-              </Link>
-              <Link to="/shop?category=featured" className="btn-outline text-white border-white hover:bg-white hover:text-navy-900">
-                View Featured
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* New Hero Section with GSAP */}
+      <HeroSection product={heroProduct} />
 
-      {/* Features Section */}
-      <section className="py-12 bg-white">
-        <div className="container-custom">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            {[
-              { icon: Truck, title: 'Free Shipping', desc: 'On orders over ₱1,000' },
-              { icon: Shield, title: 'Secure Payment', desc: '100% secure checkout' },
-              { icon: Star, title: 'Quality Products', desc: 'Premium selection' },
-              { icon: ShoppingBag, title: 'Easy Returns', desc: '30-day return policy' },
-            ].map((feature, idx) => (
-              <div key={idx} className="flex items-center gap-4 p-4 rounded-lg hover:bg-gray-50 transition-colors">
-                <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center">
-                  <feature.icon className="w-6 h-6 text-primary-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900">{feature.title}</h3>
-                  <p className="text-sm text-gray-600">{feature.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Category Sections with GSAP scroll animations */}
+      <CategorySection
+        id="apparel"
+        headline="APPAREL"
+        subheadline="Crisp shirts, premium denim, and elevated basics shipped from the U.S. to your door."
+        cta="Shop Apparel"
+        image={categoryFallbackImages.apparel}
+        imagePosition="right"
+        zIndex={20}
+        product={categoryProducts[0] ?? undefined}
+      />
 
-      {/* Featured Products */}
-      <section className="py-16">
+      <CategorySection
+        id="footwear"
+        headline="FOOTWEAR"
+        subheadline="Box-fresh sneakers, loafers, and boots — authentic and sourced direct."
+        cta="Shop Footwear"
+        image={categoryFallbackImages.footwear}
+        imagePosition="left"
+        zIndex={30}
+        product={categoryProducts[1] ?? undefined}
+      />
+
+      <CategorySection
+        id="accessories"
+        headline="ACCESSORIES"
+        subheadline="Wallets, belts, and small leather goods that complete the look."
+        cta="Shop Accessories"
+        image={categoryFallbackImages.accessories}
+        imagePosition="right"
+        zIndex={40}
+        product={categoryProducts[2] ?? undefined}
+      />
+
+      <CategorySection
+        id="dresses"
+        headline="DRESSES"
+        subheadline="Day-to-evening dresses for every occasion — shipped direct to Manila."
+        cta="Shop Dresses"
+        image={categoryFallbackImages.dresses}
+        imagePosition="left"
+        isDark={true}
+        zIndex={50}
+        product={categoryProducts[3] ?? undefined}
+      />
+
+      {/* How It Works Section */}
+      <HowItWorksSection />
+
+      {/* Original Featured Products Section */}
+      <section className="py-16 bg-white">
         <div className="container-custom">
           <div className="flex items-end justify-between mb-8">
             <div>
@@ -123,7 +143,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Banner Section */}
+      {/* Original Banner Section */}
       <section className="py-16 bg-primary-50">
         <div className="container-custom">
           <div className="bg-gradient-to-r from-primary-600 to-primary-800 rounded-2xl p-8 md:p-12 text-white flex flex-col md:flex-row items-center justify-between gap-8">
@@ -150,7 +170,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Trending Products */}
+      {/* Original Trending Products */}
       <section className="py-16">
         <div className="container-custom">
           <div className="text-center mb-12">
