@@ -277,6 +277,7 @@ app.use('/api/', apiLimiter);
 
 // Static files - serve production build from client/dist
 app.use(express.static(path.join(__dirname, '../client/dist')));
+app.use(express.static(path.join(__dirname, '../public')));
 app.use('/admin', express.static(path.join(__dirname, '../admin')));
 
 // ==================== VALIDATION HELPERS ====================
