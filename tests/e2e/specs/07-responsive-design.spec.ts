@@ -14,7 +14,7 @@ test.describe('Responsive Design - Mobile (375px)', () => {
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
 
-    const menuButton = page.locator('button:has(svg.lucide-menu)');
+    const menuButton = page.locator('button[aria-label="Open menu"]');
     await expect(menuButton).toBeVisible();
   });
 
@@ -22,7 +22,7 @@ test.describe('Responsive Design - Mobile (375px)', () => {
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
 
-    const menuButton = page.locator('button:has(svg.lucide-menu)');
+    const menuButton = page.locator('button[aria-label="Open menu"]');
     await menuButton.click();
     await page.waitForTimeout(300);
 
@@ -30,7 +30,7 @@ test.describe('Responsive Design - Mobile (375px)', () => {
     const navVisible = await navDrawer.first().isVisible().catch(() => false);
     expect(navVisible).toBeTruthy();
 
-    const closeButton = page.locator('button:has(svg.lucide-x)');
+    const closeButton = page.locator('button[aria-label="Close menu"]');
     if (await closeButton.isVisible().catch(() => false)) {
       await closeButton.click();
       await page.waitForTimeout(300);
@@ -148,7 +148,7 @@ test.describe('Responsive Design - Desktop (1920px)', () => {
     const shopLink = page.locator('header a[href="/shop"]');
     const isVisible = await shopLink.isVisible().catch(() => false);
 
-    const hamburger = page.locator('button:has(svg.lucide-menu)');
+    const hamburger = page.locator('button[aria-label="Open menu"]');
     const hamburgerVisible = await hamburger.isVisible().catch(() => false);
 
     expect(isVisible || !hamburgerVisible).toBeTruthy();

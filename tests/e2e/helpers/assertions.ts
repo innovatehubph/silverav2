@@ -46,7 +46,7 @@ export async function assertSuccessToastDisplayed(page: Page, expectedText?: str
 }
 
 export async function assertCartBadgeCount(page: Page, expectedCount: number) {
-  const badge = page.locator('header span').filter({ hasText: /^\d+$/ }).first();
+  const badge = page.locator('a[href="/cart"] span.absolute').first();
   await expect(badge).toHaveText(expectedCount.toString());
 }
 

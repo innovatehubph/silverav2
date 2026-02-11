@@ -83,7 +83,7 @@ export class RegisterPage extends BasePage {
 
 export class HomePage extends BasePage {
   get heroSection(): Locator {
-    return this.page.locator('section').first();
+    return this.page.locator('section#hero, section:has(h1)').first();
   }
 
   get featuredProducts(): Locator {
@@ -185,11 +185,11 @@ export class ProductDetailPage extends BasePage {
 
 export class CartPage extends BasePage {
   get itemNames(): Locator {
-    return this.page.locator('h3 a[href^="/product/"]');
+    return this.page.locator('.card h3');
   }
 
   get removeButtons(): Locator {
-    return this.page.locator('button:has(svg.lucide-trash-2), button:has(svg.lucide-trash)');
+    return this.page.locator('button.text-red-500');
   }
 
   get checkoutLink(): Locator {
@@ -205,11 +205,11 @@ export class CartPage extends BasePage {
   }
 
   get sizeBadges(): Locator {
-    return this.page.locator('text=/Size:/i');
+    return this.page.locator('.rounded-full.text-xs.bg-bg-tertiary');
   }
 
   get colorBadges(): Locator {
-    return this.page.locator('text=/Color:/i');
+    return this.page.locator('.rounded-full.text-xs.bg-bg-tertiary');
   }
 
   async navigate() {
@@ -285,7 +285,7 @@ export class ProfilePage extends BasePage {
   }
 
   get logoutButton(): Locator {
-    return this.page.locator('button:has-text("Logout"), button:has-text("Log Out")');
+    return this.page.locator('button:has-text("Sign Out"), button:has-text("Logout"), button:has-text("Log Out")');
   }
 
   get ordersLink(): Locator {
@@ -303,7 +303,7 @@ export class ProfilePage extends BasePage {
 
 export class OrdersPage extends BasePage {
   get orderCards(): Locator {
-    return this.page.locator('[class*="cursor-pointer"]').filter({ hasText: /Order #/i });
+    return this.page.locator('a[href^="/orders/"]').filter({ hasText: /Order #/i });
   }
 
   get orderStatuses(): Locator {
