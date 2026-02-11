@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ShoppingCart, Heart, Share2, Star, ArrowLeft, Plus, Minus } from 'lucide-react';
 import { toast } from 'sonner';
@@ -7,7 +7,8 @@ import { useCartStore } from '../stores';
 import { parseProductImages, getDiscountPercentage } from '../utils/product';
 import { SEO, generateProductStructuredData } from '../components/SEO';
 import OptimizedImage from '../components/OptimizedImage';
-import type { Product } from '../types';
+import VariantSelector from '../components/product/VariantSelector';
+import type { Product, ProductVariants } from '../types';
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
@@ -16,7 +17,32 @@ export default function ProductDetail() {
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedSize, setSelectedSize] = useState('');
+  const [selectedColor, setSelectedColor] = useState('');
   const { addItem } = useCartStore();
+
+  const variants = useMemo<ProductVariants | null>(() => {
+    if (!product?.variants) return null;
+    try {
+      return typeof product.variants === 'string'
+        ? JSON.parse(product.variants)
+        : product.variants;
+    } catch {
+      return null;
+    }
+  }, [product]);
+
+  // Auto-select first variant options when product loads
+  useEffect(() => {
+    if (variants) {
+      if (variants.sizes?.length && !selectedSize) {
+        setSelectedSize(variants.sizes[0]);
+      }
+      if (variants.colors?.length && !selectedColor) {
+        setSelectedColor(variants.colors[0].name);
+      }
+    }
+  }, [variants, selectedSize, selectedColor]);
 
   useEffect(() => {
     if (id) {
@@ -38,14 +64,14 @@ export default function ProductDetail() {
 
   const handleAddToCart = () => {
     if (product) {
-      addItem(product, quantity);
+      addItem(product, quantity, selectedSize || undefined, selectedColor || undefined);
       toast.success('Added to cart!');
     }
   };
 
   const handleBuyNow = () => {
     if (product) {
-      addItem(product, quantity);
+      addItem(product, quantity, selectedSize || undefined, selectedColor || undefined);
       navigate('/checkout');
     }
   };
@@ -185,6 +211,19 @@ export default function ProductDetail() {
           <p className="text-txt-secondary leading-relaxed">
             {product.description || 'Premium quality product with excellent craftsmanship. Made with the finest materials for lasting durability and style.'}
           </p>
+
+          {/* Variants */}
+          {variants && (variants.sizes?.length || variants.colors?.length) && (
+            <div className="bg-bg-secondary/50 backdrop-blur-sm border border-bdr-subtle rounded-2xl p-5">
+              <VariantSelector
+                variants={variants}
+                selectedSize={selectedSize}
+                selectedColor={selectedColor}
+                onSizeChange={setSelectedSize}
+                onColorChange={setSelectedColor}
+              />
+            </div>
+          )}
 
           {/* Quantity */}
           <div className="flex items-center gap-4">

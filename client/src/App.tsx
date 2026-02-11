@@ -1,10 +1,11 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { Toaster } from 'sonner';
-import { useAuthStore } from './stores';
+import { useAuthStore, useThemeStore } from './stores';
 
 // Layouts
 import MainLayout from './components/layout/MainLayout';
+import AdminLayout from './components/layout/AdminLayout';
 
 // Pages
 import Home from './pages/Home';
@@ -25,7 +26,12 @@ import Contact from './pages/Contact';
 import FAQ from './pages/FAQ';
 import Shipping from './pages/Shipping';
 import NotFound from './pages/NotFound';
-import Admin from './pages/Admin';
+
+// Admin Pages
+import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminProducts from './pages/admin/AdminProducts';
+import AdminOrders from './pages/admin/AdminOrders';
+import AdminUsers from './pages/admin/AdminUsers';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore();
@@ -33,8 +39,21 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function RequireAdmin({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, user } = useAuthStore();
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (user?.role !== 'admin') return <Navigate to="/" replace />;
+  return <>{children}</>;
+}
+
 function App() {
   const { login } = useAuthStore();
+  const { theme } = useThemeStore();
+
+  // Initialize theme on app load
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
 
   useEffect(() => {
     // Check for existing auth on app load
@@ -62,7 +81,6 @@ function App() {
         <Route path="/checkout" element={<RequireAuth><MainLayout><Checkout /></MainLayout></RequireAuth>} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/admin" element={<RequireAuth><Admin /></RequireAuth>} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/profile" element={<RequireAuth><MainLayout><Profile /></MainLayout></RequireAuth>} />
         <Route path="/orders" element={<RequireAuth><MainLayout><Orders /></MainLayout></RequireAuth>} />
@@ -73,6 +91,15 @@ function App() {
         <Route path="/contact" element={<MainLayout><Contact /></MainLayout>} />
         <Route path="/faq" element={<MainLayout><FAQ /></MainLayout>} />
         <Route path="/shipping" element={<MainLayout><Shipping /></MainLayout>} />
+
+        {/* Admin Routes */}
+        <Route path="/admin" element={<RequireAdmin><AdminLayout /></RequireAdmin>}>
+          <Route index element={<AdminDashboard />} />
+          <Route path="products" element={<AdminProducts />} />
+          <Route path="orders" element={<AdminOrders />} />
+          <Route path="users" element={<AdminUsers />} />
+        </Route>
+
         <Route path="*" element={<MainLayout><NotFound /></MainLayout>} />
       </Routes>
     </Router>

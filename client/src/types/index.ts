@@ -1,3 +1,13 @@
+export interface ProductVariantColor {
+  name: string;
+  hex: string;
+}
+
+export interface ProductVariants {
+  sizes?: string[];
+  colors?: ProductVariantColor[];
+}
+
 export interface Product {
   id: number;
   name: string;
@@ -12,6 +22,7 @@ export interface Product {
   featured: boolean;
   status: 'active' | 'inactive' | 'draft';
   rating?: number;
+  variants?: string | ProductVariants;
   created_at: string;
 }
 
@@ -31,6 +42,7 @@ export interface CartItem {
   quantity: number;
   images?: string;
   size?: string;
+  color?: string;
 }
 
 export interface User {

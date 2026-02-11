@@ -22,6 +22,7 @@ const crypto = require('crypto');
 const emailService = require('./services/email-service');
 const paymentGateway = require('./services/payment-gateway');
 const minioService = require('./services/minio');
+const psgcService = require('./services/psgc');
 const multer = require('multer');
 
 // Configure multer for memory storage (files go to MinIO)
@@ -159,14 +160,18 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
     label TEXT DEFAULT 'Home',
-    name TEXT,
-    phone TEXT,
-    address_line TEXT,
-    city TEXT,
+    name TEXT NOT NULL,
+    phone TEXT NOT NULL,
+    region_code TEXT,
+    region TEXT,
     province TEXT,
+    municipality TEXT,
+    barangay TEXT,
+    street_address TEXT,
     zip_code TEXT,
     is_default BOOLEAN DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id)
   );
 
@@ -272,6 +277,78 @@ if (prodCount.count === 0) {
     );
   });
   console.log('✅ Sample products created (10 products)');
+}
+
+// Migration: Add variants column to products if it doesn't exist
+try {
+  const columns = db.prepare("PRAGMA table_info(products)").all();
+  if (!columns.find(c => c.name === 'variants')) {
+    db.exec("ALTER TABLE products ADD COLUMN variants TEXT");
+    console.log('✅ Added variants column to products table');
+
+    // Seed variant data for existing products
+    const variantData = {
+      'premium-silk-scarf': JSON.stringify({
+        sizes: ['One Size'],
+        colors: [
+          { name: 'Ivory', hex: '#FFFFF0' },
+          { name: 'Burgundy', hex: '#800020' },
+          { name: 'Navy', hex: '#000080' },
+          { name: 'Gold', hex: '#D4AF37' }
+        ]
+      }),
+      'designer-watch': JSON.stringify({
+        sizes: ['38mm', '42mm'],
+        colors: [
+          { name: 'Silver', hex: '#C0C0C0' },
+          { name: 'Rose Gold', hex: '#B76E79' },
+          { name: 'Black', hex: '#1a1a1a' }
+        ]
+      }),
+      'premium-leather-bag': JSON.stringify({
+        sizes: ['Small', 'Medium', 'Large'],
+        colors: [
+          { name: 'Black', hex: '#1a1a1a' },
+          { name: 'Tan', hex: '#D2B48C' },
+          { name: 'Burgundy', hex: '#800020' }
+        ]
+      }),
+      'wireless-earbuds-pro': JSON.stringify({
+        sizes: ['One Size'],
+        colors: [
+          { name: 'White', hex: '#F5F5F5' },
+          { name: 'Black', hex: '#1a1a1a' },
+          { name: 'Navy', hex: '#000080' }
+        ]
+      }),
+      'cashmere-sweater': JSON.stringify({
+        sizes: ['XS', 'S', 'M', 'L', 'XL'],
+        colors: [
+          { name: 'Cream', hex: '#FFFDD0' },
+          { name: 'Charcoal', hex: '#36454F' },
+          { name: 'Blush', hex: '#DE5D83' },
+          { name: 'Camel', hex: '#C19A6B' }
+        ]
+      }),
+      'yoga-mat-premium': JSON.stringify({
+        sizes: ['Standard', 'XL'],
+        colors: [
+          { name: 'Sage', hex: '#9CAF88' },
+          { name: 'Lavender', hex: '#B57EDC' },
+          { name: 'Charcoal', hex: '#36454F' },
+          { name: 'Rose', hex: '#FF007F' }
+        ]
+      })
+    };
+
+    const updateStmt = db.prepare('UPDATE products SET variants = ? WHERE slug = ?');
+    for (const [slug, variants] of Object.entries(variantData)) {
+      updateStmt.run(variants, slug);
+    }
+    console.log('✅ Variant data seeded for existing products');
+  }
+} catch (e) {
+  console.error('Variants migration error:', e.message);
 }
 
 // Health check endpoint BEFORE any middleware (for Docker health checks over HTTP)
@@ -731,50 +808,149 @@ app.put('/api/users/profile', auth, (req, res) => {
   }
 });
 
+// ==================== PSGC (Philippine Geographic) ROUTES ====================
+
+// Get all regions
+app.get('/api/psgc/regions', (req, res) => {
+  try {
+    const regions = psgcService.getRegions();
+    res.json(regions);
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to fetch regions' });
+  }
+});
+
+// Get provinces by region
+app.get('/api/psgc/provinces/:regionCode', (req, res) => {
+  try {
+    const provinces = psgcService.getProvinces(req.params.regionCode);
+    res.json(provinces);
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to fetch provinces' });
+  }
+});
+
+// Get municipalities by region and province
+app.get('/api/psgc/municipalities/:regionCode/:province', (req, res) => {
+  try {
+    const municipalities = psgcService.getMunicipalities(
+      req.params.regionCode,
+      decodeURIComponent(req.params.province)
+    );
+    res.json(municipalities);
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to fetch municipalities' });
+  }
+});
+
+// Get barangays by region, province, and municipality
+app.get('/api/psgc/barangays/:regionCode/:province/:municipality', (req, res) => {
+  try {
+    const barangays = psgcService.getBarangays(
+      req.params.regionCode,
+      decodeURIComponent(req.params.province),
+      decodeURIComponent(req.params.municipality)
+    );
+    res.json(barangays);
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to fetch barangays' });
+  }
+});
+
+// Search locations
+app.get('/api/psgc/search', (req, res) => {
+  try {
+    const { q, limit } = req.query;
+    const results = psgcService.search(q, parseInt(limit) || 20);
+    res.json(results);
+  } catch (e) {
+    res.status(500).json({ error: 'Search failed' });
+  }
+});
+
 // ==================== ADDRESS ROUTES ====================
 
+// Get user addresses
 app.get('/api/addresses', auth, (req, res) => {
   try {
     const addresses = db.prepare(`
-      SELECT id, name, phone, address, locality, city, state, pin_code, is_default
+      SELECT id, label, name, phone, region_code, region, province, municipality, 
+             barangay, street_address, zip_code, is_default, created_at
       FROM addresses
       WHERE user_id = ?
       ORDER BY is_default DESC, created_at DESC
     `).all(req.user.id);
     res.json(addresses);
   } catch (e) {
+    console.error('Fetch addresses error:', e.message);
     res.status(500).json({ error: 'Failed to fetch addresses' });
   }
 });
 
+// Create new address
 app.post('/api/addresses', auth, (req, res) => {
   try {
-    const { name, phone, address, locality, city, state, pin_code } = req.body;
+    const { 
+      label, name, phone, region_code, region, province, 
+      municipality, barangay, street_address, zip_code, is_default 
+    } = req.body;
 
-    if (!name || !phone || !address || !city) {
-      return res.status(400).json({ error: 'Required fields missing' });
+    // Validation
+    if (!name || !phone) {
+      return res.status(400).json({ error: 'Name and phone are required' });
+    }
+    if (!region || !province || !municipality) {
+      return res.status(400).json({ error: 'Region, province, and municipality are required' });
     }
 
+    // If setting as default, unset other defaults first
+    if (is_default) {
+      db.prepare('UPDATE addresses SET is_default = 0 WHERE user_id = ?').run(req.user.id);
+    }
+
+    // Check if this is the first address (auto-set as default)
+    const existingCount = db.prepare('SELECT COUNT(*) as count FROM addresses WHERE user_id = ?').get(req.user.id);
+    const setDefault = is_default || existingCount.count === 0 ? 1 : 0;
+
     const result = db.prepare(`
-      INSERT INTO addresses (user_id, name, phone, address, locality, city, state, pin_code)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(req.user.id, name.trim(), phone.trim(), address.trim(), locality ? locality.trim() : null, city.trim(), state ? state.trim() : null, pin_code ? pin_code.trim() : null);
+      INSERT INTO addresses (user_id, label, name, phone, region_code, region, province, 
+                            municipality, barangay, street_address, zip_code, is_default)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      req.user.id,
+      (label || 'Home').trim(),
+      name.trim(),
+      phone.trim(),
+      region_code || null,
+      region.trim(),
+      province.trim(),
+      municipality.trim(),
+      barangay ? barangay.trim() : null,
+      street_address ? street_address.trim() : null,
+      zip_code || null,
+      setDefault
+    );
 
     const newAddress = db.prepare(`
-      SELECT id, name, phone, address, locality, city, state, pin_code, is_default
+      SELECT id, label, name, phone, region_code, region, province, municipality, 
+             barangay, street_address, zip_code, is_default, created_at
       FROM addresses WHERE id = ?
     `).get(result.lastInsertRowid);
 
     res.status(201).json(newAddress);
   } catch (e) {
+    console.error('Create address error:', e.message);
     res.status(500).json({ error: 'Failed to create address' });
   }
 });
 
+// Update address
 app.put('/api/addresses/:id', auth, (req, res) => {
   try {
-    const { name, phone, address, locality, city, state, pin_code } = req.body;
     const addressId = parseInt(req.params.id);
+    if (!Number.isInteger(addressId) || addressId < 1) {
+      return res.status(400).json({ error: 'Invalid address ID' });
+    }
 
     // Verify ownership
     const existingAddress = db.prepare('SELECT user_id FROM addresses WHERE id = ?').get(addressId);
@@ -782,40 +958,75 @@ app.put('/api/addresses/:id', auth, (req, res) => {
       return res.status(403).json({ error: 'Unauthorized' });
     }
 
-    if (!name || !phone || !address || !city) {
-      return res.status(400).json({ error: 'Required fields missing' });
+    const { 
+      label, name, phone, region_code, region, province, 
+      municipality, barangay, street_address, zip_code 
+    } = req.body;
+
+    if (!name || !phone) {
+      return res.status(400).json({ error: 'Name and phone are required' });
     }
 
     db.prepare(`
       UPDATE addresses
-      SET name = ?, phone = ?, address = ?, locality = ?, city = ?, state = ?, pin_code = ?
+      SET label = ?, name = ?, phone = ?, region_code = ?, region = ?, province = ?, 
+          municipality = ?, barangay = ?, street_address = ?, zip_code = ?, 
+          updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
-    `).run(name.trim(), phone.trim(), address.trim(), locality ? locality.trim() : null, city.trim(), state ? state.trim() : null, pin_code ? pin_code.trim() : null, addressId);
+    `).run(
+      (label || 'Home').trim(),
+      name.trim(),
+      phone.trim(),
+      region_code || null,
+      region ? region.trim() : null,
+      province ? province.trim() : null,
+      municipality ? municipality.trim() : null,
+      barangay ? barangay.trim() : null,
+      street_address ? street_address.trim() : null,
+      zip_code || null,
+      addressId
+    );
 
     const updatedAddress = db.prepare(`
-      SELECT id, name, phone, address, locality, city, state, pin_code, is_default
+      SELECT id, label, name, phone, region_code, region, province, municipality, 
+             barangay, street_address, zip_code, is_default, created_at
       FROM addresses WHERE id = ?
     `).get(addressId);
 
     res.json(updatedAddress);
   } catch (e) {
+    console.error('Update address error:', e.message);
     res.status(500).json({ error: 'Failed to update address' });
   }
 });
 
+// Delete address
 app.delete('/api/addresses/:id', auth, (req, res) => {
   try {
     const addressId = parseInt(req.params.id);
+    if (!Number.isInteger(addressId) || addressId < 1) {
+      return res.status(400).json({ error: 'Invalid address ID' });
+    }
 
     // Verify ownership
-    const existingAddress = db.prepare('SELECT user_id FROM addresses WHERE id = ?').get(addressId);
+    const existingAddress = db.prepare('SELECT user_id, is_default FROM addresses WHERE id = ?').get(addressId);
     if (!existingAddress || existingAddress.user_id !== req.user.id) {
       return res.status(403).json({ error: 'Unauthorized' });
     }
 
     db.prepare('DELETE FROM addresses WHERE id = ?').run(addressId);
+
+    // If deleted address was default, set another as default
+    if (existingAddress.is_default) {
+      const nextAddress = db.prepare('SELECT id FROM addresses WHERE user_id = ? ORDER BY created_at DESC LIMIT 1').get(req.user.id);
+      if (nextAddress) {
+        db.prepare('UPDATE addresses SET is_default = 1 WHERE id = ?').run(nextAddress.id);
+      }
+    }
+
     res.json({ success: true });
   } catch (e) {
+    console.error('Delete address error:', e.message);
     res.status(500).json({ error: 'Failed to delete address' });
   }
 });
@@ -823,6 +1034,9 @@ app.delete('/api/addresses/:id', auth, (req, res) => {
 app.put('/api/addresses/:id/default', auth, (req, res) => {
   try {
     const addressId = parseInt(req.params.id);
+    if (!Number.isInteger(addressId) || addressId < 1) {
+      return res.status(400).json({ error: 'Invalid address ID' });
+    }
 
     // Verify ownership
     const existingAddress = db.prepare('SELECT user_id FROM addresses WHERE id = ?').get(addressId);
@@ -837,12 +1051,14 @@ app.put('/api/addresses/:id/default', auth, (req, res) => {
     db.prepare('UPDATE addresses SET is_default = 1 WHERE id = ?').run(addressId);
 
     const updatedAddress = db.prepare(`
-      SELECT id, name, phone, address, locality, city, state, pin_code, is_default
+      SELECT id, label, name, phone, region_code, region, province, municipality, 
+             barangay, street_address, zip_code, is_default, created_at
       FROM addresses WHERE id = ?
     `).get(addressId);
 
     res.json(updatedAddress);
   } catch (e) {
+    console.error('Set default address error:', e.message);
     res.status(500).json({ error: 'Failed to set default address' });
   }
 });
@@ -1697,7 +1913,7 @@ app.get('/api/admin/products', auth, adminOnly, (req, res) => {
 
 app.post('/api/admin/products', auth, adminOnly, (req, res) => {
   try {
-    const { name, description, price, sale_price, category_id, images, stock, featured } = req.body;
+    const { name, description, price, sale_price, category_id, images, stock, featured, variants } = req.body;
 
     if (!validateString(name)) {
       return res.status(400).json({ error: 'Product name required' });
@@ -1710,9 +1926,10 @@ app.post('/api/admin/products', auth, adminOnly, (req, res) => {
     const safeStock = Math.max(0, parseInt(stock) || 0);
     const safeCategoryId = parseInt(category_id) || null;
     const safeSalePrice = validatePositiveNumber(sale_price) ? sale_price : null;
+    const safeVariants = variants ? JSON.stringify(variants) : null;
 
-    const result = db.prepare('INSERT INTO products (name, slug, description, price, sale_price, category_id, images, stock, featured) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)').run(
-      sanitizeString(name), slug, sanitizeString(description), price, safeSalePrice, safeCategoryId, JSON.stringify(images || []), safeStock, featured ? 1 : 0
+    const result = db.prepare('INSERT INTO products (name, slug, description, price, sale_price, category_id, images, stock, featured, variants) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').run(
+      sanitizeString(name), slug, sanitizeString(description), price, safeSalePrice, safeCategoryId, JSON.stringify(images || []), safeStock, featured ? 1 : 0, safeVariants
     );
     res.json({ id: result.lastInsertRowid });
   } catch (e) {
@@ -1730,7 +1947,7 @@ app.put('/api/admin/products/:id', auth, adminOnly, (req, res) => {
       return res.status(400).json({ error: 'Invalid product ID' });
     }
 
-    const { name, description, price, sale_price, category_id, images, stock, featured, status } = req.body;
+    const { name, description, price, sale_price, category_id, images, stock, featured, status, variants } = req.body;
 
     if (!validateString(name)) {
       return res.status(400).json({ error: 'Product name required' });
@@ -1743,9 +1960,10 @@ app.put('/api/admin/products/:id', auth, adminOnly, (req, res) => {
     const safeCategoryId = parseInt(category_id) || null;
     const safeSalePrice = validatePositiveNumber(sale_price) ? sale_price : null;
     const safeStatus = ['active', 'inactive', 'draft'].includes(status) ? status : 'active';
+    const safeVariants = variants ? JSON.stringify(variants) : null;
 
-    db.prepare('UPDATE products SET name=?, description=?, price=?, sale_price=?, category_id=?, images=?, stock=?, featured=?, status=? WHERE id=?').run(
-      sanitizeString(name), sanitizeString(description), price, safeSalePrice, safeCategoryId, JSON.stringify(images || []), safeStock, featured ? 1 : 0, safeStatus, id
+    db.prepare('UPDATE products SET name=?, description=?, price=?, sale_price=?, category_id=?, images=?, stock=?, featured=?, status=?, variants=? WHERE id=?').run(
+      sanitizeString(name), sanitizeString(description), price, safeSalePrice, safeCategoryId, JSON.stringify(images || []), safeStock, featured ? 1 : 0, safeStatus, safeVariants, id
     );
     res.json({ success: true });
   } catch (e) {

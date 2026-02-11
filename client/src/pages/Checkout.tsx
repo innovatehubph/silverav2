@@ -1,25 +1,119 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CreditCard, Truck, Shield, CheckCircle, Wallet, Loader2 } from 'lucide-react';
+import { CreditCard, Truck, Shield, CheckCircle, Wallet, Loader2, MapPin, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCartStore, useAuthStore } from '../stores';
 import { ordersApi, paymentsApi } from '../utils/api';
+import AddressForm from '../components/AddressForm';
+
+interface Address {
+  id: number;
+  label: string;
+  name: string;
+  phone: string;
+  region_code: string;
+  region: string;
+  province: string;
+  municipality: string;
+  barangay: string;
+  street_address: string;
+  zip_code: string;
+  is_default: boolean;
+}
 
 export default function Checkout() {
   const navigate = useNavigate();
   const { items, getTotalPrice, clearCart } = useCartStore();
-  const { user } = useAuthStore();
+  const { user, isAuthenticated } = useAuthStore();
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStep, setProcessingStep] = useState('');
+  
+  // Address state
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
+  const [showAddressForm, setShowAddressForm] = useState(false);
+  const [addressMode, setAddressMode] = useState<'saved' | 'new'>('saved');
+  const [loadingAddresses, setLoadingAddresses] = useState(true);
+  
+  // Form data for guest checkout or new address
   const [formData, setFormData] = useState({
-    fullName: user?.name || '',
     email: user?.email || '',
-    phone: '',
-    address: '',
-    city: '',
-    zipCode: '',
-    paymentMethod: 'cod', // cod, card, gcash
+    paymentMethod: 'cod',
   });
+
+  // Fetch saved addresses
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchAddresses();
+    } else {
+      setLoadingAddresses(false);
+      setAddressMode('new');
+    }
+  }, [isAuthenticated]);
+
+  const fetchAddresses = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('/api/addresses', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAddresses(data);
+        // Auto-select default address
+        const defaultAddr = data.find((a: Address) => a.is_default);
+        if (defaultAddr) {
+          setSelectedAddressId(defaultAddr.id);
+          setAddressMode('saved');
+        } else if (data.length > 0) {
+          setSelectedAddressId(data[0].id);
+          setAddressMode('saved');
+        } else {
+          setAddressMode('new');
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch addresses:', error);
+    } finally {
+      setLoadingAddresses(false);
+    }
+  };
+
+  const handleAddressSubmit = async (data: any) => {
+    if (!isAuthenticated) {
+      // Guest checkout - just use the address data directly
+      setSelectedAddressId(-1); // Special ID for guest address
+      setShowAddressForm(false);
+      return;
+    }
+
+    // Save the address
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch('/api/addresses', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(data)
+      });
+
+      if (res.ok) {
+        const newAddress = await res.json();
+        toast.success('Address saved!');
+        setAddresses(prev => [...prev, newAddress]);
+        setSelectedAddressId(newAddress.id);
+        setShowAddressForm(false);
+        setAddressMode('saved');
+      } else {
+        const error = await res.json();
+        toast.error(error.error || 'Failed to save address');
+      }
+    } catch (error) {
+      toast.error('Failed to save address');
+    }
+  };
 
   if (items.length === 0) {
     return (
@@ -36,37 +130,59 @@ export default function Checkout() {
     );
   }
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const selectedAddress = addresses.find(a => a.id === selectedAddressId);
+
+  const formatAddress = (addr: Address) => {
+    const parts = [
+      addr.street_address,
+      addr.barangay,
+      addr.municipality,
+      addr.province,
+      addr.region,
+      addr.zip_code
+    ].filter(Boolean);
+    return parts.join(', ');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate address selection
+    if (addressMode === 'saved' && !selectedAddress) {
+      toast.error('Please select a delivery address');
+      return;
+    }
+
     setIsProcessing(true);
 
     try {
+      // Build shipping address string
+      let shippingAddress = '';
+
+      if (selectedAddress) {
+        shippingAddress = formatAddress(selectedAddress);
+      }
+
       // Step 1: Create the order
       setProcessingStep('Creating order...');
       const orderResponse = await ordersApi.create({
         items: items.map(item => ({ product_id: item.product_id, quantity: item.quantity })),
-        shipping_address: `${formData.address}, ${formData.city} ${formData.zipCode}`,
+        shipping_address: shippingAddress,
         payment_method: formData.paymentMethod,
-      });
+      } as any);
 
       const orderId: number = orderResponse.data.id || orderResponse.data.orderId;
 
       // Step 2: Handle payment based on method
       if (formData.paymentMethod === 'cod') {
-        // COD: No payment gateway needed, go straight to success
         clearCart();
         navigate('/order-success');
         return;
       }
 
-      // Step 3: For non-COD, create a payment session via NexusPay
-      setProcessingStep('Connecting to NexusPay...');
+      // Step 3: For non-COD, create a payment session
+      setProcessingStep('Connecting to payment gateway...');
 
-      // Map frontend method names to payment gateway types
       const paymentTypeMap: Record<string, string> = {
         gcash: 'ewallet',
         card: 'card',
@@ -84,12 +200,9 @@ export default function Checkout() {
       });
 
       const paymentData = paymentResponse.data;
-
-      // Clear cart since order was created
       clearCart();
 
       if (paymentData.success && paymentData.checkout_url) {
-        // Navigate to payment status page with checkout URL
         const params = new URLSearchParams({
           checkout_url: paymentData.checkout_url,
           amount: String(paymentData.amount || total),
@@ -97,17 +210,14 @@ export default function Checkout() {
         });
         navigate(`/payment/${paymentData.payment_ref}?${params.toString()}`);
       } else if (paymentData.payment_ref) {
-        // Payment created but no checkout URL (fallback)
         navigate(`/payment/${paymentData.payment_ref}?amount=${total}&method=${formData.paymentMethod}`);
       } else {
-        // Payment creation returned unexpected data
         toast.error('Payment setup failed. Your order was placed — pay from your orders page.');
         navigate('/orders');
       }
     } catch (error: unknown) {
       console.error('Checkout failed:', error);
       const message = error instanceof Error ? error.message : 'Failed to process order';
-      // Check if it's an axios error with response data
       const axiosError = error as { response?: { data?: { error?: string } } };
       toast.error(axiosError?.response?.data?.error || message);
     } finally {
@@ -119,7 +229,6 @@ export default function Checkout() {
   const subtotal = getTotalPrice();
   const shipping = subtotal > 1000 ? 0 : 99;
   const total = subtotal + shipping;
-
   const isOnlinePayment = formData.paymentMethod !== 'cod';
 
   return (
@@ -130,181 +239,212 @@ export default function Checkout() {
         {/* Main Form */}
         <div className="lg:col-span-2">
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Contact Information */}
-            <div className="card p-6">
+            {/* Delivery Address */}
+            <div className="glass rounded-xl p-6">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 bg-gold text-white rounded-full flex items-center justify-center font-bold text-sm">1</div>
-                <h2 className="text-xl font-semibold">Contact Information</h2>
+                <div className="w-8 h-8 bg-gradient-gold text-bg-primary rounded-full flex items-center justify-center font-bold text-sm">1</div>
+                <h2 className="text-xl font-semibold text-txt-primary">Delivery Address</h2>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-txt-secondary mb-1">Full Name *</label>
-                  <input
-                    type="text"
-                    name="fullName"
-                    value={formData.fullName}
-                    onChange={handleInputChange}
-                    required
-                    className="input-field"
-                    placeholder="Enter your full name"
-                  />
+              {loadingAddresses ? (
+                <div className="animate-pulse space-y-3">
+                  <div className="h-20 bg-bg-tertiary rounded-lg"></div>
                 </div>
+              ) : (
+                <>
+                  {/* Address Mode Toggle */}
+                  {isAuthenticated && addresses.length > 0 && !showAddressForm && (
+                    <div className="flex gap-2 mb-4">
+                      <button
+                        type="button"
+                        onClick={() => setAddressMode('saved')}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          addressMode === 'saved' 
+                            ? 'bg-accent-gold text-bg-primary' 
+                            : 'bg-bg-tertiary text-txt-secondary hover:bg-bg-secondary'
+                        }`}
+                      >
+                        Saved Addresses
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAddressMode('new');
+                          setShowAddressForm(true);
+                        }}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1 ${
+                          addressMode === 'new' 
+                            ? 'bg-accent-gold text-bg-primary' 
+                            : 'bg-bg-tertiary text-txt-secondary hover:bg-bg-secondary'
+                        }`}
+                      >
+                        <Plus className="w-4 h-4" /> New Address
+                      </button>
+                    </div>
+                  )}
 
-                <div>
-                  <label className="block text-sm font-medium text-txt-secondary mb-1">Email *</label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    required
-                    className="input-field"
-                    placeholder="your@email.com"
-                  />
-                </div>
+                  {/* Saved Addresses */}
+                  {addressMode === 'saved' && !showAddressForm && (
+                    <div className="space-y-3">
+                      {addresses.map(address => (
+                        <label
+                          key={address.id}
+                          className={`block p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                            selectedAddressId === address.id 
+                              ? 'border-accent-gold bg-accent-gold/5' 
+                              : 'border-bdr hover:border-bdr-strong'
+                          }`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <input
+                              type="radio"
+                              name="selectedAddress"
+                              value={address.id}
+                              checked={selectedAddressId === address.id}
+                              onChange={() => setSelectedAddressId(address.id)}
+                              className="mt-1 w-4 h-4 text-accent-gold accent-accent-gold"
+                            />
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-xs font-medium px-2 py-0.5 rounded bg-bg-tertiary text-txt-secondary">
+                                  {address.label}
+                                </span>
+                                {address.is_default && (
+                                  <span className="text-xs font-medium px-2 py-0.5 rounded bg-accent-gold/20 text-accent-gold">
+                                    Default
+                                  </span>
+                                )}
+                              </div>
+                              <p className="font-medium text-txt-primary">{address.name}</p>
+                              <p className="text-sm text-txt-secondary">{address.phone}</p>
+                              <p className="text-sm text-txt-tertiary mt-1">{formatAddress(address)}</p>
+                            </div>
+                          </div>
+                        </label>
+                      ))}
 
-                <div>
-                  <label className="block text-sm font-medium text-txt-secondary mb-1">Phone *</label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    required
-                    className="input-field"
-                    placeholder="+63 912 345 6789"
-                  />
-                </div>
-              </div>
+                      {addresses.length === 0 && (
+                        <div className="text-center py-8">
+                          <MapPin className="w-12 h-12 text-txt-tertiary mx-auto mb-3" />
+                          <p className="text-txt-secondary mb-4">No saved addresses</p>
+                          <button
+                            type="button"
+                            onClick={() => setShowAddressForm(true)}
+                            className="btn-primary-sm"
+                          >
+                            <Plus className="w-4 h-4 mr-1" /> Add New Address
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* New Address Form */}
+                  {(showAddressForm || addressMode === 'new') && (
+                    <div className="mt-4">
+                      <AddressForm
+                        onSubmit={handleAddressSubmit}
+                        onCancel={addresses.length > 0 ? () => {
+                          setShowAddressForm(false);
+                          setAddressMode('saved');
+                        } : undefined}
+                        submitLabel={isAuthenticated ? "Save & Use This Address" : "Use This Address"}
+                      />
+                    </div>
+                  )}
+                </>
+              )}
             </div>
 
-            {/* Shipping Address */}
-            <div className="card p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 bg-gold text-white rounded-full flex items-center justify-center font-bold text-sm">2</div>
-                <h2 className="text-xl font-semibold">Shipping Address</h2>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-txt-secondary mb-1">Address *</label>
-                  <textarea
-                    name="address"
-                    value={formData.address}
-                    onChange={handleInputChange}
-                    required
-                    rows={3}
-                    className="input-field"
-                    placeholder="Street address, building, unit number"
-                  />
+            {/* Contact Email (for guests) */}
+            {!isAuthenticated && (
+              <div className="glass rounded-xl p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-8 h-8 bg-gradient-gold text-bg-primary rounded-full flex items-center justify-center font-bold text-sm">2</div>
+                  <h2 className="text-xl font-semibold text-txt-primary">Contact Email</h2>
                 </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-txt-secondary mb-1">City *</label>
-                    <input
-                      type="text"
-                      name="city"
-                      value={formData.city}
-                      onChange={handleInputChange}
-                      required
-                      className="input-field"
-                      placeholder="City"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-txt-secondary mb-1">ZIP Code *</label>
-                    <input
-                      type="text"
-                      name="zipCode"
-                      value={formData.zipCode}
-                      onChange={handleInputChange}
-                      required
-                      className="input-field"
-                      placeholder="1234"
-                    />
-                  </div>
-                </div>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                  required
+                  className="input-field"
+                  placeholder="your@email.com"
+                />
+                <p className="text-sm text-txt-tertiary mt-2">We'll send order updates to this email</p>
               </div>
-            </div>
+            )}
 
             {/* Payment Method */}
-            <div className="card p-6">
+            <div className="glass rounded-xl p-6">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 bg-gold text-white rounded-full flex items-center justify-center font-bold text-sm">3</div>
-                <h2 className="text-xl font-semibold">Payment Method</h2>
+                <div className="w-8 h-8 bg-gradient-gold text-bg-primary rounded-full flex items-center justify-center font-bold text-sm">
+                  {isAuthenticated ? '2' : '3'}
+                </div>
+                <h2 className="text-xl font-semibold text-txt-primary">Payment Method</h2>
               </div>
 
               <div className="space-y-3">
                 <label className={`flex items-center gap-4 p-4 border-2 rounded-xl cursor-pointer transition-all ${
-                  formData.paymentMethod === 'cod' ? 'border-gold bg-gold/10' : 'border-bdr hover:border-bdr-strong'
+                  formData.paymentMethod === 'cod' ? 'border-accent-gold bg-accent-gold/10' : 'border-bdr hover:border-bdr-strong'
                 }`}>
                   <input
                     type="radio"
                     name="paymentMethod"
                     value="cod"
                     checked={formData.paymentMethod === 'cod'}
-                    onChange={handleInputChange}
-                    className="w-5 h-5 text-gold accent-gold-400"
+                    onChange={(e) => setFormData(prev => ({ ...prev, paymentMethod: e.target.value }))}
+                    className="w-5 h-5 text-accent-gold accent-accent-gold"
                   />
                   <Truck className="w-6 h-6 text-txt-secondary flex-shrink-0" />
                   <div className="flex-1">
-                    <p className="font-medium">Cash on Delivery</p>
+                    <p className="font-medium text-txt-primary">Cash on Delivery</p>
                     <p className="text-sm text-txt-tertiary">Pay when you receive your order</p>
                   </div>
                 </label>
 
                 <label className={`flex items-center gap-4 p-4 border-2 rounded-xl cursor-pointer transition-all ${
-                  formData.paymentMethod === 'gcash' ? 'border-gold bg-gold/10' : 'border-bdr hover:border-bdr-strong'
+                  formData.paymentMethod === 'gcash' ? 'border-accent-gold bg-accent-gold/10' : 'border-bdr hover:border-bdr-strong'
                 }`}>
                   <input
                     type="radio"
                     name="paymentMethod"
                     value="gcash"
                     checked={formData.paymentMethod === 'gcash'}
-                    onChange={handleInputChange}
-                    className="w-5 h-5 text-gold accent-gold-400"
+                    onChange={(e) => setFormData(prev => ({ ...prev, paymentMethod: e.target.value }))}
+                    className="w-5 h-5 text-accent-gold accent-accent-gold"
                   />
                   <Wallet className="w-6 h-6 text-blue-400 flex-shrink-0" />
                   <div className="flex-1">
-                    <p className="font-medium">GCash</p>
+                    <p className="font-medium text-txt-primary">GCash</p>
                     <p className="text-sm text-txt-tertiary">Pay via GCash e-wallet</p>
                   </div>
-                  <span className="text-xs bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded-full border border-blue-500/20 flex-shrink-0">
-                    NexusPay
-                  </span>
                 </label>
 
                 <label className={`flex items-center gap-4 p-4 border-2 rounded-xl cursor-pointer transition-all ${
-                  formData.paymentMethod === 'card' ? 'border-gold bg-gold/10' : 'border-bdr hover:border-bdr-strong'
+                  formData.paymentMethod === 'card' ? 'border-accent-gold bg-accent-gold/10' : 'border-bdr hover:border-bdr-strong'
                 }`}>
                   <input
                     type="radio"
                     name="paymentMethod"
                     value="card"
                     checked={formData.paymentMethod === 'card'}
-                    onChange={handleInputChange}
-                    className="w-5 h-5 text-gold accent-gold-400"
+                    onChange={(e) => setFormData(prev => ({ ...prev, paymentMethod: e.target.value }))}
+                    className="w-5 h-5 text-accent-gold accent-accent-gold"
                   />
                   <CreditCard className="w-6 h-6 text-txt-secondary flex-shrink-0" />
                   <div className="flex-1">
-                    <p className="font-medium">Credit / Debit Card</p>
+                    <p className="font-medium text-txt-primary">Credit / Debit Card</p>
                     <p className="text-sm text-txt-tertiary">Visa, Mastercard, JCB</p>
                   </div>
-                  <span className="text-xs bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded-full border border-blue-500/20 flex-shrink-0">
-                    NexusPay
-                  </span>
                 </label>
               </div>
 
-              {/* NexusPay notice for online methods */}
               {isOnlinePayment && (
                 <div className="mt-4 flex items-start gap-3 p-3 bg-bg-tertiary rounded-xl">
-                  <Shield className="w-5 h-5 text-gold mt-0.5 flex-shrink-0" />
+                  <Shield className="w-5 h-5 text-accent-gold mt-0.5 flex-shrink-0" />
                   <p className="text-sm text-txt-secondary">
-                    You'll be redirected to NexusPay to complete your payment securely.
+                    You'll be redirected to complete your payment securely.
                     Your card details are never stored on our servers.
                   </p>
                 </div>
@@ -313,8 +453,8 @@ export default function Checkout() {
 
             <button
               type="submit"
-              disabled={isProcessing}
-              className="w-full btn-primary py-4 text-lg flex items-center justify-center gap-2"
+              disabled={isProcessing || (addressMode === 'saved' && !selectedAddress)}
+              className="w-full btn-primary py-4 text-lg flex items-center justify-center gap-2 disabled:opacity-50"
             >
               {isProcessing ? (
                 <>
@@ -322,7 +462,7 @@ export default function Checkout() {
                   {processingStep || 'Processing...'}
                 </>
               ) : isOnlinePayment ? (
-                <>Pay ₱{total.toFixed(2)} with NexusPay</>
+                <>Pay ₱{total.toFixed(2)}</>
               ) : (
                 <>Place Order — ₱{total.toFixed(2)}</>
               )}
@@ -332,8 +472,8 @@ export default function Checkout() {
 
         {/* Order Summary */}
         <div className="lg:col-span-1">
-          <div className="card p-6 sticky top-24">
-            <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
+          <div className="glass rounded-xl p-6 sticky top-24">
+            <h2 className="text-xl font-semibold text-txt-primary mb-4">Order Summary</h2>
 
             <div className="space-y-3 max-h-60 overflow-y-auto mb-4">
               {items.map((item) => (
@@ -344,15 +484,15 @@ export default function Checkout() {
                     className="w-16 h-16 object-cover rounded-lg bg-bg-tertiary"
                   />
                   <div className="flex-1">
-                    <p className="font-medium text-sm line-clamp-1">{item.name}</p>
+                    <p className="font-medium text-sm text-txt-primary line-clamp-1">{item.name}</p>
                     <p className="text-sm text-txt-tertiary">Qty: {item.quantity}</p>
-                    <p className="text-sm font-medium text-gold">₱{((item.sale_price || item.price) * item.quantity).toFixed(2)}</p>
+                    <p className="text-sm font-medium text-accent-gold">₱{((item.sale_price || item.price) * item.quantity).toFixed(2)}</p>
                   </div>
                 </div>
               ))}
             </div>
 
-            <hr className="my-4 border-bdr-subtle" />
+            <hr className="my-4 border-bdr" />
 
             <div className="space-y-2 text-sm">
               <div className="flex justify-between text-txt-secondary">
@@ -365,16 +505,25 @@ export default function Checkout() {
               </div>
             </div>
 
-            <hr className="my-4 border-bdr-subtle" />
+            <hr className="my-4 border-bdr" />
 
             <div className="flex justify-between text-lg font-bold">
-              <span>Total</span>
-              <span className="text-gold">₱{total.toFixed(2)}</span>
+              <span className="text-txt-primary">Total</span>
+              <span className="text-accent-gold">₱{total.toFixed(2)}</span>
             </div>
+
+            {/* Selected Address Preview */}
+            {selectedAddress && (
+              <div className="mt-4 p-3 bg-bg-tertiary rounded-lg">
+                <p className="text-xs text-txt-tertiary mb-1">Delivering to:</p>
+                <p className="text-sm font-medium text-txt-primary">{selectedAddress.name}</p>
+                <p className="text-xs text-txt-secondary line-clamp-2">{formatAddress(selectedAddress)}</p>
+              </div>
+            )}
 
             <div className="mt-4 flex items-center gap-2 text-sm text-txt-tertiary">
               <Shield className="w-4 h-4" />
-              <span>Secure checkout powered by NexusPay</span>
+              <span>Secure checkout</span>
             </div>
           </div>
         </div>
