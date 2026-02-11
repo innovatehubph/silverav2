@@ -33,7 +33,6 @@ export default function HowItWorksSection() {
     if (!section) return;
 
     const ctx = gsap.context(() => {
-      // Title animation
       gsap.fromTo(
         titleRef.current,
         { y: 24, opacity: 0 },
@@ -50,7 +49,6 @@ export default function HowItWorksSection() {
         }
       );
 
-      // Cards animation with stagger
       cardsRef.current.forEach((card, index) => {
         if (!card) return;
         gsap.fromTo(
@@ -79,15 +77,16 @@ export default function HowItWorksSection() {
     <section
       ref={sectionRef}
       id="how-it-works"
-      className="bg-[#F4F6FA] py-24 lg:py-32 px-6 lg:px-[6vw]"
+      className="bg-bg-secondary py-24 lg:py-32 px-6 lg:px-[6vw] border-t border-bdr-subtle"
       style={{ zIndex: 100 }}
     >
       <div className="max-w-6xl mx-auto">
         <h2
           ref={titleRef}
-          className="font-display font-extrabold text-[clamp(32px,4.5vw,64px)] text-[#0B0D10] mb-16 lg:mb-20"
+          className="font-display font-extrabold text-[clamp(32px,4.5vw,64px)] text-txt-primary mb-16 lg:mb-20"
         >
-          How personal shopping works
+          How personal shopping{' '}
+          <span className="text-gradient-gold">works</span>
         </h2>
 
         <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
@@ -95,18 +94,18 @@ export default function HowItWorksSection() {
             <div
               key={step.title}
               ref={(el) => { cardsRef.current[index] = el; }}
-              className="step-card"
+              className="step-card group"
             >
-              <div className="w-12 h-12 rounded-xl bg-[#B8B9FF]/20 flex items-center justify-center mb-6">
-                <step.icon className="w-6 h-6 text-[#0B0D10]" />
+              <div className="w-12 h-12 rounded-xl bg-gold/10 border border-gold/20 flex items-center justify-center mb-6 group-hover:bg-gold/20 transition-colors">
+                <step.icon className="w-6 h-6 text-gold" />
               </div>
-              <div className="text-sm font-semibold text-[#B8B9FF] mb-2">
+              <div className="text-sm font-semibold text-gold mb-2">
                 Step {index + 1}
               </div>
-              <h3 className="font-display font-bold text-xl text-[#0B0D10] mb-3">
+              <h3 className="font-display font-bold text-xl text-txt-primary mb-3">
                 {step.title}
               </h3>
-              <p className="text-[#6B7280] leading-relaxed">
+              <p className="text-txt-tertiary leading-relaxed">
                 {step.description}
               </p>
             </div>

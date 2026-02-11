@@ -32,12 +32,12 @@ export default function ProductsPage() {
   const [statusFilter, setStatusFilter] = useState('');
 
   // Filter products based on search and filters
-  const filteredProducts = products.filter((product) => {
+  const filteredProducts = Array.isArray(products) ? products.filter((product) => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = !categoryFilter || product.category?.id === parseInt(categoryFilter);
     const matchesStatus = !statusFilter || product.status === statusFilter;
     return matchesSearch && matchesCategory && matchesStatus;
-  });
+  }) : [];
 
   const handleDelete = async (id: number | string) => {
     if (confirm('Are you sure you want to delete this product?')) {

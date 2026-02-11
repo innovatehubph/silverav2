@@ -84,16 +84,18 @@ export default function RequestSection() {
     <section
       ref={sectionRef}
       id="request"
-      className="bg-[#F4F6FA] py-24 lg:py-32 px-6 lg:px-[6vw] relative overflow-hidden"
+      className="bg-bg-primary py-24 lg:py-32 px-6 lg:px-[6vw] relative overflow-hidden border-t border-bdr-subtle"
       style={{ zIndex: 100 }}
     >
-      {/* Gradient Blob */}
+      {/* Gold Glow */}
       <div
-        className="gradient-blob w-[600px] h-[600px] bg-[#B8B9FF]"
+        className="absolute w-[600px] h-[600px] rounded-full pointer-events-none"
         style={{
           top: '20%',
           left: '50%',
           transform: 'translateX(-50%)',
+          background: 'radial-gradient(circle, rgba(212, 175, 55, 0.08) 0%, transparent 70%)',
+          filter: 'blur(60px)',
         }}
       />
 
@@ -103,18 +105,18 @@ export default function RequestSection() {
           <div>
             <h2
               ref={headlineRef}
-              className="font-display font-extrabold text-[clamp(32px,4.5vw,56px)] text-[#0B0D10] mb-6"
+              className="font-display font-extrabold text-[clamp(32px,4.5vw,56px)] text-txt-primary mb-6"
             >
-              Request an item
+              Request an <span className="text-gradient-gold">item</span>
             </h2>
             <p
               ref={bodyRef}
-              className="text-lg text-[#6B7280] leading-relaxed mb-8"
+              className="text-lg text-txt-secondary leading-relaxed mb-8"
             >
               Tell us what you are looking for. We will confirm availability,
               pricing, and delivery timeline.
             </p>
-            <div className="flex items-center gap-2 text-sm text-[#6B7280]">
+            <div className="flex items-center gap-2 text-sm text-txt-tertiary">
               <div className="w-2 h-2 rounded-full bg-green-500" />
               Typical reply within 24 hours
             </div>
@@ -124,13 +126,13 @@ export default function RequestSection() {
           <form
             ref={formRef}
             onSubmit={handleSubmit}
-            className="bg-white rounded-2xl p-8 lg:p-10 shadow-lg"
+            className="glass-strong rounded-2xl p-8 lg:p-10"
           >
             <div className="space-y-5">
               <div>
                 <label
                   htmlFor="name"
-                  className="block text-sm font-medium text-[#0B0D10] mb-2"
+                  className="block text-sm font-medium text-txt-secondary mb-2"
                 >
                   Name
                 </label>
@@ -149,7 +151,7 @@ export default function RequestSection() {
               <div>
                 <label
                   htmlFor="email"
-                  className="block text-sm font-medium text-[#0B0D10] mb-2"
+                  className="block text-sm font-medium text-txt-secondary mb-2"
                 >
                   Email
                 </label>
@@ -168,7 +170,7 @@ export default function RequestSection() {
               <div>
                 <label
                   htmlFor="item"
-                  className="block text-sm font-medium text-[#0B0D10] mb-2"
+                  className="block text-sm font-medium text-txt-secondary mb-2"
                 >
                   Item / Brand / Size
                 </label>
@@ -187,7 +189,7 @@ export default function RequestSection() {
               <div>
                 <label
                   htmlFor="message"
-                  className="block text-sm font-medium text-[#0B0D10] mb-2"
+                  className="block text-sm font-medium text-txt-secondary mb-2"
                 >
                   Message (optional)
                 </label>

@@ -206,10 +206,10 @@ export function TableHeaderCell({ children }: { children: React.ReactNode }) {
 }
 
 // Table Row
-export function TableRow({ children, onClick }: { children: React.ReactNode; onClick?: () => void }) {
+export function TableRow({ children, onClick, className = '' }: { children: React.ReactNode; onClick?: () => void; className?: string }) {
   return (
     <tr
-      className={`border-b border-slate-100 ${onClick ? 'hover:bg-slate-50 cursor-pointer' : ''}`}
+      className={`border-b border-slate-100 ${onClick ? 'hover:bg-slate-50 cursor-pointer' : ''} ${className}`}
       onClick={onClick}
     >
       {children}

@@ -1,11 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { ShoppingBag, User, Menu, X, Search } from 'lucide-react';
+import { ShoppingBag, User, X, Search, LogOut, Home, ShoppingCart, Package, UserPlus } from 'lucide-react';
 import { useCartStore, useAuthStore } from '../../stores';
 
 interface MainLayoutProps {
   children: React.ReactNode;
 }
+
+/** Minimum swipe distance (px) to trigger close */
+const SWIPE_THRESHOLD = 80;
 
 export default function MainLayout({ children }: MainLayoutProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -17,6 +20,12 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const { getTotalItems } = useCartStore();
   const { isAuthenticated, user, logout } = useAuthStore();
 
+  // Touch handling refs
+  const drawerRef = useRef<HTMLDivElement>(null);
+  const touchStartX = useRef(0);
+  const touchCurrentX = useRef(0);
+  const isDragging = useRef(false);
+
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
@@ -25,10 +34,82 @@ export default function MainLayout({ children }: MainLayoutProps) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Close menu on route change
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [location.pathname]);
+
+  // Lock body scroll when drawer is open
+  useEffect(() => {
+    if (isMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isMenuOpen]);
+
+  // Close on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isMenuOpen) {
+        setIsMenuOpen(false);
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isMenuOpen]);
+
+  // Touch handlers for swipe-to-close
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchCurrentX.current = e.touches[0].clientX;
+    isDragging.current = true;
+
+    const drawer = drawerRef.current;
+    if (drawer) {
+      drawer.style.transition = 'none';
+    }
+  }, []);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!isDragging.current) return;
+
+    touchCurrentX.current = e.touches[0].clientX;
+    const deltaX = touchCurrentX.current - touchStartX.current;
+
+    // Only allow swiping right (to close)
+    if (deltaX > 0) {
+      const drawer = drawerRef.current;
+      if (drawer) {
+        drawer.style.transform = `translateX(${deltaX}px)`;
+      }
+    }
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    if (!isDragging.current) return;
+    isDragging.current = false;
+
+    const deltaX = touchCurrentX.current - touchStartX.current;
+    const drawer = drawerRef.current;
+
+    if (drawer) {
+      drawer.style.transition = '';
+      drawer.style.transform = '';
+    }
+
+    if (deltaX > SWIPE_THRESHOLD) {
+      setIsMenuOpen(false);
+    }
+  }, []);
+
   const navLinks = [
-    { path: '/', label: 'Home' },
-    { path: '/shop', label: 'Shop' },
-    { path: '/orders', label: 'Orders', auth: true },
+    { path: '/', label: 'Home', icon: Home },
+    { path: '/shop', label: 'Shop', icon: ShoppingCart },
+    { path: '/orders', label: 'Orders', auth: true, icon: Package },
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -39,29 +120,28 @@ export default function MainLayout({ children }: MainLayoutProps) {
       navigate(`/shop?search=${encodeURIComponent(searchQuery.trim())}`);
       setSearchQuery('');
       setIsSearchOpen(false);
+      setIsMenuOpen(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Header */}
+    <div className="min-h-screen flex flex-col bg-bg-primary">
+      {/* Header - Glassmorphism Navigation */}
       <header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
           isScrolled
-            ? 'bg-white/95 backdrop-blur-md shadow-lg py-3'
+            ? 'glass-strong shadow-lg py-3'
             : 'bg-transparent py-5'
         }`}
       >
         <div className="container-custom">
           <div className="flex items-center justify-between">
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-2">
-              <span className={`text-2xl font-serif font-bold transition-colors ${
-                isScrolled ? 'text-navy-900' : 'text-navy-900'
-              }`}>
+            <Link to="/" className="flex items-center gap-2 group">
+              <span className="text-2xl font-serif font-bold text-txt-primary transition-colors group-hover:text-gold">
                 Silvera
               </span>
-              <span className="text-gold-500 text-sm font-medium hidden sm:block">
+              <span className="text-gold text-sm font-medium hidden sm:block">
                 PH
               </span>
             </Link>
@@ -73,20 +153,25 @@ export default function MainLayout({ children }: MainLayoutProps) {
                   <Link
                     key={link.path}
                     to={link.path}
-                    className={`nav-link ${
-                      isActive(link.path) ? 'nav-link-active' : ''
+                    className={`relative py-1 text-sm font-medium transition-colors duration-200 ${
+                      isActive(link.path)
+                        ? 'text-gold'
+                        : 'text-txt-secondary hover:text-txt-primary'
                     }`}
                   >
                     {link.label}
+                    {isActive(link.path) && (
+                      <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gold rounded-full" />
+                    )}
                   </Link>
                 ) : null
               )}
             </nav>
 
             {/* Actions */}
-            <div className="flex items-center gap-2 md:gap-4">
+            <div className="flex items-center gap-2 md:gap-3">
               {/* Search */}
-              <form onSubmit={handleSearch} className="relative">
+              <form onSubmit={handleSearch} className="relative hidden md:block">
                 <div className={`flex items-center transition-all duration-300 ${
                   isSearchOpen ? 'w-48 md:w-64' : 'w-10'
                 }`}>
@@ -97,55 +182,58 @@ export default function MainLayout({ children }: MainLayoutProps) {
                     onFocus={() => setIsSearchOpen(true)}
                     onBlur={() => !searchQuery && setIsSearchOpen(false)}
                     placeholder="Search products..."
-                    className={`absolute right-10 w-full input-field py-2 transition-all duration-300 ${
+                    className={`absolute right-10 w-full bg-bg-tertiary border border-bdr rounded-lg px-3 py-2 text-sm text-txt-primary placeholder:text-txt-tertiary focus:border-gold/50 focus:ring-1 focus:ring-gold/20 outline-none transition-all duration-300 ${
                       isSearchOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
                     }`}
                   />
                   <button
                     type="submit"
-                    className="p-2 hover:bg-gray-100 rounded-full transition-colors relative z-10"
+                    className="p-2 hover:bg-bg-hover rounded-lg transition-colors relative z-10"
                     onClick={() => !isSearchOpen && setIsSearchOpen(true)}
                   >
-                    <Search className="w-5 h-5 text-gray-700" />
+                    <Search className="w-5 h-5 text-txt-secondary" />
                   </button>
                 </div>
               </form>
 
+              {/* Cart */}
               <Link
                 to="/cart"
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors relative"
+                className="p-2 hover:bg-bg-hover rounded-lg transition-colors relative group"
               >
-                <ShoppingBag className="w-5 h-5 text-gray-700" />
+                <ShoppingBag className="w-5 h-5 text-txt-secondary group-hover:text-txt-primary transition-colors" />
                 {getTotalItems() > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-primary-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-medium">
+                  <span className="absolute -top-1 -right-1 bg-gold text-bg-primary text-xs w-5 h-5 rounded-full flex items-center justify-center font-semibold">
                     {getTotalItems()}
                   </span>
                 )}
               </Link>
 
+              {/* User Menu */}
               {isAuthenticated ? (
-                <div className="relative group">
-                  <button className="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-full transition-colors">
-                    <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center">
-                      <span className="text-white text-sm font-medium">
+                <div className="relative group hidden md:block">
+                  <button className="flex items-center gap-2 p-2 hover:bg-bg-hover rounded-lg transition-colors">
+                    <div className="w-8 h-8 bg-gold/20 border border-gold/30 rounded-full flex items-center justify-center">
+                      <span className="text-gold text-sm font-semibold">
                         {user?.name?.[0]?.toUpperCase() || 'U'}
                       </span>
                     </div>
                   </button>
-                  
-                  <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                    <div className="py-2">
+
+                  <div className="absolute right-0 top-full mt-2 w-48 glass-strong rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 overflow-hidden">
+                    <div className="py-1">
                       <Link
                         to="/profile"
-                        className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100"
+                        className="flex items-center gap-3 px-4 py-3 text-txt-secondary hover:text-txt-primary hover:bg-bg-hover transition-colors text-sm"
                       >
                         <User className="w-4 h-4" />
                         Profile
                       </Link>
                       <button
                         onClick={logout}
-                        className="w-full flex items-center gap-2 px-4 py-2 hover:bg-gray-100 text-red-600"
+                        className="w-full flex items-center gap-3 px-4 py-3 text-red-400 hover:text-red-300 hover:bg-bg-hover transition-colors text-sm"
                       >
+                        <LogOut className="w-4 h-4" />
                         Logout
                       </button>
                     </div>
@@ -154,86 +242,194 @@ export default function MainLayout({ children }: MainLayoutProps) {
               ) : (
                 <Link
                   to="/login"
-                  className="hidden md:flex btn-primary text-sm py-2 px-4"
+                  className="hidden md:flex items-center gap-2 bg-gold hover:bg-gold-300 text-bg-primary text-sm font-semibold py-2 px-5 rounded-lg transition-all duration-300 hover:shadow-glow-gold"
                 >
                   Sign In
                 </Link>
               )}
 
-              {/* Mobile Menu Button */}
+              {/* Mobile Menu Button - Animated hamburger */}
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="md:hidden p-2 hover:bg-gray-100 rounded-full transition-colors"
+                className="md:hidden relative w-10 h-10 flex items-center justify-center rounded-lg hover:bg-bg-hover transition-colors"
+                aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
+                aria-expanded={isMenuOpen}
               >
-                {isMenuOpen ? (
-                  <X className="w-6 h-6 text-gray-700" />
-                ) : (
-                  <Menu className="w-6 h-6 text-gray-700" />
-                )}
+                <div className="w-5 h-4 relative flex flex-col justify-between">
+                  <span
+                    className={`block h-0.5 w-5 bg-txt-primary rounded-full transition-all duration-300 origin-center ${
+                      isMenuOpen ? 'rotate-45 translate-y-[7px]' : ''
+                    }`}
+                  />
+                  <span
+                    className={`block h-0.5 w-5 bg-txt-primary rounded-full transition-all duration-300 ${
+                      isMenuOpen ? 'opacity-0 scale-x-0' : ''
+                    }`}
+                  />
+                  <span
+                    className={`block h-0.5 w-5 bg-txt-primary rounded-full transition-all duration-300 origin-center ${
+                      isMenuOpen ? '-rotate-45 -translate-y-[7px]' : ''
+                    }`}
+                  />
+                </div>
               </button>
             </div>
           </div>
         </div>
+      </header>
 
-        {/* Mobile Menu */}
-        {isMenuOpen && (
-          <div className="md:hidden absolute top-full left-0 right-0 bg-white shadow-lg animate-fade-in">
-            <nav className="container-custom py-4 flex flex-col gap-2">
-              {/* Mobile Search */}
-              <form onSubmit={handleSearch} className="mb-4">
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search products..."
-                    className="flex-1 input-field"
-                  />
-                  <button type="submit" className="btn-primary px-4">
-                    <Search className="w-5 h-5" />
-                  </button>
-                </div>
-              </form>
+      {/* Mobile Drawer Overlay */}
+      <div
+        className={`fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm transition-opacity duration-300 md:hidden ${
+          isMenuOpen
+            ? 'opacity-100 pointer-events-auto'
+            : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={() => setIsMenuOpen(false)}
+        aria-hidden="true"
+      />
 
-              {navLinks.map((link) =>
-                (!link.auth || isAuthenticated) ? (
+      {/* Mobile Drawer */}
+      <div
+        ref={drawerRef}
+        className={`fixed top-0 right-0 bottom-0 z-[70] w-[min(80vw,320px)] bg-bg-secondary border-l border-bdr-subtle shadow-xl md:hidden
+          transition-transform duration-300 ease-out will-change-transform
+          ${isMenuOpen ? 'translate-x-0' : 'translate-x-full'}
+        `}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Navigation menu"
+      >
+        {/* Drawer Header */}
+        <div className="flex items-center justify-between px-6 py-5 border-b border-bdr-subtle">
+          <Link
+            to="/"
+            onClick={() => setIsMenuOpen(false)}
+            className="flex items-center gap-2"
+          >
+            <span className="text-xl font-serif font-bold text-txt-primary">
+              Silvera
+            </span>
+            <span className="text-gold text-xs font-medium">PH</span>
+          </Link>
+          <button
+            onClick={() => setIsMenuOpen(false)}
+            className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-bg-hover transition-colors"
+            aria-label="Close menu"
+          >
+            <X className="w-5 h-5 text-txt-secondary" />
+          </button>
+        </div>
+
+        {/* Drawer Body - Scrollable */}
+        <div className="flex flex-col h-[calc(100%-72px)] overflow-y-auto overscroll-contain">
+          {/* Mobile Search */}
+          <div className="px-5 py-4">
+            <form onSubmit={handleSearch}>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search products..."
+                  className="flex-1 bg-bg-tertiary border border-bdr rounded-xl px-4 py-3 text-sm text-txt-primary placeholder:text-txt-tertiary focus:border-gold/50 outline-none transition-colors"
+                />
+                <button type="submit" className="bg-gold hover:bg-gold-300 text-bg-primary rounded-xl px-4 transition-colors">
+                  <Search className="w-4 h-4" />
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {/* Navigation Links */}
+          <nav className="px-3 flex-1">
+            <div className="space-y-1">
+              {navLinks.map((link, index) => {
+                if (link.auth && !isAuthenticated) return null;
+                const Icon = link.icon;
+                return (
                   <Link
                     key={link.path}
                     to={link.path}
                     onClick={() => setIsMenuOpen(false)}
-                    className={`py-3 px-4 rounded-lg ${
+                    className={`flex items-center gap-3 py-3.5 px-4 rounded-xl text-sm font-medium transition-all duration-200 ${
                       isActive(link.path)
-                        ? 'bg-primary-50 text-primary-600 font-medium'
-                        : 'text-gray-700 hover:bg-gray-50'
+                        ? 'bg-gold/10 text-gold border border-gold/20'
+                        : 'text-txt-secondary hover:bg-bg-hover hover:text-txt-primary active:bg-bg-hover'
                     }`}
+                    style={{
+                      transitionDelay: isMenuOpen ? `${(index + 1) * 50}ms` : '0ms',
+                    }}
                   >
+                    <Icon className="w-5 h-5" />
                     {link.label}
+                    {link.path === '/cart' && getTotalItems() > 0 && (
+                      <span className="ml-auto bg-gold text-bg-primary text-xs w-5 h-5 rounded-full flex items-center justify-center font-semibold">
+                        {getTotalItems()}
+                      </span>
+                    )}
                   </Link>
-                ) : null
-              )}
-              {!isAuthenticated && (
-                <>
-                  <hr className="my-2" />
+                );
+              })}
+            </div>
+
+            {/* Authenticated user section */}
+            {isAuthenticated && (
+              <>
+                <hr className="my-3 border-bdr-subtle mx-4" />
+                <div className="space-y-1">
                   <Link
-                    to="/login"
+                    to="/profile"
                     onClick={() => setIsMenuOpen(false)}
-                    className="btn-primary text-center block"
+                    className="flex items-center gap-3 py-3.5 px-4 rounded-xl text-sm font-medium text-txt-secondary hover:bg-bg-hover hover:text-txt-primary active:bg-bg-hover transition-all duration-200"
                   >
-                    Sign In
+                    <User className="w-5 h-5" />
+                    Profile
                   </Link>
-                  <Link
-                    to="/register"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="btn-outline text-center mt-2 block"
+                  <button
+                    onClick={() => {
+                      logout();
+                      setIsMenuOpen(false);
+                    }}
+                    className="w-full flex items-center gap-3 py-3.5 px-4 rounded-xl text-sm font-medium text-red-400 hover:bg-red-500/10 active:bg-red-500/10 transition-all duration-200"
                   >
-                    Create Account
-                  </Link>
-                </>
-              )}
-            </nav>
-          </div>
-        )}
-      </header>
+                    <LogOut className="w-5 h-5" />
+                    Logout
+                  </button>
+                </div>
+              </>
+            )}
+          </nav>
+
+          {/* Bottom section - Auth buttons for non-authenticated users */}
+          {!isAuthenticated && (
+            <div className="px-5 py-5 border-t border-bdr-subtle mt-auto space-y-3">
+              <Link
+                to="/login"
+                onClick={() => setIsMenuOpen(false)}
+                className="flex items-center justify-center gap-2 w-full bg-gold hover:bg-gold-300 text-bg-primary text-sm font-semibold py-3.5 rounded-xl transition-all duration-300 active:scale-[0.98]"
+              >
+                <User className="w-4 h-4" />
+                Sign In
+              </Link>
+              <Link
+                to="/register"
+                onClick={() => setIsMenuOpen(false)}
+                className="flex items-center justify-center gap-2 w-full border border-bdr-strong text-txt-primary text-sm font-medium py-3.5 rounded-xl hover:bg-bg-hover transition-all duration-300 active:scale-[0.98]"
+              >
+                <UserPlus className="w-4 h-4" />
+                Create Account
+              </Link>
+            </div>
+          )}
+        </div>
+
+        {/* Swipe indicator */}
+        <div className="absolute top-1/2 -translate-y-1/2 left-1.5 w-1 h-8 bg-bdr-strong rounded-full opacity-40" />
+      </div>
 
       {/* Main Content */}
       <main className="flex-grow pt-20">
@@ -241,43 +437,45 @@ export default function MainLayout({ children }: MainLayoutProps) {
       </main>
 
       {/* Footer */}
-      <footer className="bg-navy-900 text-white py-12">
+      <footer className="bg-bg-secondary border-t border-bdr-subtle py-12">
         <div className="container-custom">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
-              <h3 className="text-2xl font-serif font-bold mb-4">Silvera</h3>
-              <p className="text-gray-400">
+              <h3 className="text-2xl font-serif font-bold text-txt-primary mb-4">
+                <span className="text-gradient-gold">Silvera</span>
+              </h3>
+              <p className="text-txt-tertiary text-sm leading-relaxed">
                 Premium Filipino shopping experience. Quality products, exceptional service.
               </p>
             </div>
-            
+
             <div>
-              <h4 className="font-semibold mb-4">Quick Links</h4>
+              <h4 className="font-semibold text-txt-secondary text-sm uppercase tracking-wider mb-4">Quick Links</h4>
               <ul className="space-y-2">
-                <li><Link to="/" className="text-gray-400 hover:text-white transition-colors">Home</Link></li>
-                <li><Link to="/shop" className="text-gray-400 hover:text-white transition-colors">Shop</Link></li>
-                <li><Link to="/orders" className="text-gray-400 hover:text-white transition-colors">Orders</Link></li>
+                <li><Link to="/" className="text-txt-tertiary hover:text-gold transition-colors text-sm">Home</Link></li>
+                <li><Link to="/shop" className="text-txt-tertiary hover:text-gold transition-colors text-sm">Shop</Link></li>
+                <li><Link to="/orders" className="text-txt-tertiary hover:text-gold transition-colors text-sm">Orders</Link></li>
               </ul>
             </div>
-            
+
             <div>
-              <h4 className="font-semibold mb-4">Customer Service</h4>
+              <h4 className="font-semibold text-txt-secondary text-sm uppercase tracking-wider mb-4">Customer Service</h4>
               <ul className="space-y-2">
-                <li><Link to="/contact" className="text-gray-400 hover:text-white transition-colors">Contact Us</Link></li>
-                <li><Link to="/faq" className="text-gray-400 hover:text-white transition-colors">FAQ</Link></li>
-                <li><Link to="/shipping" className="text-gray-400 hover:text-white transition-colors">Shipping Info</Link></li>
+                <li><Link to="/contact" className="text-txt-tertiary hover:text-gold transition-colors text-sm">Contact Us</Link></li>
+                <li><Link to="/faq" className="text-txt-tertiary hover:text-gold transition-colors text-sm">FAQ</Link></li>
+                <li><Link to="/shipping" className="text-txt-tertiary hover:text-gold transition-colors text-sm">Shipping Info</Link></li>
               </ul>
             </div>
-            
+
             <div>
-              <h4 className="font-semibold mb-4">Contact</h4>
-              <p className="text-gray-400">Email: support@silvera.ph</p>
-              <p className="text-gray-400 mt-2">Phone: +63 912 345 6789</p>
+              <h4 className="font-semibold text-txt-secondary text-sm uppercase tracking-wider mb-4">Contact</h4>
+              <p className="text-txt-tertiary text-sm">Email: support@silvera.ph</p>
+              <p className="text-txt-tertiary text-sm mt-2">Phone: +63 912 345 6789</p>
             </div>
           </div>
-          
-          <div className="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400">
-            <p>© 2026 Silvera Philippines. All rights reserved.</p>
+
+          <div className="border-t border-bdr-subtle mt-8 pt-8 text-center">
+            <p className="text-txt-tertiary text-sm">&copy; 2026 Silvera Philippines. All rights reserved.</p>
           </div>
         </div>
       </footer>

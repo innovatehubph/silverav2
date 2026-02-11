@@ -31,9 +31,9 @@ export default function CategoriesPage() {
   const [editingId, setEditingId] = useState<number | string | null>(null);
 
   // Filter categories
-  const filteredCategories = categories.filter((cat) =>
-    cat.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredCategories = Array.isArray(categories)
+    ? categories.filter((cat) => cat.name.toLowerCase().includes(searchTerm.toLowerCase()))
+    : [];
 
   const handleOpenModal = (category?: Category) => {
     if (category) {

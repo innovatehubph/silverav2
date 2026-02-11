@@ -1,7 +1,6 @@
 /**
  * Payment Gateway Service for Silvera V2
- * Handles DirectPay/NexusPay/PayGram integration
- * Based on PayVerse and Silvera payment implementations
+ * Handles DirectPay integration for Philippine payments
  */
 
 const crypto = require('crypto');
@@ -9,10 +8,65 @@ const axios = require('axios');
 
 class PaymentGateway {
   constructor() {
-    this.directPayBaseUrl = process.env.DIRECTPAY_BASE_URL || 'https://directpay.innovatehub.ph';
-    this.nexusPayBaseUrl = process.env.NEXUSPAY_BASE_URL || 'https://nexuspay.cloud';
-    this.apiKey = process.env.DIRECTPAY_API_KEY;
+    this.baseUrl = process.env.DIRECTPAY_BASE_URL || 'https://sandbox.directpayph.com/api';
+    this.username = process.env.DIRECTPAY_USERNAME;
+    this.password = process.env.DIRECTPAY_PASSWORD;
     this.merchantId = process.env.DIRECTPAY_MERCHANT_ID;
+    this.merchantKey = process.env.DIRECTPAY_MERCHANT_KEY;
+    this.token = null;
+    this.tokenExpiry = null;
+  }
+
+  /**
+   * Get CSRF Token from DirectPay
+   */
+  async getCsrfToken() {
+    try {
+      const response = await axios.get(`${this.baseUrl}/csrf_token`);
+      return response.data.csrf_token;
+    } catch (error) {
+      console.error('Error getting CSRF token:', error.message);
+      return null;
+    }
+  }
+
+  /**
+   * Login to DirectPay and get auth token
+   */
+  async login() {
+    try {
+      // Check if we have a valid token
+      if (this.token && this.tokenExpiry && Date.now() < this.tokenExpiry) {
+        return this.token;
+      }
+
+      const csrfToken = await this.getCsrfToken();
+      if (!csrfToken) {
+        throw new Error('Failed to get CSRF token');
+      }
+
+      const response = await axios.post(`${this.baseUrl}/create/login`, {
+        username: this.username,
+        password: this.password
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': csrfToken
+        }
+      });
+
+      if (response.data.status === 'success') {
+        this.token = response.data.data.token;
+        this.tokenExpiry = Date.now() + (23 * 60 * 60 * 1000); // 23 hours
+        console.log('✅ DirectPay login successful');
+        return this.token;
+      } else {
+        throw new Error(response.data.message || 'Login failed');
+      }
+    } catch (error) {
+      console.error('DirectPay login error:', error.message);
+      return null;
+    }
   }
 
   /**
@@ -20,135 +74,64 @@ class PaymentGateway {
    */
   generatePaymentRef(orderId) {
     const timestamp = Date.now();
-    return `QRPH-${timestamp}-${orderId}`;
+    return `SILVERA-${timestamp}-${orderId}`;
   }
 
   /**
-   * Generate payment hash for DirectPay
+   * Create Cash-In Payment via DirectPay
    */
-  generatePaymentHash(data) {
-    try {
-      const hashString = `${data.amount}|${data.currency}|${data.merchantId}|${data.reference}|${this.apiKey}`;
-      return crypto.createHash('sha256').update(hashString).digest('hex');
-    } catch (error) {
-      console.error('Error generating payment hash:', error.message);
-      return null;
-    }
-  }
-
-  /**
-   * Create QRPH Payment via DirectPay
-   * Supports E-wallets, Banks, Cards through DirectPay's unified API
-   */
-  createQRPHPayment(data) {
+  async createPayment(data) {
     try {
       const {
         orderId,
         amount,
-        currency = 'PHP',
-        paymentMethod,
-        customerEmail,
-        customerName,
         redirectUrl,
         webhookUrl
       } = data;
 
-      if (!orderId || !amount || !customerEmail) {
+      if (!orderId || !amount) {
         throw new Error('Missing required payment data');
+      }
+
+      if (amount < 100) {
+        throw new Error('Minimum amount is ₱100');
+      }
+
+      const token = await this.login();
+      if (!token) {
+        throw new Error('Failed to authenticate with DirectPay');
       }
 
       const paymentRef = this.generatePaymentRef(orderId);
 
-      // DirectPay QRPH Checkout URL
-      // This integrates with QRPH standard for Philippine payments
-      const checkoutUrl = `${this.directPayBaseUrl}/qrph/checkout`;
-
-      const paymentParams = {
-        ref: paymentRef,
+      const response = await axios.post(`${this.baseUrl}/pay_cashin`, {
         amount: parseFloat(amount),
-        currency: currency,
-        method: paymentMethod, // GCash, PayMaya, BDO, BPI, etc.
-        customer_name: customerName,
-        customer_email: customerEmail,
-        redirect_url: redirectUrl,
-        callback_url: webhookUrl,
-        webhook_url: webhookUrl,
-        description: `Order #${orderId} - Silvera E-Commerce`
-      };
-
-      // Build URL with query parameters
-      const queryString = new URLSearchParams(paymentParams).toString();
-      const paymentUrl = `${checkoutUrl}?${queryString}`;
-
-      console.log(`✅ QRPH Payment created: ${paymentRef}`);
-
-      return {
-        success: true,
-        paymentRef: paymentRef,
-        paymentUrl: paymentUrl,
-        amount: parseFloat(amount),
-        currency: currency,
-        method: paymentMethod,
-        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
-      };
-    } catch (error) {
-      console.error('Error creating QRPH payment:', error.message);
-      return {
-        success: false,
-        error: error.message
-      };
-    }
-  }
-
-  /**
-   * Verify Payment Status with DirectPay
-   */
-  async verifyPaymentStatus(paymentRef) {
-    try {
-      if (!paymentRef) {
-        throw new Error('Payment reference required');
-      }
-
-      // DirectPay Status Check Endpoint
-      const statusUrl = `${this.directPayBaseUrl}/api/payment/status`;
-
-      const response = await axios.get(statusUrl, {
-        params: {
-          ref: paymentRef,
-          api_key: this.apiKey
-        },
-        timeout: 5000
+        webhook: webhookUrl || `${process.env.APP_URL || 'https://silvera.innoserver.cloud'}/api/payments/webhook`,
+        redirectUrl: redirectUrl || `${process.env.APP_URL || 'https://silvera.innoserver.cloud'}/checkout/success`,
+        merchantpaymentreferences: paymentRef
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
       });
 
-      const data = response.data;
-
-      // Map DirectPay response to standard status
-      const statusMap = {
-        'success': 'paid',
-        'completed': 'paid',
-        'paid': 'paid',
-        'pending': 'pending',
-        'processing': 'pending',
-        'failed': 'failed',
-        'cancelled': 'failed',
-        'expired': 'failed'
-      };
-
-      const paymentStatus = statusMap[data.status] || 'pending';
-
-      console.log(`📊 Payment status verified: ${paymentRef} - ${paymentStatus}`);
-
-      return {
-        success: true,
-        paymentRef: paymentRef,
-        status: paymentStatus,
-        amount: data.amount,
-        currency: data.currency,
-        transactionId: data.transaction_id,
-        timestamp: data.timestamp
-      };
+      if (response.data.status === 'success') {
+        console.log(`✅ DirectPay payment created: ${response.data.transactionId}`);
+        return {
+          success: true,
+          paymentRef: paymentRef,
+          transactionId: response.data.transactionId,
+          paymentUrl: response.data.link,
+          qrData: response.data.qrphraw,
+          amount: parseFloat(amount),
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000)
+        };
+      } else {
+        throw new Error(response.data.message || 'Payment creation failed');
+      }
     } catch (error) {
-      console.error('Error verifying payment status:', error.message);
+      console.error('Error creating DirectPay payment:', error.message);
       return {
         success: false,
         error: error.message
@@ -157,60 +140,48 @@ class PaymentGateway {
   }
 
   /**
-   * Process Payment Callback from DirectPay
-   * Called after customer completes payment
+   * Check Payment Status
    */
-  processPaymentCallback(callbackData) {
+  async checkPaymentStatus(transactionId) {
     try {
-      const {
-        ref,
-        status,
-        amount,
-        transaction_id,
-        signature
-      } = callbackData;
-
-      if (!ref || !status) {
-        throw new Error('Missing callback data');
+      const token = await this.login();
+      if (!token) {
+        throw new Error('Failed to authenticate with DirectPay');
       }
 
-      // Verify callback signature (if signature provided)
-      if (signature) {
-        const expectedSignature = this.generatePaymentHash({
-          amount: amount,
-          currency: 'PHP',
-          merchantId: this.merchantId,
-          reference: ref
-        });
-
-        if (signature !== expectedSignature) {
-          console.warn('Invalid payment callback signature');
-          // Continue anyway but log warning
+      const response = await axios.get(
+        `${this.baseUrl}/cashin_transactions_status/${transactionId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
         }
+      );
+
+      if (response.data.success) {
+        const statusMap = {
+          'COMPLETED': 'paid',
+          'SUCCESS': 'paid',
+          'PENDING': 'pending',
+          'FAILED': 'failed',
+          'CANCELLED': 'failed',
+          'EXPIRED': 'failed'
+        };
+
+        return {
+          success: true,
+          transactionId: response.data.reference_number,
+          status: statusMap[response.data.transaction_status] || 'pending',
+          amount: response.data.total_amount
+        };
       }
 
-      // Map status
-      const statusMap = {
-        'success': 'paid',
-        'completed': 'paid',
-        'failed': 'failed',
-        'cancelled': 'failed',
-        'pending': 'pending'
-      };
-
-      const paymentStatus = statusMap[status] || 'pending';
-
-      console.log(`✅ Payment callback processed: ${ref} - ${paymentStatus}`);
-
       return {
-        success: true,
-        paymentRef: ref,
-        status: paymentStatus,
-        transactionId: transaction_id,
-        amount: amount
+        success: false,
+        error: 'Failed to get status'
       };
     } catch (error) {
-      console.error('Error processing payment callback:', error.message);
+      console.error('Error checking payment status:', error.message);
       return {
         success: false,
         error: error.message
@@ -219,46 +190,96 @@ class PaymentGateway {
   }
 
   /**
-   * Process Webhook from DirectPay (Server-to-Server)
-   * Called asynchronously after payment is complete
+   * Get Account Balance
    */
-  processPaymentWebhook(webhookData) {
+  async getBalance() {
+    try {
+      const token = await this.login();
+      if (!token) {
+        throw new Error('Failed to authenticate with DirectPay');
+      }
+
+      const response = await axios.get(`${this.baseUrl}/user/info`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.data.status === 'success') {
+        return {
+          success: true,
+          balance: parseFloat(response.data.data.wallet_funds),
+          username: response.data.data.username
+        };
+      }
+
+      return {
+        success: false,
+        error: 'Failed to get balance'
+      };
+    } catch (error) {
+      console.error('Error getting balance:', error.message);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * Verify Webhook Signature
+   */
+  verifyWebhookSignature(payload, signature) {
+    try {
+      if (!this.merchantKey) {
+        console.warn('⚠️ DIRECTPAY_MERCHANT_KEY not configured');
+        return true; // Skip verification if no key
+      }
+
+      const dataString = JSON.stringify(payload);
+      const expectedSignature = crypto
+        .createHmac('sha256', this.merchantKey)
+        .update(dataString)
+        .digest('hex');
+
+      return signature === expectedSignature;
+    } catch (error) {
+      console.error('Error verifying webhook signature:', error.message);
+      return false;
+    }
+  }
+
+  /**
+   * Process Webhook from DirectPay
+   */
+  processWebhook(webhookData) {
     try {
       const {
-        ref,
-        status,
-        amount,
-        transaction_id,
-        timestamp
+        reference_number,
+        transaction_status,
+        total_amount,
+        merchantpaymentreferences
       } = webhookData;
 
-      if (!ref || !status) {
-        throw new Error('Missing webhook data');
-      }
+      console.log(`🔔 DirectPay webhook: ${reference_number} - ${transaction_status}`);
 
-      console.log(`🔔 Payment webhook received: ${ref} - ${status}`);
-
-      // Map status
       const statusMap = {
-        'success': 'paid',
-        'completed': 'paid',
-        'paid': 'paid',
-        'failed': 'failed',
-        'cancelled': 'failed'
+        'COMPLETED': 'paid',
+        'SUCCESS': 'paid',
+        'PENDING': 'pending',
+        'FAILED': 'failed',
+        'CANCELLED': 'failed'
       };
-
-      const paymentStatus = statusMap[status] || 'pending';
 
       return {
         success: true,
-        paymentRef: ref,
-        status: paymentStatus,
-        transactionId: transaction_id,
-        amount: amount,
-        timestamp: timestamp
+        transactionId: reference_number,
+        paymentRef: merchantpaymentreferences,
+        status: statusMap[transaction_status] || 'pending',
+        amount: total_amount
       };
     } catch (error) {
-      console.error('Error processing payment webhook:', error.message);
+      console.error('Error processing webhook:', error.message);
       return {
         success: false,
         error: error.message
@@ -271,85 +292,30 @@ class PaymentGateway {
    */
   getSupportedPaymentMethods() {
     return {
-      eWallets: [
+      qrph: [
         { id: 'gcash', name: 'GCash', icon: 'gcash.webp', min: 100, max: 100000 },
-        { id: 'paymaya', name: 'PayMaya', icon: 'paymaya.webp', min: 100, max: 50000 },
-        { id: 'paypal', name: 'PayPal PH', icon: 'paypal.webp', min: 100, max: 100000 }
+        { id: 'maya', name: 'Maya', icon: 'maya.webp', min: 100, max: 50000 },
+        { id: 'grabpay', name: 'GrabPay', icon: 'grabpay.webp', min: 100, max: 50000 }
       ],
       banks: [
-        { id: 'bdo', name: 'BDO Online Banking', icon: 'bdo.webp', min: 100, max: 999999 },
-        { id: 'bpi', name: 'BPI Online', icon: 'bpi.webp', min: 100, max: 999999 },
-        { id: 'metrobank', name: 'Metrobank Online', icon: 'metrobank.webp', min: 100, max: 999999 },
-        { id: 'unionbank', name: 'UnionBank Online', icon: 'unionbank.webp', min: 100, max: 999999 },
-        { id: 'securitybank', name: 'Security Bank', icon: 'securitybank.webp', min: 100, max: 999999 }
-      ],
-      cards: [
-        { id: 'visa', name: 'Visa Card', icon: 'visa.webp', min: 100, max: 999999 },
-        { id: 'mastercard', name: 'Mastercard', icon: 'mastercard.webp', min: 100, max: 999999 },
-        { id: 'amex', name: 'American Express', icon: 'amex.webp', min: 100, max: 999999 }
-      ],
-      international: [
-        { id: 'paypal_intl', name: 'PayPal International', icon: 'paypal.webp', min: 100, max: 100000 },
-        { id: 'apple_pay', name: 'Apple Pay', icon: 'applepay.webp', min: 100, max: 100000 },
-        { id: 'google_pay', name: 'Google Pay', icon: 'googlepay.webp', min: 100, max: 100000 }
+        { id: 'bdo', name: 'BDO', icon: 'bdo.webp', min: 100, max: 999999 },
+        { id: 'bpi', name: 'BPI', icon: 'bpi.webp', min: 100, max: 999999 },
+        { id: 'unionbank', name: 'UnionBank', icon: 'unionbank.webp', min: 100, max: 999999 }
       ]
     };
   }
 
   /**
-   * Validate Payment Amount
-   */
-  validatePaymentAmount(amount, method) {
-    try {
-      const methods = this.getSupportedPaymentMethods();
-
-      // Find method in all categories
-      for (const category of Object.values(methods)) {
-        const methodData = category.find(m => m.id === method);
-
-        if (methodData) {
-          if (amount < methodData.min || amount > methodData.max) {
-            return {
-              valid: false,
-              error: `Amount must be between ₱${methodData.min} and ₱${methodData.max}`
-            };
-          }
-          return { valid: true };
-        }
-      }
-
-      return {
-        valid: false,
-        error: 'Invalid payment method'
-      };
-    } catch (error) {
-      console.error('Error validating payment amount:', error.message);
-      return {
-        valid: false,
-        error: 'Validation failed'
-      };
-    }
-  }
-
-  /**
-   * Format Payment Amount for Display
-   */
-  formatAmount(amount, currency = 'PHP') {
-    if (currency === 'PHP') {
-      return `₱${parseFloat(amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`;
-    }
-    return `${currency} ${parseFloat(amount).toFixed(2)}`;
-  }
-
-  /**
-   * Check Payment Service Status
+   * Check Service Status
    */
   getStatus() {
     return {
-      directPayUrl: this.directPayBaseUrl,
-      merchantId: this.merchantId ? '***' : 'not-set',
-      apiKeySet: !!this.apiKey,
-      ready: !!(this.apiKey && this.merchantId)
+      baseUrl: this.baseUrl,
+      merchantId: this.merchantId ? '✓ configured' : '✗ not set',
+      merchantKey: this.merchantKey ? '✓ configured' : '✗ not set',
+      username: this.username ? '✓ configured' : '✗ not set',
+      authenticated: !!this.token,
+      ready: !!(this.username && this.password && this.merchantId)
     };
   }
 }

@@ -52,9 +52,9 @@ export default function CustomerProfilePage() {
 
       // Load customer orders (would use getUserOrders in Phase 3)
       const allOrders = await adminApi.getOrders();
-      const customerOrders = (allOrders as any).filter(
+      const customerOrders = Array.isArray(allOrders) ? (allOrders as any).filter(
         (o: any) => o.customer_id === parseInt(customerId)
-      );
+      ) : [];
       setOrders(customerOrders);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load customer data');

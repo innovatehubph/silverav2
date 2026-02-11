@@ -24,6 +24,7 @@ import Contact from './pages/Contact';
 import FAQ from './pages/FAQ';
 import Shipping from './pages/Shipping';
 import NotFound from './pages/NotFound';
+import Admin from './pages/Admin';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore();
@@ -60,6 +61,7 @@ function App() {
         <Route path="/checkout" element={<RequireAuth><MainLayout><Checkout /></MainLayout></RequireAuth>} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/admin" element={<RequireAuth><Admin /></RequireAuth>} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/profile" element={<RequireAuth><MainLayout><Profile /></MainLayout></RequireAuth>} />
         <Route path="/orders" element={<RequireAuth><MainLayout><Orders /></MainLayout></RequireAuth>} />

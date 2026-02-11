@@ -28,12 +28,12 @@ export default function CustomersPage() {
   const [searchTerm, setSearchTerm] = useState('');
 
   // Filter customers based on search
-  const filteredCustomers = users.filter((user) => {
+  const filteredCustomers = Array.isArray(users) ? users.filter((user) => {
     const matchesSearch =
       user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesSearch;
-  });
+  }) : [];
 
   const handleViewProfile = (userId: number | string) => {
     router.push(`/customers/${userId}`);

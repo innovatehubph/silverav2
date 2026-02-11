@@ -10,6 +10,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const compression = require('compression');
+const helmet = require('helmet');
 const path = require('path');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
@@ -22,6 +23,7 @@ const emailService = require('./services/email-service');
 const paymentGateway = require('./services/payment-gateway');
 
 const app = express();
+app.set('trust proxy', 1); // Trust first proxy (for rate limiter behind reverse proxy)
 const PORT = process.env.PORT || 3865;
 
 // Generate secure JWT secret if not provided
@@ -164,6 +166,41 @@ db.exec(`
   );
 `);
 
+// ==================== DATABASE INDEXES FOR PERFORMANCE ====================
+// Create indexes on foreign keys and frequently queried columns
+console.log('🔧 Creating database indexes...');
+
+db.exec(`
+  -- Indexes on foreign keys for JOIN performance
+  CREATE INDEX IF NOT EXISTS idx_products_category_id ON products(category_id);
+  CREATE INDEX IF NOT EXISTS idx_orders_user_id ON orders(user_id);
+  CREATE INDEX IF NOT EXISTS idx_orders_payment_ref ON orders(payment_ref);
+  CREATE INDEX IF NOT EXISTS idx_cart_user_id ON cart(user_id);
+  CREATE INDEX IF NOT EXISTS idx_cart_product_id ON cart(product_id);
+  CREATE INDEX IF NOT EXISTS idx_wishlist_user_id ON wishlist(user_id);
+  CREATE INDEX IF NOT EXISTS idx_wishlist_product_id ON wishlist(product_id);
+  CREATE INDEX IF NOT EXISTS idx_reviews_product_id ON reviews(product_id);
+  CREATE INDEX IF NOT EXISTS idx_reviews_user_id ON reviews(user_id);
+  CREATE INDEX IF NOT EXISTS idx_addresses_user_id ON addresses(user_id);
+  CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
+
+  -- Indexes for filtering and searching
+  CREATE INDEX IF NOT EXISTS idx_products_status ON products(status);
+  CREATE INDEX IF NOT EXISTS idx_products_featured ON products(featured);
+  CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
+  CREATE INDEX IF NOT EXISTS idx_orders_payment_status ON orders(payment_status);
+  CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+  CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
+  CREATE INDEX IF NOT EXISTS idx_notifications_is_read ON notifications(is_read);
+
+  -- Composite indexes for common queries
+  CREATE INDEX IF NOT EXISTS idx_cart_user_product ON cart(user_id, product_id);
+  CREATE INDEX IF NOT EXISTS idx_wishlist_user_product ON wishlist(user_id, product_id);
+  CREATE INDEX IF NOT EXISTS idx_orders_user_status ON orders(user_id, status);
+`);
+
+console.log('✅ Database indexes created');
+
 // Seed admin user if not exists
 const adminExists = db.prepare('SELECT * FROM users WHERE role = ?').get('admin');
 if (!adminExists) {
@@ -221,7 +258,37 @@ if (prodCount.count === 0) {
   console.log('✅ Sample products created (10 products)');
 }
 
+// Health check endpoint BEFORE any middleware (for Docker health checks over HTTP)
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', app: 'Silvera V2', version: '2.0.2', uptime: process.uptime() });
+});
+
 // ==================== MIDDLEWARE ====================
+
+// Security headers with Helmet
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "https:", "http:"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"], // Allow inline scripts for React
+      connectSrc: ["'self'", "https://silvera.innoserver.cloud", "https://sandbox.directpayph.com"],
+    },
+  },
+  crossOriginEmbedderPolicy: false, // Allow external images
+  hsts: {
+    maxAge: 31536000, // 1 year
+    includeSubDomains: true,
+    preload: true
+  },
+  frameguard: {
+    action: 'deny' // Prevent clickjacking
+  },
+  noSniff: true, // Prevent MIME type sniffing
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' }
+}));
 
 // CORS configuration
 app.use(cors({
@@ -239,6 +306,16 @@ app.use(cors({
 }));
 
 app.use(compression());
+
+// HTTPS enforcement (redirect HTTP to HTTPS in production)
+if (process.env.NODE_ENV === 'production') {
+  app.use((req, res, next) => {
+    if (req.headers['x-forwarded-proto'] !== 'https' && !req.secure) {
+      return res.redirect(301, `https://${req.headers.host}${req.url}`);
+    }
+    next();
+  });
+}
 
 // JSON body parser with error handling
 app.use(express.json({
@@ -278,6 +355,7 @@ app.use('/api/', apiLimiter);
 // Static files - serve production build from client/dist
 app.use(express.static(path.join(__dirname, '../client/dist')));
 app.use(express.static(path.join(__dirname, '../public')));
+// Admin panel
 app.use('/admin', express.static(path.join(__dirname, '../admin')));
 
 // ==================== VALIDATION HELPERS ====================
@@ -1151,6 +1229,99 @@ app.post('/api/orders', auth, (req, res) => {
 
 // ==================== PAYMENT (DirectPay/NexusPay) ====================
 
+/**
+ * Verify NexusPay/DirectPay webhook signature
+ * Uses HMAC-SHA256 with DIRECTPAY_MERCHANT_KEY as secret
+ */
+function verifyPaymentSignature(payload, receivedSignature) {
+  try {
+    const DIRECTPAY_MERCHANT_KEY = process.env.DIRECTPAY_MERCHANT_KEY;
+
+    if (!DIRECTPAY_MERCHANT_KEY) {
+      console.warn('⚠️  DIRECTPAY_MERCHANT_KEY not configured, skipping signature verification');
+      return true; // Allow in development if key not set
+    }
+
+    if (!receivedSignature) {
+      // For sandbox/testing, allow webhooks without signature
+      const isSandbox = process.env.DIRECTPAY_BASE_URL?.includes('sandbox');
+      if (isSandbox) {
+        console.warn('⚠️  No signature provided, but sandbox mode - allowing');
+        return true;
+      }
+      console.error('❌ No signature provided in webhook');
+      return false;
+    }
+
+    // Create signature from payload
+    const signatureData = `${payload.payment_ref}:${payload.status}:${payload.amount}:${payload.timestamp}`;
+    const expectedSignature = crypto
+      .createHmac('sha256', DIRECTPAY_MERCHANT_KEY)
+      .update(signatureData)
+      .digest('hex');
+
+    const isValid = expectedSignature === receivedSignature;
+
+    if (!isValid) {
+      console.error('❌ Signature mismatch:', { expected: expectedSignature, received: receivedSignature });
+    }
+
+    return isValid;
+  } catch (error) {
+    console.error('❌ Signature verification error:', error.message);
+    return false;
+  }
+}
+
+/**
+ * Send order confirmation email after successful payment
+ */
+async function sendOrderConfirmationEmail(orderId) {
+  try {
+    // Fetch order details with items
+    const order = db.prepare(`
+      SELECT o.*, u.name as customer_name, u.email as customer_email
+      FROM orders o
+      JOIN users u ON o.user_id = u.id
+      WHERE o.id = ?
+    `).get(orderId);
+
+    if (!order) {
+      console.error('❌ Order not found for confirmation email:', orderId);
+      return;
+    }
+
+    // Parse order items
+    const items = JSON.parse(order.items || '[]');
+
+    // Parse shipping address
+    const shippingAddress = JSON.parse(order.shipping_address || '{}');
+
+    // Send confirmation email
+    await emailService.sendOrderConfirmation(order.customer_email, {
+      customerName: order.customer_name,
+      orderNumber: order.id,
+      orderDate: new Date(order.created_at).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      }),
+      total: order.total,
+      items: items.map(item => ({
+        name: item.name,
+        quantity: item.quantity,
+        price: item.price
+      })),
+      shippingAddress: shippingAddress,
+      paymentMethod: 'NexusPay'
+    });
+
+    console.log(`✅ Order confirmation email sent for order #${orderId}`);
+  } catch (error) {
+    console.error(`❌ Failed to send order confirmation email for order #${orderId}:`, error.message);
+  }
+}
+
 // Get supported payment methods (e-wallets and banks)
 app.get('/api/payments/methods', (req, res) => {
   try {
@@ -1301,9 +1472,9 @@ app.get('/api/payments/:paymentRef/status', auth, (req, res) => {
 });
 
 // DirectPay Callback Handler (called when user returns from payment)
-app.post('/api/payments/callback', (req, res) => {
+app.post('/api/payments/callback', async (req, res) => {
   try {
-    const { ref, status, amount, signature } = req.body;
+    const { ref, status, amount, signature, timestamp } = req.body;
 
     if (!ref || !status) {
       console.error('Invalid callback: missing ref or status');
@@ -1312,18 +1483,32 @@ app.post('/api/payments/callback', (req, res) => {
 
     console.log(`[DirectPay Callback] Ref: ${ref}, Status: ${status}, Amount: ${amount}`);
 
-    // Verify signature (implement DirectPay signature verification)
-    // if (!verifyDirectPaySignature(req.body, signature)) {
-    //   return res.status(401).json({ error: 'Invalid signature' });
-    // }
+    // Verify signature for callback
+    const callbackTimestamp = timestamp || Date.now();
+    if (!verifyPaymentSignature({ payment_ref: ref, status, amount, timestamp: callbackTimestamp }, signature)) {
+      console.error('❌ Invalid callback signature');
+      return res.status(401).json({ error: 'Invalid signature' });
+    }
+
+    console.log('✅ Callback signature verified');
 
     // Update order based on payment status
     if (status === 'success' || status === 'completed' || status === 'paid') {
-      const result = db.prepare('UPDATE orders SET payment_status = ?, updated_at = CURRENT_TIMESTAMP WHERE payment_ref = ?')
-        .run('paid', ref);
+      const result = db.prepare('UPDATE orders SET payment_status = ?, status = ? WHERE payment_ref = ?')
+        .run('paid', 'processing', ref);
 
       if (result.changes > 0) {
-        console.log(`[Payment Confirmed] Order updated: ${ref}`);
+        console.log(`✅ [Payment Confirmed] Order updated: ${ref}`);
+
+        // Get order ID and send confirmation email
+        const order = db.prepare('SELECT id FROM orders WHERE payment_ref = ?').get(ref);
+        if (order) {
+          // Send confirmation email asynchronously
+          sendOrderConfirmationEmail(order.id).catch(err =>
+            console.error('Error sending confirmation email:', err)
+          );
+        }
+
         res.json({
           success: true,
           message: 'Payment confirmed',
@@ -1331,11 +1516,11 @@ app.post('/api/payments/callback', (req, res) => {
           status: 'paid'
         });
       } else {
-        console.error(`[Payment Error] Order not found: ${ref}`);
+        console.error(`❌ [Payment Error] Order not found: ${ref}`);
         res.status(404).json({ error: 'Order not found' });
       }
     } else if (status === 'failed' || status === 'cancelled') {
-      db.prepare('UPDATE orders SET payment_status = ?, updated_at = CURRENT_TIMESTAMP WHERE payment_ref = ?')
+      db.prepare('UPDATE orders SET payment_status = ? WHERE payment_ref = ?')
         .run('failed', ref);
 
       res.json({
@@ -1359,43 +1544,82 @@ app.post('/api/payments/callback', (req, res) => {
 });
 
 // DirectPay Webhook Handler (server-to-server notification)
-app.post('/api/payments/webhook', (req, res) => {
+app.post('/api/payments/webhook', async (req, res) => {
   try {
-    const { payment_ref, status, amount, timestamp, signature } = req.body;
+    // Support both DirectPay format and legacy format
+    const {
+      // DirectPay format
+      reference_number,
+      transaction_status,
+      total_amount,
+      merchantpaymentreferences,
+      // Legacy format
+      payment_ref: legacyPaymentRef,
+      status: legacyStatus,
+      amount: legacyAmount,
+      timestamp,
+      signature
+    } = req.body;
 
-    if (!payment_ref || !status) {
-      console.error('Invalid webhook: missing payment_ref or status');
+    // Normalize to common format
+    const payment_ref = merchantpaymentreferences || legacyPaymentRef;
+    const status = (transaction_status || legacyStatus || '').toLowerCase();
+    const amount = total_amount || legacyAmount;
+    const transactionId = reference_number;
+
+    if (!payment_ref && !transactionId) {
+      console.error('Invalid webhook: missing payment reference');
       return res.status(400).json({ error: 'Invalid webhook data' });
     }
 
-    console.log(`[DirectPay Webhook] Ref: ${payment_ref}, Status: ${status}, Amount: ${amount}, Timestamp: ${timestamp}`);
+    console.log(`[DirectPay Webhook] TxID: ${transactionId}, Ref: ${payment_ref}, Status: ${status}, Amount: ${amount}`);
 
-    // Verify webhook signature (implement DirectPay signature verification)
-    // if (!verifyDirectPayWebhookSignature(req.body, signature)) {
-    //   return res.status(401).json({ error: 'Invalid webhook signature' });
-    // }
+    // Verify webhook signature
+    if (!verifyPaymentSignature({ payment_ref, status, amount, timestamp }, signature)) {
+      console.error('❌ Invalid webhook signature');
+      return res.status(401).json({ error: 'Invalid webhook signature' });
+    }
 
-    // Update order based on payment status
-    if (status === 'success' || status === 'completed' || status === 'paid') {
-      db.prepare(`
+    console.log('✅ Webhook signature verified');
+
+    // Update order based on payment status (handle both DirectPay and legacy formats)
+    const successStatuses = ['success', 'completed', 'paid'];
+    const failedStatuses = ['failed', 'cancelled', 'expired'];
+    
+    if (successStatuses.includes(status)) {
+      // Update order by payment_ref
+      const result = db.prepare(`
         UPDATE orders
-        SET payment_status = ?, status = ?, updated_at = CURRENT_TIMESTAMP
+        SET payment_status = ?, status = ?
         WHERE payment_ref = ?
       `).run('paid', 'processing', payment_ref);
 
-      console.log(`[Webhook Confirmed] Payment: ${payment_ref}`);
-    } else if (status === 'failed' || status === 'cancelled') {
+      if (result.changes > 0) {
+        console.log(`✅ [Webhook Confirmed] Payment: ${payment_ref}`);
+
+        // Get order ID and send confirmation email
+        const order = db.prepare('SELECT id FROM orders WHERE payment_ref = ?').get(payment_ref);
+        if (order) {
+          // Send confirmation email asynchronously
+          sendOrderConfirmationEmail(order.id).catch(err =>
+            console.error('Error sending confirmation email:', err)
+          );
+        }
+      } else {
+        console.warn(`⚠️  No order found for payment_ref: ${payment_ref}`);
+      }
+    } else if (failedStatuses.includes(status)) {
       db.prepare(`
         UPDATE orders
-        SET payment_status = ?, status = ?, updated_at = CURRENT_TIMESTAMP
+        SET payment_status = ?, status = ?
         WHERE payment_ref = ?
       `).run('failed', 'cancelled', payment_ref);
 
-      console.log(`[Webhook Failed] Payment: ${payment_ref}`);
+      console.log(`⚠️  [Webhook Failed] Payment: ${payment_ref}`);
     }
 
     // Always respond with 200 to acknowledge receipt
-    res.json({ received: true, payment_ref: payment_ref });
+    res.json({ received: true, payment_ref: payment_ref, status: 'processed' });
   } catch (e) {
     console.error('[Webhook Error]', e.message);
     res.status(200).json({ received: true, error: e.message }); // Return 200 to prevent retries
