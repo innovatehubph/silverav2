@@ -35,6 +35,9 @@ jobs:
       - name: Build client
         run: cd client && npm install && npm run build
 
+      - name: Create data directory
+        run: mkdir -p ./data
+
       - name: Install Playwright browsers
         run: npx playwright install --with-deps ${{ matrix.browser }}
 
@@ -42,6 +45,7 @@ jobs:
         run: npx playwright test --project=${{ matrix.browser }}
         env:
           CI: 'true'
+          DATABASE_PATH: ./data/silvera-test.db
 
       - name: Upload test results
         if: always()
