@@ -1,0 +1,12 @@
+# Silvera PH - Robots.txt
+
+User-agent: *
+Allow: /
+Disallow: /checkout
+Disallow: /cart
+Disallow: /profile
+Disallow: /orders
+Disallow: /login
+Disallow: /register
+
+Sitemap: https://silvera.innoserver.cloud/sitemap.xml

@@ -50,10 +50,10 @@ export default function Shop() {
     <div className="container-custom py-8 animate-fade-in">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
         <h1 className="section-title mb-0">Shop</h1>
-        
+
         {/* Search Bar */}
         <div className="relative max-w-md w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-txt-tertiary" />
           <input
             type="text"
             value={searchQuery}
@@ -65,14 +65,14 @@ export default function Shop() {
               }
             }}
             placeholder="Search products..."
-            className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            className="w-full pl-10 pr-10 py-2 bg-bg-tertiary border border-bdr rounded-xl text-txt-primary placeholder:text-txt-tertiary focus:ring-2 focus:ring-gold/40 focus:border-gold/50 outline-none transition-all"
           />
           {searchQuery && (
             <button
               onClick={clearSearch}
               className="absolute right-3 top-1/2 -translate-y-1/2"
             >
-              <X className="w-5 h-5 text-gray-400 hover:text-gray-600" />
+              <X className="w-5 h-5 text-txt-tertiary hover:text-txt-primary transition-colors" />
             </button>
           )}
         </div>
@@ -81,10 +81,10 @@ export default function Shop() {
       {/* Search Results Info */}
       {searchQuery && (
         <div className="mb-6 flex items-center gap-2">
-          <span className="text-gray-600">
-            Search results for <span className="font-semibold">"{searchQuery}"</span>
+          <span className="text-txt-secondary">
+            Search results for <span className="font-semibold text-gold">"{searchQuery}"</span>
           </span>
-          <span className="text-gray-400">({filteredProducts.length} items)</span>
+          <span className="text-txt-tertiary">({filteredProducts.length} items)</span>
         </div>
       )}
 
@@ -102,9 +102,9 @@ export default function Shop() {
         </div>
       ) : filteredProducts.length === 0 ? (
         <div className="text-center py-16">
-          <Search className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-          <h2 className="text-xl font-semibold mb-2">No products found</h2>
-          <p className="text-gray-600 mb-4">Try adjusting your search terms</p>
+          <Search className="w-16 h-16 mx-auto text-txt-tertiary mb-4" />
+          <h2 className="text-xl font-semibold text-txt-primary mb-2">No products found</h2>
+          <p className="text-txt-secondary mb-4">Try adjusting your search terms</p>
           <button onClick={clearSearch} className="btn-primary">
             Clear Search
           </button>

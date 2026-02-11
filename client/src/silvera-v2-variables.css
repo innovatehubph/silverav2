@@ -1,0 +1,423 @@
+/* =============================================================================
+   SILVERA V2 - DESIGN SYSTEM CSS VARIABLES
+   Premium E-Commerce Design System
+   ============================================================================= */
+
+/* =============================================================================
+   1. COLOR TOKENS - DARK MODE (DEFAULT)
+   ============================================================================= */
+
+:root {
+  /* -------------------------------------------------------------------------
+     Background Layers
+     ------------------------------------------------------------------------- */
+  --bg-primary: #0A0A0B;
+  --bg-secondary: #111113;
+  --bg-tertiary: #18181B;
+  --bg-hover: #1F1F23;
+
+  /* -------------------------------------------------------------------------
+     Glassmorphism
+     ------------------------------------------------------------------------- */
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-highlight: rgba(255, 255, 255, 0.12);
+
+  /* -------------------------------------------------------------------------
+     Text Hierarchy
+     ------------------------------------------------------------------------- */
+  --text-primary: #FAFAFA;
+  --text-secondary: #A1A1AA;
+  --text-tertiary: #71717A;
+  --text-inverse: #0A0A0B;
+
+  /* -------------------------------------------------------------------------
+     Accent Colors - Premium Gold Theme
+     ------------------------------------------------------------------------- */
+  --accent-primary: #D4AF37;
+  --accent-primary-hover: #E5C158;
+  --accent-primary-active: #B8942E;
+  --accent-secondary: #8B5CF6;
+  --accent-secondary-hover: #A78BFA;
+  
+  /* Gold Gradient */
+  --accent-gradient: linear-gradient(135deg, #D4AF37 0%, #F5E6A3 50%, #D4AF37 100%);
+  --accent-gradient-hover: linear-gradient(135deg, #E5C158 0%, #FFF3C4 50%, #E5C158 100%);
+
+  /* -------------------------------------------------------------------------
+     Status Colors
+     ------------------------------------------------------------------------- */
+  --success: #22C55E;
+  --success-bg: rgba(34, 197, 94, 0.1);
+  --warning: #F59E0B;
+  --warning-bg: rgba(245, 158, 11, 0.1);
+  --error: #EF4444;
+  --error-bg: rgba(239, 68, 68, 0.1);
+  --info: #3B82F6;
+  --info-bg: rgba(59, 130, 246, 0.1);
+
+  /* -------------------------------------------------------------------------
+     Borders
+     ------------------------------------------------------------------------- */
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-default: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.2);
+  --border-accent: rgba(212, 175, 55, 0.5);
+
+  /* -------------------------------------------------------------------------
+     Shadows
+     ------------------------------------------------------------------------- */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.4);
+  --shadow-xl: 0 20px 50px rgba(0, 0, 0, 0.5);
+  --shadow-glow: 0 0 30px -5px rgba(212, 175, 55, 0.4);
+  --shadow-glow-lg: 0 0 60px -10px rgba(212, 175, 55, 0.5);
+}
+
+/* =============================================================================
+   2. COLOR TOKENS - LIGHT MODE
+   ============================================================================= */
+
+[data-theme="light"],
+.light {
+  --bg-primary: #FAFAFA;
+  --bg-secondary: #FFFFFF;
+  --bg-tertiary: #F4F4F5;
+  --bg-hover: #E4E4E7;
+
+  --glass-bg: rgba(0, 0, 0, 0.02);
+  --glass-border: rgba(0, 0, 0, 0.06);
+  --glass-highlight: rgba(0, 0, 0, 0.08);
+
+  --text-primary: #09090B;
+  --text-secondary: #52525B;
+  --text-tertiary: #A1A1AA;
+  --text-inverse: #FAFAFA;
+
+  --border-subtle: rgba(0, 0, 0, 0.04);
+  --border-default: rgba(0, 0, 0, 0.08);
+  --border-strong: rgba(0, 0, 0, 0.15);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.15);
+  --shadow-xl: 0 20px 50px rgba(0, 0, 0, 0.2);
+}
+
+/* =============================================================================
+   3. TYPOGRAPHY TOKENS
+   ============================================================================= */
+
+:root {
+  /* Font Families */
+  --font-display: 'SF Pro Display', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: 'Inter', 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+
+  /* Font Weights */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+}
+
+/* =============================================================================
+   4. SPACING TOKENS (8px BASE)
+   ============================================================================= */
+
+:root {
+  --space-0: 0;
+  --space-1: 0.25rem;   /* 4px */
+  --space-2: 0.5rem;    /* 8px */
+  --space-3: 0.75rem;   /* 12px */
+  --space-4: 1rem;      /* 16px */
+  --space-5: 1.25rem;   /* 20px */
+  --space-6: 1.5rem;    /* 24px */
+  --space-8: 2rem;      /* 32px */
+  --space-10: 2.5rem;   /* 40px */
+  --space-12: 3rem;     /* 48px */
+  --space-16: 4rem;     /* 64px */
+  --space-20: 5rem;     /* 80px */
+  --space-24: 6rem;     /* 96px */
+  --space-32: 8rem;     /* 128px */
+  --space-40: 10rem;    /* 160px */
+}
+
+/* =============================================================================
+   5. LAYOUT TOKENS
+   ============================================================================= */
+
+:root {
+  /* Container Widths */
+  --container-sm: 640px;
+  --container-md: 768px;
+  --container-lg: 1024px;
+  --container-xl: 1280px;
+  --container-2xl: 1440px;
+
+  /* Navbar */
+  --navbar-height: 72px;
+  --navbar-height-mobile: 56px;
+
+  /* Border Radius */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --radius-3xl: 24px;
+  --radius-full: 9999px;
+
+  /* Z-Index Scale */
+  --z-dropdown: 50;
+  --z-sticky: 60;
+  --z-fixed: 70;
+  --z-drawer: 80;
+  --z-modal-backdrop: 90;
+  --z-modal: 100;
+  --z-popover: 110;
+  --z-tooltip: 120;
+}
+
+/* =============================================================================
+   6. ANIMATION TOKENS
+   ============================================================================= */
+
+:root {
+  /* Durations */
+  --duration-instant: 50ms;
+  --duration-fast: 150ms;
+  --duration-normal: 200ms;
+  --duration-slow: 300ms;
+  --duration-slower: 400ms;
+  --duration-slowest: 600ms;
+
+  /* Easing Functions */
+  --ease-linear: linear;
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+  /* Transitions */
+  --transition-fast: all var(--duration-fast) var(--ease-out);
+  --transition-normal: all var(--duration-normal) var(--ease-out);
+  --transition-slow: all var(--duration-slow) var(--ease-out);
+  --transition-colors: color var(--duration-normal) var(--ease-out), 
+                       background-color var(--duration-normal) var(--ease-out), 
+                       border-color var(--duration-normal) var(--ease-out);
+}
+
+/* =============================================================================
+   7. KEYFRAME ANIMATIONS
+   ============================================================================= */
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes slideInLeft {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes slideInUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(212, 175, 55, 0.3); }
+  50% { box-shadow: 0 0 40px rgba(212, 175, 55, 0.5); }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* =============================================================================
+   8. UTILITY CLASSES
+   ============================================================================= */
+
+/* Glassmorphism */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--glass-border);
+}
+
+.glass-subtle {
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Gold Gradient Text */
+.text-gradient-gold {
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Hover Effects */
+.hover-lift {
+  transition: transform var(--duration-slow) var(--ease-out), 
+              box-shadow var(--duration-slow) var(--ease-out);
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+.hover-glow {
+  transition: box-shadow var(--duration-slow) var(--ease-out);
+}
+
+.hover-glow:hover {
+  box-shadow: var(--shadow-glow);
+}
+
+/* Skeleton Loading */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-secondary) 25%,
+    var(--bg-tertiary) 50%,
+    var(--bg-secondary) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius-md);
+}
+
+/* Focus States */
+:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+/* =============================================================================
+   9. RESPONSIVE UTILITIES
+   ============================================================================= */
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* High Contrast */
+@media (prefers-contrast: high) {
+  :root {
+    --border-default: rgba(255, 255, 255, 0.5);
+    --border-strong: rgba(255, 255, 255, 0.8);
+    --text-secondary: #D4D4D8;
+    --text-tertiary: #A1A1AA;
+  }
+}
+
+/* Touch Devices */
+@media (pointer: coarse) {
+  .touch-target {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+/* =============================================================================
+   10. COMPONENT TOKENS
+   ============================================================================= */
+
+:root {
+  /* Buttons */
+  --btn-padding-sm: var(--space-2) var(--space-4);
+  --btn-padding-md: var(--space-3) var(--space-6);
+  --btn-padding-lg: var(--space-4) var(--space-8);
+  --btn-padding-xl: var(--space-5) var(--space-10);
+  --btn-radius: var(--radius-lg);
+  --btn-font-size-sm: 0.75rem;
+  --btn-font-size-md: 0.875rem;
+  --btn-font-size-lg: 1rem;
+  --btn-font-size-xl: 1.125rem;
+
+  /* Inputs */
+  --input-padding: var(--space-4) var(--space-5);
+  --input-radius: var(--radius-lg);
+  --input-border: 1px solid var(--border-default);
+
+  /* Cards */
+  --card-padding: var(--space-5);
+  --card-radius: var(--radius-2xl);
+  --card-border: 1px solid var(--border-subtle);
+
+  /* Product Cards */
+  --product-card-radius: var(--radius-2xl);
+  --product-card-image-ratio: 1;
+}

@@ -5,6 +5,8 @@ import { toast } from 'sonner';
 import { productsApi } from '../utils/api';
 import { useCartStore } from '../stores';
 import { parseProductImages, getDiscountPercentage } from '../utils/product';
+import { SEO, generateProductStructuredData } from '../components/SEO';
+import OptimizedImage from '../components/OptimizedImage';
 import type { Product } from '../types';
 
 export default function ProductDetail() {
@@ -76,28 +78,51 @@ export default function ProductDetail() {
 
   const images = parseProductImages(product.images);
   const discountPercentage = getDiscountPercentage(product.price, product.sale_price);
+  const currentPrice = product.sale_price || product.price;
+  const productUrl = `https://silvera.innoserver.cloud/products/${product.id}`;
 
   return (
-    <div className="container-custom py-8 animate-fade-in">
-      <button
-        onClick={() => navigate(-1)}
-        className="flex items-center gap-2 text-gray-600 hover:text-primary-600 mb-6"
-      >
-        <ArrowLeft className="w-5 h-5" />
-        Back
-      </button>
+    <>
+      <SEO
+        title={product.name}
+        description={product.description || `Buy ${product.name} online at Silvera PH. Premium quality, fast delivery, secure payment.`}
+        keywords={`${product.name}, luxury products, premium shopping, ${product.category_name || 'products'}`}
+        image={images[0] || 'https://silvera.innoserver.cloud/og-image.jpg'}
+        url={productUrl}
+        type="product"
+        price={currentPrice.toString()}
+        currency="PHP"
+        availability={product.stock > 0 ? 'instock' : 'outofstock'}
+        structuredData={generateProductStructuredData({
+          name: product.name,
+          description: product.description || '',
+          image: images[0] || '',
+          price: product.price,
+          salePrice: product.sale_price,
+          currency: 'PHP',
+          sku: product.id.toString(),
+          availability: product.stock > 0 ? 'InStock' : 'OutOfStock'
+        })}
+      />
+      <div className="container-custom py-8 animate-fade-in">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 text-gray-600 hover:text-primary-600 mb-6"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          Back
+        </button>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
         {/* Image Gallery */}
         <div>
           <div className="relative aspect-square rounded-2xl overflow-hidden bg-gray-100">
-            <img
+            <OptimizedImage
               src={images[activeImage]}
               alt={product.name}
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = 'assets/images/product-images/01.webp';
-              }}
+              className="w-full h-full"
+              sizes="(max-width: 768px) 100vw, 50vw"
+              eager={activeImage === 0}
             />
             {discountPercentage > 0 && (
               <span className="absolute top-4 left-4 badge-gold text-lg px-4 py-2">
@@ -105,7 +130,7 @@ export default function ProductDetail() {
               </span>
             )}
           </div>
-          
+
           {images.length > 1 && (
             <div className="flex gap-2 mt-4 overflow-x-auto">
               {images.map((img, idx) => (
@@ -116,7 +141,12 @@ export default function ProductDetail() {
                     activeImage === idx ? 'border-primary-600' : 'border-transparent'
                   }`}
                 >
-                  <img src={img} alt="" className="w-full h-full object-cover" />
+                  <OptimizedImage
+                    src={img}
+                    alt=""
+                    className="w-full h-full"
+                    sizes="80px"
+                  />
                 </button>
               ))}
             </div>
@@ -235,5 +265,6 @@ export default function ProductDetail() {
         </div>
       </div>
     </div>
+    </>
   );
 }

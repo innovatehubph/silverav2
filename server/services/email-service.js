@@ -434,6 +434,168 @@ class EmailService {
   }
 
   /**
+   * Send order confirmation email
+   */
+  async sendOrderConfirmation(emailAddress, orderData) {
+    try {
+      if (!this.initialized) {
+        console.warn('⚠️  Email service not initialized, skipping order confirmation email');
+        return { success: true, message: 'Order confirmation email skipped (email service not ready)' };
+      }
+
+      const {
+        customerName,
+        orderNumber,
+        orderDate,
+        total,
+        items = [],
+        shippingAddress = {},
+        paymentMethod = 'NexusPay'
+      } = orderData;
+
+      const itemsHtml = items.map(item => `
+        <tr>
+          <td style="padding: 10px; border-bottom: 1px solid #eee;">${item.name}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">₱${item.price.toFixed(2)}</td>
+        </tr>
+      `).join('');
+
+      const htmlContent = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Confirmation</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; }
+        .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px 20px; text-align: center; }
+        .header h1 { font-size: 24px; margin-bottom: 10px; }
+        .header .checkmark { font-size: 48px; margin-bottom: 10px; }
+        .content { padding: 30px 20px; }
+        .greeting { font-size: 16px; color: #333; margin-bottom: 20px; }
+        .order-info { background: #f9f9f9; padding: 20px; border-radius: 6px; margin: 20px 0; }
+        .order-info-row { display: flex; justify-content: space-between; margin: 10px 0; font-size: 14px; }
+        .order-info-label { color: #666; }
+        .order-info-value { font-weight: 600; color: #333; }
+        .items-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        .items-table th { background: #f9f9f9; padding: 10px; text-align: left; font-size: 12px; color: #666; text-transform: uppercase; border-bottom: 2px solid #eee; }
+        .items-table td { padding: 10px; border-bottom: 1px solid #eee; font-size: 14px; }
+        .total-row { background: #f0f0f0; font-weight: bold; font-size: 16px; }
+        .shipping-info { background: #f9f9f9; padding: 15px; border-radius: 6px; margin: 20px 0; font-size: 14px; }
+        .shipping-info h3 { font-size: 16px; margin-bottom: 10px; color: #333; }
+        .button { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; margin: 20px 0; }
+        .footer { background: #f9f9f9; padding: 20px; text-align: center; font-size: 12px; color: #999; border-top: 1px solid #eee; }
+        .footer-text { margin: 5px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="checkmark">✓</div>
+            <h1>Order Confirmed!</h1>
+            <p>Thank you for your purchase</p>
+        </div>
+
+        <div class="content">
+            <div class="greeting">Hi ${customerName},</div>
+
+            <p style="color: #666; margin-bottom: 20px; line-height: 1.6;">
+                Thank you for shopping with Silvera! Your order has been confirmed and we're preparing it for shipment.
+                You'll receive a shipping confirmation email once your order is on its way.
+            </p>
+
+            <div class="order-info">
+                <div class="order-info-row">
+                    <span class="order-info-label">Order Number:</span>
+                    <span class="order-info-value">#${orderNumber}</span>
+                </div>
+                <div class="order-info-row">
+                    <span class="order-info-label">Order Date:</span>
+                    <span class="order-info-value">${orderDate}</span>
+                </div>
+                <div class="order-info-row">
+                    <span class="order-info-label">Payment Method:</span>
+                    <span class="order-info-value">${paymentMethod}</span>
+                </div>
+            </div>
+
+            <h3 style="font-size: 18px; margin: 30px 0 15px 0; color: #333;">Order Details</h3>
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th style="text-align: center;">Quantity</th>
+                        <th style="text-align: right;">Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${itemsHtml}
+                    <tr class="total-row">
+                        <td colspan="2" style="padding: 15px;">Total</td>
+                        <td style="padding: 15px; text-align: right;">₱${total.toFixed(2)}</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="shipping-info">
+                <h3>Shipping Address</h3>
+                <p style="color: #666; line-height: 1.6;">
+                    ${shippingAddress.street || ''}<br>
+                    ${shippingAddress.city || ''}, ${shippingAddress.province || ''} ${shippingAddress.zipCode || ''}<br>
+                    ${shippingAddress.country || 'Philippines'}
+                </p>
+            </div>
+
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="https://silvera.innoserver.cloud/orders/${orderNumber}" class="button">View Order Details</a>
+            </div>
+
+            <p style="color: #666; font-size: 14px; line-height: 1.6; margin-top: 30px;">
+                Questions about your order? Contact us at <a href="mailto:support@silvera.ph" style="color: #667eea;">support@silvera.ph</a>
+                or visit our help center.
+            </p>
+        </div>
+
+        <div class="footer">
+            <div class="footer-text">© ${new Date().getFullYear()} Silvera E-Commerce Platform. All rights reserved.</div>
+            <div class="footer-text">This is an automated email. Please do not reply to this address.</div>
+            <div class="footer-text">Need help? Contact us at support@silvera.ph</div>
+        </div>
+    </div>
+</body>
+</html>
+      `;
+
+      const mailOptions = {
+        from: process.env.SMTP_FROM || 'noreply@silvera.ph',
+        to: emailAddress,
+        subject: `Order Confirmation #${orderNumber} - Silvera`,
+        html: htmlContent,
+        text: `Order #${orderNumber} confirmed. Total: ₱${total.toFixed(2)}. Thank you for shopping with Silvera!`
+      };
+
+      const result = await this.transporter.sendMail(mailOptions);
+
+      console.log(`✅ Order confirmation email sent to ${emailAddress} (Order: ${orderNumber})`);
+      return {
+        success: true,
+        message: 'Order confirmation email sent successfully',
+        messageId: result.messageId
+      };
+    } catch (error) {
+      console.error(`❌ Failed to send order confirmation email to ${emailAddress}:`, error.message);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  /**
    * Check if email service is ready
    */
   isReady() {

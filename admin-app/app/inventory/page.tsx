@@ -29,16 +29,16 @@ export default function InventoryPage() {
   const [adjustmentQty, setAdjustmentQty] = useState(0);
 
   // Get low stock products (< 20)
-  const lowStockProducts = products.filter((p) => p.stock < 20 && p.stock > 0);
-  const outOfStockProducts = products.filter((p) => p.stock === 0);
+  const lowStockProducts = Array.isArray(products) ? products.filter((p) => p.stock < 20 && p.stock > 0) : [];
+  const outOfStockProducts = Array.isArray(products) ? products.filter((p) => p.stock === 0) : [];
 
   // Filter for search
-  const filteredProducts = products.filter((p) =>
+  const filteredProducts = Array.isArray(products) ? products.filter((p) =>
     p.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  ) : [];
 
   // Calculate total inventory value
-  const totalValue = products.reduce((sum, p) => sum + p.price * p.stock, 0);
+  const totalValue = Array.isArray(products) ? products.reduce((sum, p) => sum + p.price * p.stock, 0) : 0;
 
   const handleAdjustStock = (product: any) => {
     setSelectedProduct(product);

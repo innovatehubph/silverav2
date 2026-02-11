@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { ShoppingCart, Heart } from 'lucide-react';
 import { useCartStore } from '../../stores';
 import { parseProductImages, getDiscountPercentage } from '../../utils/product';
+import OptimizedImage from '../OptimizedImage';
 import type { Product } from '../../types';
 
 interface ProductCardProps {
@@ -23,73 +24,73 @@ export default function ProductCard({ product, showWishlist = true }: ProductCar
 
   return (
     <Link to={`/product/${product.id}`} className="group">
-      <div className="card card-hover">
+      <div className="card card-hover hover-glow">
         <div className="relative overflow-hidden">
-          <img
+          <OptimizedImage
             src={imageUrl}
             alt={product.name}
-            className="w-full h-48 md:h-64 object-cover transform group-hover:scale-105 transition-transform duration-500"
-            onError={(e) => {
-              const img = e.target as HTMLImageElement;
-              if (!img.dataset.fallback) {
-                img.dataset.fallback = '1';
-                img.src = '/assets/images/product-images/01.webp';
-              }
-            }}
+            className="w-full h-48 md:h-64"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
           />
-          
+
+          {/* Hover zoom overlay */}
+          <div className="absolute inset-0 transform group-hover:scale-105 transition-transform duration-700 pointer-events-none" />
+
+          {/* Gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
           {/* Discount Badge */}
           {discountPercentage > 0 && (
-            <span className="absolute top-3 left-3 badge-gold">
+            <span className="absolute top-3 left-3 bg-gold/90 text-bg-primary text-xs font-semibold px-3 py-1 rounded-full">
               -{discountPercentage}%
             </span>
           )}
-          
+
           {/* Featured Badge */}
           {product.featured && !discountPercentage && (
-            <span className="absolute top-3 left-3 badge-primary">
+            <span className="absolute top-3 left-3 bg-violet/80 text-white text-xs font-semibold px-3 py-1 rounded-full">
               Featured
             </span>
           )}
-          
+
           {/* Actions */}
-          <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
             {showWishlist && (
               <button
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                 }}
-                className="w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center hover:bg-gray-50 transition-colors"
+                className="w-10 h-10 glass-strong rounded-full flex items-center justify-center hover:bg-white/10 transition-colors"
               >
-                <Heart className="w-5 h-5 text-gray-600" />
+                <Heart className="w-4 h-4 text-txt-primary" />
               </button>
             )}
             <button
               onClick={handleAddToCart}
-              className="w-10 h-10 bg-primary-600 rounded-full shadow-md flex items-center justify-center hover:bg-primary-700 transition-colors"
+              className="w-10 h-10 bg-gold rounded-full flex items-center justify-center hover:bg-gold-300 transition-colors shadow-glow-gold"
             >
-              <ShoppingCart className="w-5 h-5 text-white" />
+              <ShoppingCart className="w-4 h-4 text-bg-primary" />
             </button>
           </div>
         </div>
-        
+
         <div className="p-4">
-          <h3 className="font-medium text-gray-900 mb-1 line-clamp-1 group-hover:text-primary-600 transition-colors">
+          <h3 className="font-medium text-txt-primary text-sm mb-1 line-clamp-1 group-hover:text-gold transition-colors">
             {product.name}
           </h3>
-          
-          <p className="text-sm text-gray-500 mb-2 line-clamp-1">
+
+          <p className="text-xs text-txt-tertiary mb-3 line-clamp-1">
             {product.description || 'Premium quality product'}
           </p>
-          
+
           <div className="flex items-center gap-2">
-            <span className="font-bold text-lg text-gray-900">
+            <span className="font-bold text-lg text-gold">
               ₱{(product.sale_price || product.price).toFixed(2)}
             </span>
-            
+
             {product.sale_price && product.price !== product.sale_price && (
-              <span className="text-sm text-gray-400 line-through">
+              <span className="text-sm text-txt-tertiary line-through">
                 ₱{product.price.toFixed(2)}
               </span>
             )}

@@ -4,116 +4,218 @@
 @tailwind components;
 @tailwind utilities;
 
+/* =============================================================================
+   CSS VARIABLES - DARK MODE (DEFAULT)
+   ============================================================================= */
+
+:root {
+  /* Background Layers */
+  --bg-primary: #0A0A0B;
+  --bg-secondary: #111113;
+  --bg-tertiary: #18181B;
+  --bg-hover: #1F1F23;
+
+  /* Glassmorphism */
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-highlight: rgba(255, 255, 255, 0.12);
+
+  /* Text Hierarchy */
+  --text-primary: #FAFAFA;
+  --text-secondary: #A1A1AA;
+  --text-tertiary: #71717A;
+  --text-inverse: #0A0A0B;
+
+  /* Accent Colors - Premium Gold */
+  --accent-primary: #D4AF37;
+  --accent-primary-hover: #E5C158;
+  --accent-primary-active: #B8942E;
+  --accent-secondary: #8B5CF6;
+  --accent-secondary-hover: #A78BFA;
+
+  /* Gold Gradient */
+  --accent-gradient: linear-gradient(135deg, #D4AF37 0%, #F5E6A3 50%, #D4AF37 100%);
+
+  /* Status Colors */
+  --success: #22C55E;
+  --warning: #F59E0B;
+  --error: #EF4444;
+  --info: #3B82F6;
+
+  /* Borders */
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-default: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.2);
+  --border-accent: rgba(212, 175, 55, 0.5);
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.4);
+  --shadow-xl: 0 20px 50px rgba(0, 0, 0, 0.5);
+  --shadow-glow: 0 0 30px -5px rgba(212, 175, 55, 0.4);
+
+  /* Layout */
+  --navbar-height: 72px;
+  --navbar-height-mobile: 56px;
+
+  /* Transitions */
+  --duration-fast: 150ms;
+  --duration-normal: 200ms;
+  --duration-slow: 300ms;
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* =============================================================================
+   BASE STYLES
+   ============================================================================= */
+
 @layer base {
   html {
     scroll-behavior: smooth;
   }
-  
+
   body {
-    @apply font-sans antialiased bg-cream text-gray-900;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
   }
-  
+
   h1, h2, h3, h4, h5, h6 {
-    @apply font-serif;
+    font-family: 'Playfair Display', Georgia, serif;
+  }
+
+  ::selection {
+    background-color: rgba(212, 175, 55, 0.3);
+    color: #FAFAFA;
   }
 }
+
+/* =============================================================================
+   COMPONENT CLASSES
+   ============================================================================= */
 
 @layer components {
   .btn-primary {
-    @apply bg-primary-600 hover:bg-primary-700 text-white font-medium py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl;
+    @apply bg-gold hover:bg-gold-300 text-bg-primary font-medium py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-[1.02] shadow-lg hover:shadow-glow-gold;
   }
-  
+
   .btn-secondary {
-    @apply bg-gold-400 hover:bg-gold-500 text-navy-900 font-medium py-3 px-6 rounded-lg transition-all duration-300;
+    @apply bg-transparent border border-gold/50 text-gold hover:bg-gold/10 font-medium py-3 px-6 rounded-xl transition-all duration-300;
   }
-  
+
   .btn-outline {
-    @apply border-2 border-primary-600 text-primary-600 hover:bg-primary-600 hover:text-white font-medium py-3 px-6 rounded-lg transition-all duration-300;
+    @apply border border-bdr-strong text-txt-primary hover:bg-bg-hover font-medium py-3 px-6 rounded-xl transition-all duration-300;
   }
-  
+
+  .btn-ghost {
+    @apply bg-transparent text-txt-secondary hover:text-txt-primary hover:bg-bg-hover py-2 px-4 rounded-lg transition-all duration-200;
+  }
+
   .card {
-    @apply bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden;
+    @apply bg-bg-secondary rounded-2xl border border-bdr-subtle overflow-hidden transition-all duration-300;
   }
-  
+
   .card-hover {
-    @apply transform hover:-translate-y-1 transition-all duration-300;
+    @apply hover:-translate-y-1 hover:shadow-lift hover:border-bdr-strong transition-all duration-300;
   }
-  
+
   .input-field {
-    @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all duration-200;
+    @apply w-full px-4 py-3 bg-bg-tertiary border border-bdr rounded-xl text-txt-primary placeholder:text-txt-tertiary focus:ring-2 focus:ring-gold/40 focus:border-gold/50 outline-none transition-all duration-200;
   }
-  
+
   .section-title {
-    @apply text-3xl md:text-4xl font-serif font-bold text-navy-900 mb-2;
+    @apply text-display-lg font-serif font-bold text-txt-primary mb-2;
   }
-  
+
   .section-subtitle {
-    @apply text-gray-600 text-lg;
+    @apply text-txt-secondary text-lg;
   }
-  
+
   .badge {
     @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
   }
-  
+
   .badge-gold {
-    @apply badge bg-gold-100 text-gold-800;
+    @apply badge bg-gold/10 text-gold border border-gold/20;
   }
-  
+
   .badge-primary {
-    @apply badge bg-primary-100 text-primary-800;
+    @apply badge bg-violet/10 text-violet-light border border-violet/20;
   }
-  
+
   .nav-link {
-    @apply text-gray-700 hover:text-primary-600 font-medium transition-colors duration-200;
+    @apply text-txt-secondary hover:text-txt-primary font-medium transition-colors duration-200;
   }
-  
+
   .nav-link-active {
-    @apply text-primary-600 font-semibold;
+    @apply text-gold font-semibold;
   }
 }
 
+/* =============================================================================
+   UTILITY CLASSES
+   ============================================================================= */
+
 @layer utilities {
   .text-gradient {
-    @apply bg-gradient-to-r from-primary-600 to-gold-500 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-gold to-gold-light bg-clip-text text-transparent;
   }
-  
+
   .bg-gradient-luxury {
-    @apply bg-gradient-to-br from-navy-900 via-navy-800 to-primary-800;
+    background: linear-gradient(135deg, #0A0A0B 0%, #111113 50%, #18181B 100%);
   }
-  
-  .glass {
-    @apply bg-white/80 backdrop-blur-md;
-  }
-  
+
   .container-custom {
     @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
   }
 }
 
-/* Custom scrollbar */
+/* =============================================================================
+   SCROLLBAR
+   ============================================================================= */
+
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-gray-100;
+  background: var(--bg-secondary);
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-primary-300 rounded-full;
+  background: rgba(212, 175, 55, 0.3);
+  border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-primary-400;
+  background: rgba(212, 175, 55, 0.5);
 }
 
-/* Loading skeleton animation */
+/* =============================================================================
+   SKELETON LOADING
+   ============================================================================= */
+
 .skeleton {
-  @apply animate-pulse bg-gray-200 rounded;
+  background: linear-gradient(
+    90deg,
+    var(--bg-secondary) 25%,
+    var(--bg-tertiary) 50%,
+    var(--bg-secondary) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
 }
 
-/* GSAP Section Styles */
+/* =============================================================================
+   GSAP & SECTION STYLES
+   ============================================================================= */
+
 .section-pinned {
   position: relative;
   width: 100%;
@@ -125,55 +227,66 @@
   position: absolute;
   border-radius: 50%;
   filter: blur(80px);
-  opacity: 0.22;
+  opacity: 0.15;
   pointer-events: none;
 }
 
 .step-card {
-  background: white;
-  border-radius: 16px;
+  background: var(--bg-secondary);
+  border-radius: 20px;
   padding: 2rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid var(--border-subtle);
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
 .step-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.4);
+  border-color: rgba(212, 175, 55, 0.3);
 }
+
+/* =============================================================================
+   FORM STYLES
+   ============================================================================= */
 
 .form-input {
   width: 100%;
   padding: 0.75rem 1rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.5rem;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-default);
+  border-radius: 12px;
+  color: var(--text-primary);
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .form-input:focus {
-  border-color: #1a365d;
-  box-shadow: 0 0 0 3px rgba(26, 54, 93, 0.1);
+  border-color: rgba(212, 175, 55, 0.5);
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
 }
+
+/* =============================================================================
+   CTA & DISPLAY STYLES
+   ============================================================================= */
 
 .cta-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 1rem 2rem;
-  background-color: #1a365d;
-  color: white;
-  font-weight: 500;
-  border-radius: 9999px;
+  background: linear-gradient(135deg, #D4AF37 0%, #E5C158 100%);
+  color: #0A0A0B;
+  font-weight: 600;
+  border-radius: 12px;
   transition: all 0.3s ease;
   border: none;
   cursor: pointer;
 }
 
 .cta-button:hover {
-  background-color: #243b53;
+  background: linear-gradient(135deg, #E5C158 0%, #F5E6A3 100%);
   transform: translateY(-2px);
-  box-shadow: 0 10px 30px rgba(26, 54, 93, 0.3);
+  box-shadow: 0 0 30px -5px rgba(212, 175, 55, 0.5);
 }
 
 .headline-display {
@@ -194,7 +307,7 @@
 }
 
 .product-shadow {
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
 }
 
 .add-button {
@@ -203,5 +316,53 @@
 
 .add-button:hover {
   transform: scale(1.1);
-  box-shadow: 0 10px 30px rgba(26, 54, 93, 0.4);
+  box-shadow: 0 0 30px -5px rgba(212, 175, 55, 0.5);
+}
+
+/* =============================================================================
+   KEYFRAME ANIMATIONS
+   ============================================================================= */
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(212, 175, 55, 0.3); }
+  50% { box-shadow: 0 0 40px rgba(212, 175, 55, 0.5); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+}
+
+@keyframes goldShine {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+/* =============================================================================
+   FOCUS STATES
+   ============================================================================= */
+
+:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+/* =============================================================================
+   REDUCED MOTION
+   ============================================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

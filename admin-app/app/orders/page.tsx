@@ -35,12 +35,12 @@ export default function OrdersPage() {
   const [newStatus, setNewStatus] = useState('');
 
   // Filter orders based on search and status
-  const filteredOrders = orders.filter((order) => {
+  const filteredOrders = Array.isArray(orders) ? orders.filter((order) => {
     const matchesSearch = order.id.toString().includes(searchTerm) ||
                          (order.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesStatus = !statusFilter || order.status === statusFilter;
     return matchesSearch && matchesStatus;
-  });
+  }) : [];
 
   const handleStatusUpdate = async (order: Order) => {
     setSelectedOrder(order);
