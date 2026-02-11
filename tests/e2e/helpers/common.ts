@@ -12,7 +12,7 @@ export async function login(page: Page, email: string, password: string) {
   await page.locator('input[type="email"]').fill(email);
   await page.locator('input[type="password"]').fill(password);
   await page.locator('button[type="submit"]').click();
-  await page.waitForURL(url => !url.toString().includes('/login'), { timeout: 15000 });
+  await page.waitForURL(url => !url.toString().includes('/login'), { timeout: 15000, waitUntil: 'domcontentloaded' });
 }
 
 export async function logout(page: Page) {
