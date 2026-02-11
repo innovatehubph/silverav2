@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CreditCard, Truck, Shield, CheckCircle, Wallet, Loader2, MapPin, Plus } from 'lucide-react';
+import { CreditCard, Truck, Shield, CheckCircle, Wallet, Loader2, MapPin, Plus, Ticket, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCartStore, useAuthStore } from '../stores';
-import { ordersApi, paymentsApi } from '../utils/api';
+import { ordersApi, paymentsApi, couponsApi } from '../utils/api';
 import AddressForm from '../components/AddressForm';
 
 interface Address {
@@ -27,14 +27,22 @@ export default function Checkout() {
   const { user, isAuthenticated } = useAuthStore();
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStep, setProcessingStep] = useState('');
-  
+
   // Address state
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [addressMode, setAddressMode] = useState<'saved' | 'new'>('saved');
   const [loadingAddresses, setLoadingAddresses] = useState(true);
-  
+
+  // Coupon state
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    id: number; code: string; type: string; value: number; discount: number;
+  } | null>(null);
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState('');
+
   // Form data for guest checkout or new address
   const [formData, setFormData] = useState({
     email: user?.email || '',
@@ -115,6 +123,29 @@ export default function Checkout() {
     }
   };
 
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) return;
+    setCouponLoading(true);
+    setCouponError('');
+    try {
+      const res = await couponsApi.validate(couponCode.trim(), getTotalPrice());
+      const { coupon, discount } = res.data;
+      setAppliedCoupon({ id: coupon.id, code: coupon.code, type: coupon.type, value: coupon.value, discount });
+      setCouponCode('');
+      toast.success(`Coupon "${coupon.code}" applied! You save ₱${discount.toFixed(2)}`);
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { error?: string } } };
+      setCouponError(axiosErr?.response?.data?.error || 'Invalid coupon code');
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponError('');
+  };
+
   if (items.length === 0) {
     return (
       <div className="container-custom py-16 text-center">
@@ -146,7 +177,7 @@ export default function Checkout() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate address selection
     if (addressMode === 'saved' && !selectedAddress) {
       toast.error('Please select a delivery address');
@@ -228,7 +259,8 @@ export default function Checkout() {
 
   const subtotal = getTotalPrice();
   const shipping = subtotal > 1000 ? 0 : 99;
-  const total = subtotal + shipping;
+  const couponDiscount = appliedCoupon ? appliedCoupon.discount : 0;
+  const total = Math.max(0, subtotal + shipping - couponDiscount);
   const isOnlinePayment = formData.paymentMethod !== 'cod';
 
   return (
@@ -259,8 +291,8 @@ export default function Checkout() {
                         type="button"
                         onClick={() => setAddressMode('saved')}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                          addressMode === 'saved' 
-                            ? 'bg-accent-gold text-bg-primary' 
+                          addressMode === 'saved'
+                            ? 'bg-accent-gold text-bg-primary'
                             : 'bg-bg-tertiary text-txt-secondary hover:bg-bg-secondary'
                         }`}
                       >
@@ -273,8 +305,8 @@ export default function Checkout() {
                           setShowAddressForm(true);
                         }}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1 ${
-                          addressMode === 'new' 
-                            ? 'bg-accent-gold text-bg-primary' 
+                          addressMode === 'new'
+                            ? 'bg-accent-gold text-bg-primary'
                             : 'bg-bg-tertiary text-txt-secondary hover:bg-bg-secondary'
                         }`}
                       >
@@ -290,8 +322,8 @@ export default function Checkout() {
                         <label
                           key={address.id}
                           className={`block p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                            selectedAddressId === address.id 
-                              ? 'border-accent-gold bg-accent-gold/5' 
+                            selectedAddressId === address.id
+                              ? 'border-accent-gold bg-accent-gold/5'
                               : 'border-bdr hover:border-bdr-strong'
                           }`}
                         >
@@ -503,7 +535,45 @@ export default function Checkout() {
                 <span>Shipping</span>
                 <span>{shipping === 0 ? <span className="text-green-400">Free</span> : `₱${shipping.toFixed(2)}`}</span>
               </div>
+              {appliedCoupon && (
+                <div className="flex justify-between text-green-400">
+                  <span className="flex items-center gap-1">
+                    <Ticket className="w-3.5 h-3.5" />
+                    {appliedCoupon.code}
+                    <button type="button" onClick={handleRemoveCoupon} className="ml-1 text-red-400 hover:text-red-300">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </span>
+                  <span>-₱{couponDiscount.toFixed(2)}</span>
+                </div>
+              )}
             </div>
+
+            {/* Coupon Code Input */}
+            {!appliedCoupon && (
+              <div className="mt-3">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={couponCode}
+                    onChange={(e) => { setCouponCode(e.target.value.toUpperCase()); setCouponError(''); }}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleApplyCoupon(); } }}
+                    placeholder="Coupon code"
+                    className="input-field flex-1 text-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleApplyCoupon}
+                    disabled={couponLoading || !couponCode.trim()}
+                    className="px-4 py-2 bg-accent-gold/20 text-accent-gold rounded-lg text-sm font-medium hover:bg-accent-gold/30 transition-colors disabled:opacity-50 flex items-center gap-1"
+                  >
+                    {couponLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Ticket className="w-4 h-4" />}
+                    Apply
+                  </button>
+                </div>
+                {couponError && <p className="text-xs text-red-400 mt-1">{couponError}</p>}
+              </div>
+            )}
 
             <hr className="my-4 border-bdr" />
 
