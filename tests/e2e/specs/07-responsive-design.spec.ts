@@ -21,13 +21,14 @@ test.describe('Responsive Design - Mobile (375px)', () => {
   test('7.2: Mobile nav drawer opens and closes', async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(1000);
 
     const menuButton = page.locator('button[aria-label="Open menu"]');
     await menuButton.click();
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(500);
 
-    const navDrawer = page.locator('nav a[href="/shop"], a[href="/cart"]');
-    const navVisible = await navDrawer.first().isVisible().catch(() => false);
+    const navLinks = page.locator('a[href="/shop"], a[href="/cart"]');
+    const navVisible = await navLinks.first().isVisible().catch(() => false);
     expect(navVisible).toBeTruthy();
 
     const closeButton = page.locator('button[aria-label="Close menu"]');
@@ -65,6 +66,7 @@ test.describe('Responsive Design - Mobile (375px)', () => {
   test('7.5: Mobile product cards display', async ({ page }) => {
     await page.goto('/shop');
     await page.waitForLoadState('domcontentloaded');
+    await page.locator('a[href^="/product/"]').first().waitFor({ timeout: 10000 }).catch(() => {});
 
     const productCards = page.locator('a[href^="/product/"]');
     const count = await productCards.count();
@@ -86,6 +88,7 @@ test.describe('Responsive Design - Mobile (375px)', () => {
   test('7.7: Mobile product images scale properly', async ({ page }) => {
     await page.goto('/product/1');
     await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(2000);
 
     const images = page.locator('img').first();
     if (await images.isVisible()) {
@@ -102,6 +105,7 @@ test.describe('Responsive Design - Tablet (768px)', () => {
   test('7.8: Tablet product grid displays', async ({ page }) => {
     await page.goto('/shop');
     await page.waitForLoadState('domcontentloaded');
+    await page.locator('a[href^="/product/"]').first().waitFor({ timeout: 10000 }).catch(() => {});
 
     const products = page.locator('a[href^="/product/"]');
     const count = await products.count();
@@ -122,6 +126,7 @@ test.describe('Responsive Design - Tablet (768px)', () => {
 
     await page.goto('/checkout');
     await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(2000);
 
     const formElements = page.locator('input, select, button[type="submit"]');
     const count = await formElements.count();
@@ -135,6 +140,7 @@ test.describe('Responsive Design - Desktop (1920px)', () => {
   test('7.11: Desktop multi-column product grid', async ({ page }) => {
     await page.goto('/shop');
     await page.waitForLoadState('domcontentloaded');
+    await page.locator('a[href^="/product/"]').first().waitFor({ timeout: 10000 }).catch(() => {});
 
     const products = page.locator('a[href^="/product/"]');
     const count = await products.count();

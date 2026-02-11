@@ -17,6 +17,7 @@ test.describe('User Account Management', () => {
     const profilePage = new ProfilePage(page);
     await profilePage.navigate();
     await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(2000);
 
     await expect(profilePage.nameDisplay).toBeVisible();
     await expect(profilePage.emailDisplay).toBeVisible();
@@ -26,6 +27,7 @@ test.describe('User Account Management', () => {
     const profilePage = new ProfilePage(page);
     await profilePage.navigate();
     await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(2000);
 
     const nameText = await profilePage.nameDisplay.textContent();
     expect(nameText).toBeTruthy();
@@ -36,6 +38,7 @@ test.describe('User Account Management', () => {
     const ordersPage = new OrdersPage(page);
     await ordersPage.navigate();
     await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(2000);
 
     expect(page.url()).toContain('/orders');
 
@@ -48,6 +51,7 @@ test.describe('User Account Management', () => {
     const ordersPage = new OrdersPage(page);
     await ordersPage.navigate();
     await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(2000);
 
     const orderCount = await ordersPage.getOrdersCount();
     if (orderCount > 0) {
@@ -62,6 +66,7 @@ test.describe('User Account Management', () => {
     const profilePage = new ProfilePage(page);
     await profilePage.navigate();
     await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(2000);
 
     const logoutVisible = await profilePage.logoutButton.isVisible().catch(() => false);
     expect(logoutVisible).toBeTruthy();

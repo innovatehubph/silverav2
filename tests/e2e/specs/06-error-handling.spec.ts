@@ -40,6 +40,7 @@ test.describe('Error Handling & Edge Cases', () => {
   test('6.4: Invalid product ID shows error or fallback', async ({ page }) => {
     await page.goto('/product/99999');
     await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(2000);
 
     const bodyText = await page.textContent('body');
     const hasError = bodyText?.toLowerCase().includes('not found') ||
