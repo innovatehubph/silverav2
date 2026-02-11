@@ -21,7 +21,7 @@ export default function PaymentStatus() {
   const [status, setStatus] = useState<PaymentState>('loading');
   const [hasRedirected, setHasRedirected] = useState(false);
   const pollStartTime = useRef(Date.now());
-  const pollTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const pollTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const pollPaymentStatus = useCallback(async () => {
     if (!ref) return;

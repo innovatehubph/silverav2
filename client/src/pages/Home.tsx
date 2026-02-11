@@ -73,6 +73,7 @@ export default function Home() {
           imagePosition="right"
           zIndex={20}
           product={categoryProducts[0] ?? undefined}
+          categorySlug="fashion"
         />
 
         <CategorySection
@@ -84,6 +85,7 @@ export default function Home() {
           imagePosition="left"
           zIndex={30}
           product={categoryProducts[1] ?? undefined}
+          categorySlug="sports"
         />
 
         <CategorySection
@@ -95,6 +97,7 @@ export default function Home() {
           imagePosition="right"
           zIndex={40}
           product={categoryProducts[2] ?? undefined}
+          categorySlug="electronics"
         />
 
         <CategorySection
@@ -107,6 +110,7 @@ export default function Home() {
           isDark={true}
           zIndex={50}
           product={categoryProducts[3] ?? undefined}
+          categorySlug="beauty"
         />
 
         {/* How It Works */}

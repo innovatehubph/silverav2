@@ -1,7 +1,20 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ShoppingBag, User, X, Search, LogOut, Home, ShoppingCart, Package, UserPlus } from 'lucide-react';
-import { useCartStore, useAuthStore } from '../../stores';
+import { useCartStore, useAuthStore, useThemeStore } from '../../stores';
+import ThemeToggle, { ThemeToggleCompact } from '../ThemeToggle';
+
+// Logo component that switches based on theme
+function SilveraLogo({ className = "h-10" }: { className?: string }) {
+  const { theme } = useThemeStore();
+  return (
+    <img 
+      src={theme === 'dark' ? '/images/branding/silvera-logo-dark.jpg' : '/images/branding/silvera-logo-light.jpg'}
+      alt="Silvera Luxury Brands" 
+      className={`${className} w-auto object-contain`}
+    />
+  );
+}
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -138,12 +151,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
           <div className="flex items-center justify-between">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2 group">
-              <span className="text-2xl font-serif font-bold text-txt-primary transition-colors group-hover:text-gold">
-                Silvera
-              </span>
-              <span className="text-gold text-sm font-medium hidden sm:block">
-                PH
-              </span>
+              <SilveraLogo className="h-10" />
             </Link>
 
             {/* Desktop Navigation */}
@@ -170,6 +178,11 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
             {/* Actions */}
             <div className="flex items-center gap-2 md:gap-3">
+              {/* Theme Toggle - Desktop */}
+              <div className="hidden md:block">
+                <ThemeToggle />
+              </div>
+
               {/* Search */}
               <form onSubmit={handleSearch} className="relative hidden md:block">
                 <div className={`flex items-center transition-all duration-300 ${
@@ -310,18 +323,18 @@ export default function MainLayout({ children }: MainLayoutProps) {
             onClick={() => setIsMenuOpen(false)}
             className="flex items-center gap-2"
           >
-            <span className="text-xl font-serif font-bold text-txt-primary">
-              Silvera
-            </span>
-            <span className="text-gold text-xs font-medium">PH</span>
+            <SilveraLogo className="h-8" />
           </Link>
-          <button
-            onClick={() => setIsMenuOpen(false)}
-            className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-bg-hover transition-colors"
-            aria-label="Close menu"
-          >
-            <X className="w-5 h-5 text-txt-secondary" />
-          </button>
+          <div className="flex items-center gap-2">
+            <ThemeToggleCompact />
+            <button
+              onClick={() => setIsMenuOpen(false)}
+              className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-bg-hover transition-colors"
+              aria-label="Close menu"
+            >
+              <X className="w-5 h-5 text-txt-secondary" />
+            </button>
+          </div>
         </div>
 
         {/* Drawer Body - Scrollable */}
@@ -441,11 +454,9 @@ export default function MainLayout({ children }: MainLayoutProps) {
         <div className="container-custom">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
-              <h3 className="text-2xl font-serif font-bold text-txt-primary mb-4">
-                <span className="text-gradient-gold">Silvera</span>
-              </h3>
+              <SilveraLogo className="h-16 mb-4" />
               <p className="text-txt-tertiary text-sm leading-relaxed">
-                Premium Filipino shopping experience. Quality products, exceptional service.
+                Premium luxury shopping experience. Authentic branded products, exceptional service.
               </p>
             </div>
 
