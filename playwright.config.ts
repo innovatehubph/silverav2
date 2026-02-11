@@ -44,11 +44,11 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'node server/index.js',
-    url: 'http://localhost:3865',
+    command: 'NODE_ENV=test DATABASE_PATH=./data/silvera-test.db node server/index.js',
+    url: 'http://localhost:3865/api/products',
     reuseExistingServer: !process.env.CI,
     stdout: 'pipe',
     stderr: 'pipe',
-    timeout: 30 * 1000,
+    timeout: 60 * 1000,
   },
 });
