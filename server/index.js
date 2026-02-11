@@ -21,6 +21,22 @@ const crypto = require('crypto');
 // Import services
 const emailService = require('./services/email-service');
 const paymentGateway = require('./services/payment-gateway');
+const minioService = require('./services/minio');
+const multer = require('multer');
+
+// Configure multer for memory storage (files go to MinIO)
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Only JPEG, PNG, WebP, and GIF are allowed.'));
+    }
+  }
+});
 
 const app = express();
 app.set('trust proxy', 1); // Trust first proxy (for rate limiter behind reverse proxy)
@@ -1749,6 +1765,103 @@ app.delete('/api/admin/products/:id', auth, adminOnly, (req, res) => {
     res.status(500).json({ error: 'Failed to delete product' });
   }
 });
+
+// ==================== IMAGE UPLOAD ROUTES ====================
+
+/**
+ * Upload product images to MinIO S3
+ * POST /api/admin/upload/product-images
+ */
+app.post('/api/admin/upload/product-images', auth, adminOnly, upload.array('images', 10), async (req, res) => {
+  try {
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ error: 'No images provided' });
+    }
+
+    const results = await minioService.uploadImages(req.files, 'products');
+    const successfulUploads = results.filter(r => r.success);
+    const failedUploads = results.filter(r => !r.success);
+
+    if (successfulUploads.length === 0) {
+      return res.status(500).json({ error: 'All uploads failed', details: failedUploads });
+    }
+
+    res.json({
+      success: true,
+      uploaded: successfulUploads.length,
+      failed: failedUploads.length,
+      images: successfulUploads.map(r => ({
+        url: r.url,
+        key: r.key
+      }))
+    });
+  } catch (e) {
+    console.error('Image upload error:', e.message);
+    res.status(500).json({ error: 'Image upload failed' });
+  }
+});
+
+/**
+ * Upload category image to MinIO S3
+ * POST /api/admin/upload/category-image
+ */
+app.post('/api/admin/upload/category-image', auth, adminOnly, upload.single('image'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No image provided' });
+    }
+
+    const result = await minioService.uploadImage(
+      req.file.buffer,
+      req.file.originalname,
+      req.file.mimetype,
+      'categories'
+    );
+
+    if (!result.success) {
+      return res.status(500).json({ error: result.error });
+    }
+
+    res.json({
+      success: true,
+      image: {
+        url: result.url,
+        key: result.key
+      }
+    });
+  } catch (e) {
+    console.error('Category image upload error:', e.message);
+    res.status(500).json({ error: 'Image upload failed' });
+  }
+});
+
+/**
+ * Delete image from MinIO S3
+ * DELETE /api/admin/upload/image
+ */
+app.delete('/api/admin/upload/image', auth, adminOnly, async (req, res) => {
+  try {
+    const { key, url } = req.body;
+    const imageKey = key || minioService.extractKeyFromUrl(url);
+
+    if (!imageKey) {
+      return res.status(400).json({ error: 'Image key or URL required' });
+    }
+
+    const result = await minioService.deleteImage(imageKey);
+
+    if (!result.success) {
+      return res.status(500).json({ error: result.error });
+    }
+
+    res.json({ success: true });
+  } catch (e) {
+    console.error('Image delete error:', e.message);
+    res.status(500).json({ error: 'Image delete failed' });
+  }
+});
+
+// ==================== END IMAGE UPLOAD ROUTES ====================
 
 app.get('/api/admin/orders', auth, adminOnly, (req, res) => {
   try {

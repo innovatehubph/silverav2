@@ -50,7 +50,8 @@ export default function Wishlist() {
   if (isLoading) {
     return (
       <div className="container-custom py-16 text-center">
-        <div className="w-8 h-8 border-2 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto" />
+        <div className="w-8 h-8 border-2 border-gold border-t-transparent rounded-full animate-spin mx-auto" />
+        <p className="text-txt-tertiary mt-4">Loading wishlist...</p>
       </div>
     );
   }
@@ -58,11 +59,11 @@ export default function Wishlist() {
   if (items.length === 0) {
     return (
       <div className="container-custom py-16 text-center">
-        <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Heart className="w-10 h-10 text-gray-400" />
+        <div className="w-20 h-20 bg-bg-tertiary rounded-full flex items-center justify-center mx-auto mb-4">
+          <Heart className="w-10 h-10 text-txt-tertiary" />
         </div>
         <h1 className="section-title">Your Wishlist is Empty</h1>
-        <p className="text-gray-600 mb-6">Save items you love for later</p>
+        <p className="text-txt-secondary mb-6">Save items you love for later</p>
         <Link to="/shop" className="btn-primary inline-block">Browse Shop</Link>
       </div>
     );
@@ -88,14 +89,14 @@ export default function Wishlist() {
                 />
               </Link>
               <div className="p-4">
-                <Link to={`/product/${item.product_id}`} className="font-medium hover:text-primary-600 line-clamp-1">
+                <Link to={`/product/${item.product_id}`} className="font-medium text-txt-primary hover:text-gold transition-colors line-clamp-1">
                   {item.name}
                 </Link>
                 <div className="flex items-center gap-2 mt-1">
                   {item.sale_price ? (
                     <>
-                      <span className="font-bold text-primary-600">₱{item.sale_price.toFixed(2)}</span>
-                      <span className="text-sm text-gray-400 line-through">₱{item.price.toFixed(2)}</span>
+                      <span className="font-bold text-gold">₱{item.sale_price!.toFixed(2)}</span>
+                      <span className="text-sm text-txt-tertiary line-through">₱{item.price.toFixed(2)}</span>
                     </>
                   ) : (
                     <span className="font-bold">₱{item.price.toFixed(2)}</span>
@@ -110,7 +111,7 @@ export default function Wishlist() {
                   </button>
                   <button
                     onClick={() => handleRemove(item.product_id)}
-                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                    className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>

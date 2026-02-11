@@ -45,19 +45,19 @@ export default function Profile() {
           <div className="md:col-span-2">
             <div className="card p-6">
               <div className="flex items-center gap-4 mb-6">
-                <div className="w-16 h-16 bg-primary-600 rounded-full flex items-center justify-center">
+                <div className="w-16 h-16 bg-gold rounded-full flex items-center justify-center">
                   <span className="text-white text-2xl font-bold">{user.name[0]?.toUpperCase()}</span>
                 </div>
                 <div>
                   <h2 className="text-xl font-semibold">{user.name}</h2>
-                  <p className="text-gray-500 capitalize">{user.role}</p>
+                  <p className="text-txt-tertiary capitalize">{user.role}</p>
                 </div>
               </div>
 
               {isEditing ? (
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                    <label className="block text-sm font-medium text-txt-secondary mb-1">Name</label>
                     <input
                       type="text"
                       value={formData.name}
@@ -66,7 +66,7 @@ export default function Profile() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <label className="block text-sm font-medium text-txt-secondary mb-1">Email</label>
                     <input
                       type="email"
                       value={formData.email}
@@ -75,7 +75,7 @@ export default function Profile() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                    <label className="block text-sm font-medium text-txt-secondary mb-1">Phone</label>
                     <input
                       type="tel"
                       value={formData.phone}
@@ -105,24 +105,24 @@ export default function Profile() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <div className="flex items-center gap-3 py-3 border-b">
-                    <User className="w-5 h-5 text-gray-400" />
+                  <div className="flex items-center gap-3 py-3 border-b border-bdr">
+                    <User className="w-5 h-5 text-txt-tertiary" />
                     <div>
-                      <p className="text-sm text-gray-500">Name</p>
+                      <p className="text-sm text-txt-tertiary">Name</p>
                       <p className="font-medium">{user.name}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 py-3 border-b">
-                    <Mail className="w-5 h-5 text-gray-400" />
+                  <div className="flex items-center gap-3 py-3 border-b border-bdr">
+                    <Mail className="w-5 h-5 text-txt-tertiary" />
                     <div>
-                      <p className="text-sm text-gray-500">Email</p>
+                      <p className="text-sm text-txt-tertiary">Email</p>
                       <p className="font-medium">{user.email}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 py-3 border-b">
-                    <Phone className="w-5 h-5 text-gray-400" />
+                  <div className="flex items-center gap-3 py-3 border-b border-bdr">
+                    <Phone className="w-5 h-5 text-txt-tertiary" />
                     <div>
-                      <p className="text-sm text-gray-500">Phone</p>
+                      <p className="text-sm text-txt-tertiary">Phone</p>
                       <p className="font-medium">{user.phone || 'Not set'}</p>
                     </div>
                   </div>
@@ -140,11 +140,11 @@ export default function Profile() {
           {/* Sidebar */}
           <div className="space-y-4">
             <Link to="/orders" className="card p-4 flex items-center gap-3 hover:shadow-md transition-shadow">
-              <Package className="w-5 h-5 text-primary-600" />
+              <Package className="w-5 h-5 text-gold" />
               <span className="font-medium">My Orders</span>
             </Link>
             <Link to="/wishlist" className="card p-4 flex items-center gap-3 hover:shadow-md transition-shadow">
-              <Heart className="w-5 h-5 text-primary-600" />
+              <Heart className="w-5 h-5 text-gold" />
               <span className="font-medium">Wishlist</span>
             </Link>
             <button

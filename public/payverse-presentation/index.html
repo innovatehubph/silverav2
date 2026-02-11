@@ -2,127 +2,160 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>PayVerse × PDAX Partnership Proposal</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
         :root {
             --primary: #1a365d;
-            --secondary: #c9a227;
+            --secondary: #10b981;
+            --secondary-light: #34d399;
             --accent: #00a86b;
             --dark: #0f172a;
+            --darker: #020617;
             --light: #f8fafc;
-            --gray: #64748b;
+            --gray: #94a3b8;
+            --payverse-green: #10b981;
+            --payverse-teal: #14b8a6;
             --pdax-green: #7ed321;
-            --pdax-blue: #1a3a5c;
         }
 
-        html { scroll-behavior: smooth; scroll-snap-type: y mandatory; }
+        html { 
+            scroll-behavior: smooth; 
+            scroll-snap-type: y mandatory;
+            -webkit-overflow-scrolling: touch;
+        }
         
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background: var(--dark);
             color: var(--light);
             overflow-x: hidden;
+            line-height: 1.6;
         }
 
-        /* Navigation */
+        /* Mobile-First Navigation */
         .nav {
             position: fixed;
             top: 0; left: 0; right: 0;
             z-index: 1000;
-            padding: 1rem 2rem;
+            padding: 0.75rem 1rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(201, 162, 39, 0.2);
+            background: rgba(15, 23, 42, 0.98);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(16, 185, 129, 0.2);
+            gap: 0.5rem;
         }
 
         .nav-left {
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 0.75rem;
+            flex: 1;
+            min-width: 0;
         }
 
         .nav-logo {
-            height: 40px;
+            height: 36px;
             width: auto;
+            border-radius: 6px;
+            flex-shrink: 0;
+        }
+
+        .nav-text {
+            min-width: 0;
         }
 
         .nav-title {
             font-family: 'Playfair Display', serif;
-            font-size: 1.25rem;
+            font-size: 1rem;
             font-weight: 700;
             color: var(--secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .nav-subtitle {
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             color: var(--gray);
             text-transform: uppercase;
-            letter-spacing: 2px;
+            letter-spacing: 1px;
+            display: none;
         }
 
-        .nav-dots {
-            display: flex;
-            gap: 0.5rem;
+        .slide-counter {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--secondary);
+            padding: 0.4rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
 
-        .nav-dot {
-            width: 10px; height: 10px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.2);
-            cursor: pointer;
-            transition: all 0.3s;
+        /* Progress bar */
+        .progress-bar {
+            position: fixed;
+            top: 0; left: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--secondary), var(--payverse-teal));
+            z-index: 1001;
+            transition: width 0.3s ease;
         }
 
-        .nav-dot:hover, .nav-dot.active {
-            background: var(--secondary);
-            transform: scale(1.2);
-        }
-
-        /* Slides */
+        /* Slides - Mobile First */
         .slide {
             min-height: 100vh;
+            min-height: 100dvh;
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             justify-content: center;
-            padding: 6rem 2rem 4rem;
+            padding: 5rem 1.25rem 6rem;
             scroll-snap-align: start;
             position: relative;
+            overflow-y: auto;
         }
 
         .slide-content {
             max-width: 1200px;
             width: 100%;
-            opacity: 0;
-            transform: translateY(30px);
-            animation: fadeUp 0.8s ease forwards;
+            animation: fadeUp 0.6s ease forwards;
         }
 
         @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
         .slide-number {
-            font-size: 0.875rem;
+            display: inline-block;
+            font-size: 0.75rem;
             color: var(--secondary);
-            font-weight: 600;
-            letter-spacing: 3px;
+            font-weight: 700;
+            letter-spacing: 2px;
             text-transform: uppercase;
-            margin-bottom: 1rem;
+            margin-bottom: 0.75rem;
+            padding: 0.35rem 0.75rem;
+            background: rgba(16, 185, 129, 0.15);
+            border-radius: 20px;
         }
 
         h1 {
             font-family: 'Playfair Display', serif;
-            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-size: 2rem;
             font-weight: 700;
-            line-height: 1.1;
-            margin-bottom: 1.5rem;
+            line-height: 1.15;
+            margin-bottom: 1.25rem;
             background: linear-gradient(135deg, #fff 0%, var(--secondary) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -131,24 +164,25 @@
 
         h2 {
             font-family: 'Playfair Display', serif;
-            font-size: clamp(2rem, 4vw, 3rem);
+            font-size: 1.6rem;
             font-weight: 600;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
             color: #fff;
+            line-height: 1.2;
         }
 
         h3 {
-            font-size: 1.5rem;
+            font-size: 1.15rem;
             font-weight: 600;
-            margin-bottom: 1rem;
+            margin-bottom: 0.75rem;
             color: var(--secondary);
         }
 
         p {
-            font-size: 1.125rem;
-            line-height: 1.8;
+            font-size: 1rem;
+            line-height: 1.7;
             color: rgba(255,255,255,0.85);
-            margin-bottom: 1.5rem;
+            margin-bottom: 1.25rem;
         }
 
         .highlight {
@@ -156,92 +190,95 @@
             font-weight: 600;
         }
 
-        /* Logo Grid for Title */
+        /* Logo Grid */
         .partner-logos {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 2rem;
-            margin: 2rem 0;
+            gap: 1rem;
+            margin: 1.5rem 0;
             flex-wrap: wrap;
         }
 
         .partner-logo {
-            height: 60px;
+            height: 50px;
             width: auto;
             object-fit: contain;
+            border-radius: 8px;
         }
 
         .logo-x {
-            font-size: 2rem;
+            font-size: 1.5rem;
             color: var(--secondary);
             font-weight: 300;
         }
 
-        /* Stats Grid */
+        /* Stats Grid - Mobile Stack */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 2rem;
-            margin: 3rem 0;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin: 1.5rem 0;
         }
 
         .stat-card {
-            background: linear-gradient(135deg, rgba(201, 162, 39, 0.1) 0%, rgba(45, 90, 135, 0.1) 100%);
-            border: 1px solid rgba(201, 162, 39, 0.3);
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(20, 184, 166, 0.05) 100%);
+            border: 1px solid rgba(16, 185, 129, 0.25);
             border-radius: 16px;
-            padding: 2rem;
+            padding: 1.25rem;
             text-align: center;
-            transition: transform 0.3s;
+            transition: transform 0.2s, border-color 0.2s;
         }
 
-        .stat-card:hover {
-            transform: translateY(-5px);
+        .stat-card:active {
+            transform: scale(0.98);
+            border-color: var(--secondary);
         }
 
         .stat-card img {
-            width: 80px;
-            height: 80px;
+            width: 60px;
+            height: 60px;
             object-fit: contain;
-            margin-bottom: 1rem;
+            margin-bottom: 0.75rem;
             border-radius: 8px;
         }
 
         .stat-number {
             font-family: 'Playfair Display', serif;
-            font-size: 2.5rem;
+            font-size: 2rem;
             font-weight: 700;
             color: var(--secondary);
             display: block;
+            line-height: 1;
         }
 
         .stat-label {
-            font-size: 0.875rem;
+            font-size: 0.8rem;
             color: var(--gray);
             text-transform: uppercase;
             letter-spacing: 1px;
             margin-top: 0.5rem;
         }
 
-        /* Two Column */
+        /* Two Column - Stack on Mobile */
         .two-col {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 3rem;
-            margin: 2rem 0;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin: 1.5rem 0;
         }
 
         .col {
-            padding: 2rem;
+            padding: 1.25rem;
             background: rgba(255,255,255,0.03);
             border-radius: 16px;
-            border: 1px solid rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.08);
         }
 
         .col h4 {
             color: var(--secondary);
-            font-size: 1.25rem;
-            margin-bottom: 1rem;
+            font-size: 1.1rem;
+            margin-bottom: 0.75rem;
             display: flex;
             align-items: center;
             gap: 0.5rem;
@@ -250,39 +287,46 @@
         /* Lists */
         ul {
             list-style: none;
-            margin: 1.5rem 0;
+            margin: 1rem 0;
         }
 
         li {
-            padding: 0.75rem 0;
+            padding: 0.6rem 0;
             padding-left: 1.5rem;
             position: relative;
-            font-size: 1.05rem;
+            font-size: 0.95rem;
             color: rgba(255,255,255,0.85);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
         }
 
+        li:last-child { border-bottom: none; }
+
         li::before {
-            content: '▸';
+            content: '●';
             position: absolute;
             left: 0;
             color: var(--secondary);
-            font-weight: bold;
+            font-size: 0.6rem;
+            top: 0.8rem;
         }
 
-        /* Tables */
+        /* Tables - Mobile Scroll */
         .table-container {
             overflow-x: auto;
-            margin: 2rem 0;
+            margin: 1.5rem -1.25rem;
+            padding: 0 1.25rem;
+            -webkit-overflow-scrolling: touch;
         }
 
         table {
             width: 100%;
+            min-width: 400px;
             border-collapse: collapse;
-            font-size: 0.95rem;
+            font-size: 0.85rem;
         }
 
         th, td {
-            padding: 1rem;
+            padding: 0.875rem 0.75rem;
             text-align: left;
             border-bottom: 1px solid rgba(255,255,255,0.1);
         }
@@ -291,157 +335,271 @@
             color: var(--secondary);
             font-weight: 600;
             text-transform: uppercase;
-            font-size: 0.8rem;
+            font-size: 0.7rem;
             letter-spacing: 1px;
+            white-space: nowrap;
         }
 
-        tr:hover { background: rgba(255,255,255,0.02); }
+        tr:active { background: rgba(16, 185, 129, 0.1); }
 
-        /* Timeline */
+        /* Timeline - Horizontal Scroll on Mobile */
         .timeline {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 1.5rem;
-            margin: 2rem 0;
+            display: flex;
+            gap: 1rem;
+            margin: 1.5rem -1.25rem;
+            padding: 0 1.25rem 1rem;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
         }
 
         .timeline-item {
-            background: rgba(201, 162, 39, 0.1);
+            flex: 0 0 260px;
+            scroll-snap-align: start;
+            background: rgba(16, 185, 129, 0.1);
             border-left: 3px solid var(--secondary);
-            padding: 1.5rem;
+            padding: 1.25rem;
             border-radius: 0 12px 12px 0;
         }
 
         .timeline-phase {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: var(--secondary);
             text-transform: uppercase;
             letter-spacing: 2px;
             margin-bottom: 0.5rem;
+            font-weight: 600;
         }
 
-        .timeline-title { font-weight: 600; margin-bottom: 0.5rem; }
-        .timeline-desc { font-size: 0.9rem; color: var(--gray); }
+        .timeline-title { 
+            font-weight: 600; 
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+        
+        .timeline-desc { 
+            font-size: 0.85rem; 
+            color: var(--gray);
+            line-height: 1.5;
+        }
 
         /* CTA Box */
         .cta-box {
-            background: linear-gradient(135deg, var(--secondary) 0%, #d4af37 100%);
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--payverse-teal) 100%);
             color: var(--dark);
-            padding: 2.5rem;
-            border-radius: 20px;
+            padding: 1.5rem;
+            border-radius: 16px;
             text-align: center;
-            margin: 2rem 0;
+            margin: 1.5rem 0;
         }
 
         .cta-box h3 {
             color: var(--dark);
-            font-size: 1.75rem;
-            margin-bottom: 1rem;
+            font-size: 1.25rem;
+            margin-bottom: 0.75rem;
         }
 
         .cta-box p {
             color: rgba(0,0,0,0.8);
-            font-size: 1.1rem;
+            font-size: 0.95rem;
             margin: 0;
+            line-height: 1.6;
         }
 
         .cta-box img {
-            height: 60px;
+            height: 50px;
             width: auto;
-            margin-bottom: 1rem;
+            margin-bottom: 0.75rem;
             border-radius: 8px;
         }
 
         /* Quote */
         .quote {
             font-family: 'Playfair Display', serif;
-            font-size: 1.4rem;
+            font-size: 1.15rem;
             font-style: italic;
             color: var(--secondary);
-            border-left: 4px solid var(--secondary);
-            padding-left: 2rem;
-            margin: 2rem 0;
+            border-left: 3px solid var(--secondary);
+            padding-left: 1.25rem;
+            margin: 1.5rem 0;
+            line-height: 1.6;
         }
 
-        /* Footer nav */
-        .slide-nav {
-            position: fixed;
-            bottom: 2rem;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 1rem;
-            z-index: 1000;
-        }
-
-        .nav-btn {
-            background: rgba(201, 162, 39, 0.2);
-            border: 1px solid var(--secondary);
-            color: var(--secondary);
-            padding: 0.75rem 1.5rem;
-            border-radius: 50px;
-            cursor: pointer;
-            font-size: 0.875rem;
-            font-weight: 500;
-            transition: all 0.3s;
-        }
-
-        .nav-btn:hover {
-            background: var(--secondary);
-            color: var(--dark);
-        }
-
-        /* Progress bar */
-        .progress-bar {
-            position: fixed;
-            top: 0; left: 0;
-            height: 3px;
-            background: var(--secondary);
-            z-index: 1001;
-            transition: width 0.3s;
-        }
-
-        /* Platform Cards with Logos */
+        /* Platform Cards */
         .platform-card {
             background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.08);
             border-radius: 16px;
-            padding: 2rem;
+            padding: 1.25rem;
             text-align: center;
-            transition: transform 0.3s;
+            transition: border-color 0.2s;
         }
 
-        .platform-card:hover {
-            transform: translateY(-5px);
+        .platform-card:active {
             border-color: var(--secondary);
         }
 
         .platform-card img {
-            width: 100px;
-            height: 100px;
+            width: 70px;
+            height: 70px;
             object-fit: contain;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
+            border-radius: 8px;
         }
 
         .platform-card h3 {
-            margin-bottom: 1rem;
+            margin-bottom: 0.75rem;
         }
 
         .platform-card ul {
             text-align: left;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
         }
 
-        /* Responsive */
-        @media (max-width: 768px) {
-            .nav { padding: 0.75rem 1rem; }
-            .nav-logo { height: 32px; }
-            .partner-logos { gap: 1rem; }
-            .partner-logo { height: 40px; }
-            .slide { padding: 5rem 1rem 3rem; }
-            .stats-grid { grid-template-columns: 1fr; }
-            .two-col { grid-template-columns: 1fr; }
+        /* Bottom Navigation - Mobile */
+        .slide-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 0.75rem 1rem;
+            padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+            display: flex;
+            gap: 0.75rem;
+            background: rgba(15, 23, 42, 0.98);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(16, 185, 129, 0.2);
         }
+
+        .nav-btn {
+            flex: 1;
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: var(--secondary);
+            padding: 0.875rem 1rem;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .nav-btn:active {
+            background: var(--secondary);
+            color: var(--dark);
+            transform: scale(0.98);
+        }
+
+        .nav-dots-container {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            flex: 2;
+            align-items: center;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+        }
+
+        .nav-dot {
+            width: 8px; 
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .nav-dot.active {
+            background: var(--secondary);
+            width: 24px;
+            border-radius: 4px;
+        }
+
+        /* Swipe Indicator */
+        .swipe-hint {
+            position: fixed;
+            bottom: 5.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            color: var(--gray);
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            opacity: 0.7;
+            animation: bounce 2s infinite;
+            pointer-events: none;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(-5px); }
+        }
+
+        .swipe-hint.hidden { display: none; }
+
+        /* Desktop Overrides */
+        @media (min-width: 640px) {
+            .nav { padding: 1rem 1.5rem; }
+            .nav-logo { height: 40px; }
+            .nav-title { font-size: 1.15rem; }
+            .nav-subtitle { display: block; }
+            .slide { padding: 6rem 2rem 5rem; }
+            h1 { font-size: 2.5rem; }
+            h2 { font-size: 2rem; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .partner-logo { height: 60px; }
+        }
+
+        @media (min-width: 768px) {
+            .slide { 
+                padding: 6rem 2rem 4rem; 
+                align-items: center;
+            }
+            h1 { font-size: 3rem; }
+            h2 { font-size: 2.25rem; }
+            .stats-grid { grid-template-columns: repeat(3, 1fr); }
+            .two-col { grid-template-columns: repeat(2, 1fr); gap: 2rem; }
+            .timeline { 
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                margin: 2rem 0;
+                padding: 0;
+                overflow: visible;
+            }
+            .timeline-item { flex: none; }
+            .slide-nav {
+                bottom: 2rem;
+                left: 50%;
+                right: auto;
+                transform: translateX(-50%);
+                width: auto;
+                padding: 0.75rem;
+                border-radius: 50px;
+                border: 1px solid rgba(16, 185, 129, 0.2);
+                gap: 0.5rem;
+            }
+            .nav-btn { 
+                padding: 0.75rem 1.5rem;
+                border-radius: 50px;
+            }
+            .swipe-hint { display: none; }
+        }
+
+        @media (min-width: 1024px) {
+            h1 { font-size: 3.5rem; }
+            h2 { font-size: 2.5rem; }
+            .timeline { grid-template-columns: repeat(4, 1fr); }
+        }
+
+        /* Dark mode scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.3); border-radius: 3px; }
     </style>
 </head>
 <body>
@@ -451,12 +609,12 @@
     <nav class="nav">
         <div class="nav-left">
             <img src="payverse-logo.jpg" alt="PayVerse" class="nav-logo">
-            <div>
+            <div class="nav-text">
                 <div class="nav-title">PayVerse × PDAX</div>
-                <div class="nav-subtitle">Strategic Partnership Proposal</div>
+                <div class="nav-subtitle">Strategic Partnership</div>
             </div>
         </div>
-        <div class="nav-dots" id="navDots"></div>
+        <div class="slide-counter" id="slideCounter">1 / 12</div>
     </nav>
 
     <!-- SLIDE 1: Title -->
@@ -472,29 +630,29 @@
             
             <h1>The Philippine Gaming<br>Payments Revolution</h1>
             
-            <p class="quote" style="border: none; text-align: center; max-width: 800px; margin: 2rem auto;">
+            <p class="quote" style="border: none; text-align: center;">
                 "A strategic partnership unlocking direct access to the Philippines' largest untapped payment market: online gaming."
             </p>
             
-            <div class="stats-grid" style="max-width: 900px; margin: 3rem auto;">
+            <div class="stats-grid">
                 <div class="stat-card">
                     <span class="stat-number">₱410B</span>
-                    <div class="stat-label">Philippine Gaming GGR</div>
+                    <div class="stat-label">Gaming GGR</div>
                 </div>
                 <div class="stat-card">
                     <span class="stat-number">165%</span>
-                    <div class="stat-label">iGaming Growth Rate</div>
+                    <div class="stat-label">iGaming Growth</div>
                 </div>
                 <div class="stat-card">
                     <span class="stat-number">300M</span>
-                    <div class="stat-label">PHPT Tokens in Circulation</div>
+                    <div class="stat-label">PHPT Tokens</div>
                 </div>
             </div>
             
-            <p style="font-size: 1.25rem; margin-top: 2rem;">
+            <p style="margin-top: 1.5rem;">
                 <span class="highlight">Presented by Innovate Hub Philippines</span>
             </p>
-            <img src="innovatehub-logo.jpg" alt="Innovate Hub" style="height: 60px; margin-top: 1rem; border-radius: 8px;">
+            <img src="innovatehub-logo.jpg" alt="Innovate Hub" style="height: 50px; margin-top: 0.75rem; border-radius: 8px;">
         </div>
     </section>
 
@@ -502,37 +660,34 @@
     <section class="slide" id="slide2">
         <div class="slide-content">
             <div class="slide-number">Market Opportunity</div>
-            <h2>The ₱410 Billion Market Opportunity</h2>
+            <h2>The ₱410 Billion Market</h2>
             
-            <p>Two massive markets are converging, creating an unprecedented opportunity for innovation in payment infrastructure.</p>
+            <p>Two massive markets are converging — an unprecedented opportunity.</p>
             
             <div class="two-col">
                 <div class="col">
                     <h4>🎮 Gaming Industry</h4>
-                    <p>The Philippine gaming sector generates <span class="highlight">₱410 billion annually</span>, with iGaming experiencing explosive 165% year-over-year growth.</p>
                     <ul>
                         <li>₱410B total industry GGR</li>
-                        <li>165% iGaming segment growth</li>
-                        <li>Continuous expansion trajectory</li>
+                        <li>165% iGaming growth YoY</li>
+                        <li>Continuous expansion</li>
                     </ul>
                 </div>
                 <div class="col">
                     <h4>💸 Remittance Flows</h4>
-                    <p>The Philippines processes <span class="highlight">₱2.24 trillion</span> in annual remittances. Industry research indicates 5-15% of these flows are gaming-linked.</p>
                     <ul>
-                        <li>₱2.24T annual remittance volume</li>
-                        <li>₱112-336B gaming-linked flows</li>
-                        <li>OFW corridor opportunities</li>
+                        <li>₱2.24T annual volume</li>
+                        <li>₱112-336B gaming-linked</li>
+                        <li>OFW corridor opportunity</li>
                     </ul>
                 </div>
             </div>
             
             <div class="cta-box">
                 <img src="747-logo.png" alt="747 Live">
-                <h3>747 Live — Live Partner Data</h3>
-                <p>₱283 million monthly deposits • 324,000 transactions<br>
-                <strong>Critical Finding:</strong> 15-20% weekend volume loss due to payment failures<br>
-                ₱42-57 million monthly revenue leakage from GCash downtime during peak hours</p>
+                <h3>747 Live — Real Data</h3>
+                <p>₱283M monthly deposits • 324K transactions<br>
+                <strong>15-20% weekend volume loss</strong> due to payment failures</p>
             </div>
         </div>
     </section>
@@ -543,17 +698,14 @@
             <div class="slide-number">The Problem</div>
             <h2>Why Traditional Payments Fail</h2>
             
-            <p>Current payment infrastructure creates significant friction for gaming operators and players alike.</p>
-            
             <div class="two-col">
                 <div class="col">
-                    <h4>❌ Traditional Challenges</h4>
+                    <h4>❌ Challenges</h4>
                     <ul>
-                        <li>GCash delays during weekends</li>
-                        <li>Banks closed on holidays</li>
-                        <li>High transaction fees (2.5-3.5%)</li>
-                        <li>Chargeback risks (45-90 days)</li>
-                        <li>Limited operating hours</li>
+                        <li>GCash weekend delays</li>
+                        <li>Banks closed holidays</li>
+                        <li>High fees (2.5-3.5%)</li>
+                        <li>Chargeback risks</li>
                         <li>Settlement delays</li>
                     </ul>
                 </div>
@@ -563,17 +715,16 @@
                         <li>24/7 instant settlement</li>
                         <li>Zero chargeback risk</li>
                         <li>Ultra-low fees (0.5-1%)</li>
-                        <li>3-second confirmation via BSC</li>
+                        <li>3-second confirmation</li>
                         <li>Always-on infrastructure</li>
-                        <li>Real-time fund availability</li>
                     </ul>
                 </div>
             </div>
             
             <div class="cta-box">
-                <p style="font-size: 1.5rem; font-weight: 600; margin: 0;">
-                    ₱42-57 million in monthly revenue leakage at 747 Live alone.<br>
-                    <span style="color: var(--primary);">This is not theoretical — this is actual revenue loss.</span>
+                <p style="font-size: 1.1rem; font-weight: 600;">
+                    ₱42-57M monthly revenue leakage at 747 Live alone.<br>
+                    <span style="opacity: 0.8;">This is actual revenue loss.</span>
                 </p>
             </div>
         </div>
@@ -585,47 +736,41 @@
             <div class="slide-number">Our Ecosystem</div>
             <h2>Three Platforms, One Vision</h2>
             
-            <p>An integrated ecosystem providing end-to-end control from payment to settlement.</p>
-            
             <div class="stats-grid">
                 <div class="platform-card">
                     <img src="payverse-logo.jpg" alt="PayVerse">
                     <h3>PayVerse</h3>
                     <ul>
-                        <li>PHPT-powered digital wallet</li>
-                        <li>P2P transfers & QR payments</li>
-                        <li>AI-powered customer support</li>
-                        <li>Direct 747 Live integration</li>
-                        <li>Mobile-first architecture</li>
+                        <li>PHPT-powered wallet</li>
+                        <li>P2P & QR payments</li>
+                        <li>AI support</li>
+                        <li>747 Live integration</li>
                     </ul>
                 </div>
                 <div class="platform-card">
                     <img src="platapay-logo.png" alt="PlataPay">
                     <h3>PlataPay</h3>
                     <ul>
-                        <li>BSP-registered (OPSCR-2025-0005)</li>
-                        <li>80,000+ agent network nationwide</li>
-                        <li>Bills payment & remittance</li>
-                        <li>Cash-in/cash-out services</li>
-                        <li>Dubai OFW corridor operations</li>
+                        <li>BSP-registered</li>
+                        <li>80,000+ agents</li>
+                        <li>Bills & remittance</li>
+                        <li>Cash in/out</li>
                     </ul>
                 </div>
                 <div class="platform-card">
                     <img src="747-logo.png" alt="747 Live">
                     <h3>747 Live</h3>
                     <ul>
-                        <li>Top-tier agent status</li>
-                        <li>₱283M monthly transaction volume</li>
-                        <li>24/7 gaming operations</li>
-                        <li>Real transaction data</li>
-                        <li>Live integration ready</li>
+                        <li>Top-tier agent</li>
+                        <li>₱283M monthly</li>
+                        <li>24/7 operations</li>
+                        <li>Live data ready</li>
                     </ul>
                 </div>
             </div>
             
-            <p style="text-align: center; font-size: 1.25rem; margin-top: 2rem;">
-                <span class="highlight">100% end-to-end control from payment to settlement.</span><br>
-                PDAX partnership provides the regulatory framework for full compliance.
+            <p style="text-align: center; margin-top: 1rem;">
+                <span class="highlight">100% end-to-end control</span> from payment to settlement.
             </p>
         </div>
     </section>
@@ -634,43 +779,37 @@
     <section class="slide" id="slide5">
         <div class="slide-content">
             <div class="slide-number">Core Asset</div>
-            <h2>PHPT: The First PHP-Pegged Stablecoin</h2>
+            <h2>PHPT: PHP-Pegged Stablecoin</h2>
             
-            <div style="text-align: center; margin-bottom: 2rem;">
-                <img src="phpt-logo.jpg" alt="PHPT" style="height: 100px; border-radius: 12px;">
+            <div style="text-align: center; margin-bottom: 1.5rem;">
+                <img src="phpt-logo.jpg" alt="PHPT" style="height: 80px; border-radius: 12px;">
             </div>
-            
-            <p>PHPT represents a breakthrough in Philippine financial infrastructure — the first and only Philippine Peso-pegged stablecoin.</p>
             
             <div class="two-col">
                 <div class="col">
-                    <h4>Technical Specifications</h4>
+                    <h4>Technical Specs</h4>
                     <ul>
-                        <li>Binance Smart Chain (BSC) blockchain</li>
-                        <li>3-second settlement finality</li>
-                        <li>Below ₱6 transaction cost</li>
-                        <li>300 million circulating supply</li>
-                        <li>Smart contract verified</li>
+                        <li>Binance Smart Chain</li>
+                        <li>3-second settlement</li>
+                        <li>Below ₱6 tx cost</li>
+                        <li>300M supply</li>
                     </ul>
                 </div>
                 <div class="col">
-                    <h4>Collateralization (Verified)</h4>
+                    <h4>Collateral (Verified)</h4>
                     <ul>
-                        <li>₱284 million total collateral</li>
-                        <li>₱241 million USDT reserves</li>
-                        <li>₱42.8 million USDC reserves</li>
-                        <li>100%+ collateralization ratio</li>
-                        <li>On-chain verifiable (BscScan/Etherscan)</li>
+                        <li>₱284M total collateral</li>
+                        <li>₱241M USDT reserves</li>
+                        <li>₱42.8M USDC reserves</li>
+                        <li>100%+ ratio</li>
                     </ul>
                 </div>
             </div>
             
             <div class="cta-box">
-                <p style="margin: 0; font-size: 1.2rem;">
-                    <strong>100%+ Collateralized</strong> — fully transparent reserves visible on-chain.<br><br>
-                    Currently listed on Coinstore and LBank.<br>
-                    <span style="color: var(--primary); font-weight: 600;">PDAX listing represents the next growth milestone.</span>
-                </p>
+                <p><strong>100%+ Collateralized</strong> — on-chain verifiable<br>
+                Currently on Coinstore & LBank<br>
+                <span style="font-weight: 600;">PDAX listing = next milestone</span></p>
             </div>
         </div>
     </section>
@@ -681,27 +820,25 @@
             <div class="slide-number">Strategic Partnership</div>
             <h2>Why PDAX?</h2>
             
-            <div style="text-align: center; margin-bottom: 2rem;">
-                <img src="pdax-logo.jpg" alt="PDAX" style="height: 80px; border-radius: 8px;">
+            <div style="text-align: center; margin-bottom: 1.5rem;">
+                <img src="pdax-logo.jpg" alt="PDAX" style="height: 60px; border-radius: 8px;">
             </div>
-            
-            <p>PDAX represents the ideal strategic partner for three critical reasons:</p>
             
             <div class="stats-grid">
                 <div class="stat-card">
-                    <span style="font-size: 3rem; color: var(--secondary);">01</span>
-                    <h3 style="margin: 1rem 0;">Proven Momentum</h3>
-                    <p style="font-size: 0.95rem;">Toku partnership for stablecoin payroll. Codex for cross-border remittance. GCrypto integration reaching 80 million GCash users. Demonstrated execution capability.</p>
+                    <span class="stat-number">01</span>
+                    <div class="stat-label">Proven Momentum</div>
+                    <p style="font-size: 0.85rem; margin-top: 0.5rem; color: var(--gray);">Toku, Codex, GCrypto partnerships</p>
                 </div>
                 <div class="stat-card">
-                    <span style="font-size: 3rem; color: var(--secondary);">02</span>
-                    <h3 style="margin: 1rem 0;">Regulatory Strength</h3>
-                    <p style="font-size: 0.95rem;">BSP VASP license holder since 2017. SEC broker-dealer registration. Strongest compliance framework in the Philippines. Eliminates 12-18 month VASP application process.</p>
+                    <span class="stat-number">02</span>
+                    <div class="stat-label">Regulatory Strength</div>
+                    <p style="font-size: 0.85rem; margin-top: 0.5rem; color: var(--gray);">BSP VASP license since 2017</p>
                 </div>
                 <div class="stat-card">
-                    <span style="font-size: 3rem; color: var(--secondary);">03</span>
-                    <h3 style="margin: 1rem 0;">Gaming Gap</h3>
-                    <p style="font-size: 0.95rem;">Robust infrastructure but no gaming vertical expertise. Payverse ecosystem is the missing piece. Mutually beneficial strategic alignment.</p>
+                    <span class="stat-number">03</span>
+                    <div class="stat-label">Gaming Gap</div>
+                    <p style="font-size: 0.85rem; margin-top: 0.5rem; color: var(--gray);">Payverse fills the missing piece</p>
                 </div>
             </div>
         </div>
@@ -717,15 +854,15 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>Monthly Volume</th>
-                            <th>Revenue Split</th>
-                            <th>Transaction Rate</th>
+                            <th>Volume</th>
+                            <th>Split</th>
+                            <th>Rate</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
                             <td>₱0 - 500M</td>
-                            <td>60/40 (Payverse/PDAX)</td>
+                            <td>60/40</td>
                             <td>0.40%</td>
                         </tr>
                         <tr>
@@ -742,25 +879,21 @@
                 </table>
             </div>
             
-            <p style="text-align: center; margin: 2rem 0;">
-                Higher volume triggers lower rates — <span class="highlight">fair economics for both parties.</span>
-            </p>
-            
             <div class="two-col">
                 <div class="col">
-                    <h4>Exclusivity Terms</h4>
+                    <h4>Exclusivity</h4>
                     <ul>
-                        <li>24-month Philippine iGaming exclusivity</li>
-                        <li>Right of first refusal for SEA expansion</li>
-                        <li>Co-marketing opportunities</li>
+                        <li>24-month PH iGaming</li>
+                        <li>First refusal SEA</li>
+                        <li>Co-marketing</li>
                     </ul>
                 </div>
                 <div class="col">
-                    <h4>Strategic Value</h4>
+                    <h4>Value</h4>
                     <ul>
-                        <li>₱4.2-8.4B regulatory cost avoidance (5 years)</li>
-                        <li>No VASP application required</li>
-                        <li>12-18 months time-to-market savings</li>
+                        <li>₱4.2-8.4B cost avoidance</li>
+                        <li>No VASP application</li>
+                        <li>12-18 mo. saved</li>
                     </ul>
                 </div>
             </div>
@@ -777,41 +910,35 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>Competitor</th>
+                            <th>Player</th>
                             <th>Strength</th>
-                            <th>Limitation</th>
+                            <th>Gap</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
                             <td><strong>GCash</strong></td>
                             <td>94M users</td>
-                            <td>Basic crypto, no gaming focus</td>
+                            <td>No gaming focus</td>
                         </tr>
                         <tr>
                             <td><strong>Maya</strong></td>
-                            <td>Digital banking license</td>
-                            <td>No agent network, no crypto</td>
+                            <td>Banking license</td>
+                            <td>No agents/crypto</td>
                         </tr>
                         <tr>
                             <td><strong>Coins.ph</strong></td>
-                            <td>Strong crypto offering</td>
-                            <td>No agent network, no gaming</td>
-                        </tr>
-                        <tr style="background: rgba(201, 162, 39, 0.1);">
-                            <td><strong>Payverse</strong></td>
-                            <td colspan="2"><span class="highlight">Only platform with: 80,000+ agents, PHPT-native, gaming-specialized, 24/7 settlement, 0.5-1% fees</span></td>
+                            <td>Strong crypto</td>
+                            <td>No gaming</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
             
             <div class="cta-box">
-                <p style="margin: 0; font-size: 1.25rem;">
-                    <strong>12-18 month head start.</strong><br><br>
-                    Competitors would need to obtain VASP licenses, build agent networks, and negotiate gaming partnerships.
-                    By the time they launch, <span style="color: var(--primary);">our network effects will be locked in.</span>
-                </p>
+                <p><strong>12-18 month head start</strong><br>
+                Competitors need VASP licenses, agent networks, gaming partnerships.<br>
+                <span style="font-weight: 600;">Our network effects lock in first.</span></p>
             </div>
         </div>
     </section>
@@ -822,59 +949,51 @@
             <div class="slide-number">Financial Projections</div>
             <h2>Revenue Opportunity</h2>
             
-            <h3 style="margin-top: 2rem;">Volume Projections (Base Case)</h3>
             <div class="table-container">
                 <table>
                     <thead>
                         <tr>
                             <th>Year</th>
-                            <th>Monthly Volume</th>
-                            <th>Growth Driver</th>
+                            <th>Monthly Vol</th>
+                            <th>Driver</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td>Year 1</td>
-                            <td>₱1.96 Billion</td>
-                            <td>747 Live integration</td>
+                            <td>Y1</td>
+                            <td>₱1.96B</td>
+                            <td>747 Live</td>
                         </tr>
                         <tr>
-                            <td>Year 2</td>
-                            <td>₱6.72 Billion</td>
-                            <td>Platform expansion</td>
+                            <td>Y2</td>
+                            <td>₱6.72B</td>
+                            <td>Expansion</td>
                         </tr>
                         <tr>
-                            <td>Year 3</td>
-                            <td>₱15.68 Billion</td>
-                            <td>Remittance corridors</td>
+                            <td>Y3</td>
+                            <td>₱15.68B</td>
+                            <td>Remittance</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
             
-            <h3 style="margin-top: 2rem;">Revenue @ 0.90% Blended Rate</h3>
             <div class="stats-grid">
                 <div class="stat-card">
                     <span class="stat-number">₱10.6M</span>
-                    <div class="stat-label">Payverse Year 1</div>
+                    <div class="stat-label">Year 1</div>
                 </div>
                 <div class="stat-card">
                     <span class="stat-number">₱36.3M</span>
-                    <div class="stat-label">Payverse Year 2</div>
+                    <div class="stat-label">Year 2</div>
                 </div>
                 <div class="stat-card">
                     <span class="stat-number">₱84.7M</span>
-                    <div class="stat-label">Payverse Year 3</div>
+                    <div class="stat-label">Year 3</div>
                 </div>
             </div>
             
-            <div class="cta-box">
-                <p style="margin: 0;">
-                    <strong>Unit Economics per ₱10,000 Transaction:</strong><br>
-                    ₱90-280 gross → ₱35-60 costs → <span style="color: var(--primary); font-size: 1.5rem; font-weight: 700;">₱55-220 net</span><br><br>
-                    That's <strong>70-75% margins</strong> — software-level economics, not traditional payments.
-                </p>
-            </div>
+            <p style="text-align: center;"><span class="highlight">70-75% margins</span> — software economics</p>
         </div>
     </section>
 
@@ -884,34 +1003,31 @@
             <div class="slide-number">90-Day Roadmap</div>
             <h2>Execution Timeline</h2>
             
-            <p>90-day implementation based on PDAX's proven Toku/Codex execution pattern.</p>
-            
             <div class="timeline">
                 <div class="timeline-item">
-                    <div class="timeline-phase">Phase 1 — Weeks 1-4</div>
+                    <div class="timeline-phase">Weeks 1-4</div>
                     <div class="timeline-title">Agreement & Setup</div>
-                    <div class="timeline-desc">Term sheet finalization, sandbox environment, API integration kickoff. Deliverable: Signed partnership agreement.</div>
+                    <div class="timeline-desc">Term sheet, sandbox, API kickoff</div>
                 </div>
                 <div class="timeline-item">
-                    <div class="timeline-phase">Phase 2 — Weeks 5-8</div>
-                    <div class="timeline-title">Technical Integration</div>
-                    <div class="timeline-desc">API integration, PDAX fiat on/off ramps, 747 Live testing, security audit. Deliverable: Technical integration complete.</div>
+                    <div class="timeline-phase">Weeks 5-8</div>
+                    <div class="timeline-title">Integration</div>
+                    <div class="timeline-desc">API, fiat ramps, 747 testing</div>
                 </div>
                 <div class="timeline-item">
-                    <div class="timeline-phase">Phase 3 — Weeks 9-12</div>
+                    <div class="timeline-phase">Weeks 9-12</div>
                     <div class="timeline-title">Testing & Pilot</div>
-                    <div class="timeline-desc">End-to-end testing, 10x load testing, compliance verification, limited pilot launch. Deliverable: Production ready.</div>
+                    <div class="timeline-desc">E2E testing, compliance, pilot</div>
                 </div>
                 <div class="timeline-item">
-                    <div class="timeline-phase">Phase 4 — Week 13+</div>
-                    <div class="timeline-title">Full Production</div>
-                    <div class="timeline-desc">Full production deployment, marketing launch, volume scaling. Deliverable: Live operations.</div>
+                    <div class="timeline-phase">Week 13+</div>
+                    <div class="timeline-title">Production</div>
+                    <div class="timeline-desc">Full deployment, scaling</div>
                 </div>
             </div>
             
-            <p style="text-align: center; margin-top: 2rem; font-size: 1.25rem;">
-                Engineering team ready for immediate deployment.<br>
-                <span class="highlight">Every week of delay = ₱10-15 million in leaked revenue.</span>
+            <p style="text-align: center; margin-top: 1rem;">
+                <span class="highlight">Every week delay = ₱10-15M leaked revenue</span>
             </p>
         </div>
     </section>
@@ -922,39 +1038,37 @@
             <div class="slide-number">Risk Management</div>
             <h2>Regulatory Strategy</h2>
             
-            <p>Transparent risk assessment with defined mitigation strategies.</p>
-            
             <div class="stats-grid">
                 <div class="stat-card">
-                    <span style="font-size: 2.5rem; color: #ef4444;">15%</span>
-                    <h3 style="margin: 1rem 0;">Restrictive</h3>
-                    <p style="font-size: 0.9rem;">BSP negative guidance on gaming payments.<br><br><strong>Mitigation:</strong> Pivot to remittance-only focus, orderly PHPT wind-down.</p>
+                    <span class="stat-number" style="color: #ef4444;">15%</span>
+                    <div class="stat-label">Restrictive</div>
+                    <p style="font-size: 0.8rem; margin-top: 0.5rem; color: var(--gray);">Pivot to remittance-only</p>
                 </div>
                 <div class="stat-card">
-                    <span style="font-size: 2.5rem; color: #f59e0b;">50%</span>
-                    <h3 style="margin: 1rem 0;">Status Quo</h3>
-                    <p style="font-size: 0.9rem;">Regulatory gray area persists.<br><br><strong>Mitigation:</strong> Accelerate growth, build operational precedent for future clarity.</p>
+                    <span class="stat-number" style="color: #f59e0b;">50%</span>
+                    <div class="stat-label">Status Quo</div>
+                    <p style="font-size: 0.8rem; margin-top: 0.5rem; color: var(--gray);">Accelerate growth</p>
                 </div>
                 <div class="stat-card">
-                    <span style="font-size: 2.5rem; color: #22c55e;">35%</span>
-                    <h3 style="margin: 1rem 0;">Supportive</h3>
-                    <p style="font-size: 0.9rem;">Clear regulatory framework emerges.<br><br><strong>Mitigation:</strong> Aggressive expansion, first-mover advantage.</p>
+                    <span class="stat-number" style="color: #22c55e;">35%</span>
+                    <div class="stat-label">Supportive</div>
+                    <p style="font-size: 0.8rem; margin-top: 0.5rem; color: var(--gray);">Aggressive expansion</p>
                 </div>
             </div>
             
             <div class="two-col">
                 <div class="col">
-                    <h4>Compliance Division</h4>
+                    <h4>Compliance Split</h4>
                     <ul>
-                        <li><strong>PDAX:</strong> KYC, AML, fiat compliance</li>
-                        <li><strong>Payverse:</strong> PAGCOR reporting, player verification, transaction monitoring</li>
+                        <li><strong>PDAX:</strong> KYC, AML, fiat</li>
+                        <li><strong>Payverse:</strong> PAGCOR, player verification</li>
                     </ul>
                 </div>
                 <div class="col">
-                    <h4>Fallback Options</h4>
+                    <h4>Fallback</h4>
                     <ul>
-                        <li>If PDAX fees exceed 0.50% — Coins.ph alternative ready</li>
-                        <li>Multiple exchange relationships maintained</li>
+                        <li>Coins.ph alternative ready</li>
+                        <li>Multiple exchange relationships</li>
                     </ul>
                 </div>
             </div>
@@ -974,73 +1088,80 @@
             
             <h1>Let's Build the<br>Future Together</h1>
             
-            <div class="stats-grid" style="max-width: 800px; margin: 3rem auto;">
+            <div class="stats-grid">
                 <div class="stat-card">
                     <span class="stat-number">90</span>
                     <div class="stat-label">Days to Live</div>
                 </div>
                 <div class="stat-card">
                     <span class="stat-number">24</span>
-                    <div class="stat-label">Months Exclusivity</div>
+                    <div class="stat-label">Months Exclusive</div>
                 </div>
                 <div class="stat-card">
                     <span class="stat-number">₱95B+</span>
-                    <div class="stat-label">Addressable Market</div>
+                    <div class="stat-label">Market Size</div>
                 </div>
             </div>
             
-            <p class="quote" style="border: none; text-align: center; max-width: 800px; margin: 2rem auto;">
-                "The regulatory window is open now. Infrastructure is ready. ₱283 million flows through 747 Live monthly — real volume, real revenue. This is not hypothetical. This is the opportunity before us."
+            <p class="quote" style="border: none; text-align: center;">
+                "The window is open. ₱283M flows monthly — real volume, real revenue."
             </p>
             
-            <div class="cta-box" style="max-width: 600px; margin: 3rem auto;">
-                <h3 style="color: var(--dark);">Ready to discuss terms?</h3>
-                <p style="color: rgba(0,0,0,0.8); margin: 0;">Thank you for your time.</p>
+            <div class="cta-box" style="max-width: 400px; margin: 1.5rem auto;">
+                <h3>Ready to discuss?</h3>
+                <p>Thank you for your time.</p>
             </div>
             
-            <div style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1);">
-                <img src="innovatehub-logo.jpg" alt="Innovate Hub" style="height: 50px; border-radius: 8px; margin-bottom: 1rem;">
-                <p style="font-size: 0.9rem; color: var(--gray);">
-                    PayVerse × PDAX Partnership Proposal | February 2026<br>
-                    Presented by Innovate Hub Philippines
+            <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1);">
+                <img src="innovatehub-logo.jpg" alt="Innovate Hub" style="height: 40px; border-radius: 8px;">
+                <p style="font-size: 0.8rem; color: var(--gray); margin-top: 0.75rem;">
+                    PayVerse × PDAX | February 2026<br>
+                    Innovate Hub Philippines
                 </p>
             </div>
         </div>
     </section>
 
-    <!-- Slide Navigation -->
+    <!-- Swipe Hint -->
+    <div class="swipe-hint" id="swipeHint">
+        <span>↑ Swipe to navigate ↓</span>
+    </div>
+
+    <!-- Bottom Navigation -->
     <div class="slide-nav">
-        <button class="nav-btn" onclick="prevSlide()">← Previous</button>
+        <button class="nav-btn" onclick="prevSlide()">← Prev</button>
+        <div class="nav-dots-container" id="navDots"></div>
         <button class="nav-btn" onclick="nextSlide()">Next →</button>
     </div>
 
     <script>
-        // Navigation dots
         const totalSlides = 12;
         const navDots = document.getElementById('navDots');
-        
+        const slideCounter = document.getElementById('slideCounter');
+        const progressBar = document.getElementById('progress');
+        const swipeHint = document.getElementById('swipeHint');
+        const slides = document.querySelectorAll('.slide');
+        let currentSlide = 1;
+
+        // Create nav dots
         for (let i = 1; i <= totalSlides; i++) {
             const dot = document.createElement('div');
-            dot.className = 'nav-dot';
+            dot.className = 'nav-dot' + (i === 1 ? ' active' : '');
             dot.onclick = () => goToSlide(i);
             navDots.appendChild(dot);
         }
 
-        // Progress bar
-        const progressBar = document.getElementById('progress');
-        const slides = document.querySelectorAll('.slide');
-        let currentSlide = 1;
-
-        function updateProgress() {
-            const scrollTop = window.scrollY;
-            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-            const progress = (scrollTop / docHeight) * 100;
+        function updateUI() {
+            slideCounter.textContent = `${currentSlide} / ${totalSlides}`;
+            const progress = ((currentSlide - 1) / (totalSlides - 1)) * 100;
             progressBar.style.width = progress + '%';
             
-            const dots = document.querySelectorAll('.nav-dot');
-            dots.forEach((dot, index) => {
+            document.querySelectorAll('.nav-dot').forEach((dot, index) => {
                 dot.classList.toggle('active', index + 1 === currentSlide);
             });
+
+            // Hide swipe hint after first navigation
+            if (currentSlide > 1) swipeHint.classList.add('hidden');
         }
 
         function goToSlide(n) {
@@ -1048,6 +1169,7 @@
             if (slide) {
                 slide.scrollIntoView({ behavior: 'smooth' });
                 currentSlide = n;
+                updateUI();
             }
         }
 
@@ -1069,33 +1191,50 @@
                 prevSlide();
             } else if (e.key >= '1' && e.key <= '9') {
                 goToSlide(parseInt(e.key));
+            } else if (e.key === '0') {
+                goToSlide(10);
             }
         });
 
-        // Update current slide on scroll
+        // Intersection Observer for scroll detection
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
-                if (entry.isIntersecting) {
+                if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
                     const id = entry.target.id;
                     currentSlide = parseInt(id.replace('slide', ''));
-                    updateProgress();
+                    updateUI();
                 }
             });
         }, { threshold: 0.5 });
 
         slides.forEach(slide => observer.observe(slide));
-        updateProgress();
 
-        // Touch swipe support
+        // Touch swipe support (improved)
         let touchStartY = 0;
+        let touchStartTime = 0;
+        
         document.addEventListener('touchstart', (e) => {
             touchStartY = e.changedTouches[0].screenY;
-        });
+            touchStartTime = Date.now();
+        }, { passive: true });
+
         document.addEventListener('touchend', (e) => {
             const touchEndY = e.changedTouches[0].screenY;
-            if (touchStartY - touchEndY > 50) nextSlide();
-            else if (touchEndY - touchStartY > 50) prevSlide();
-        });
+            const timeDiff = Date.now() - touchStartTime;
+            const distance = touchStartY - touchEndY;
+            
+            // Quick swipe detection
+            if (timeDiff < 300 && Math.abs(distance) > 50) {
+                if (distance > 0) nextSlide();
+                else prevSlide();
+            }
+        }, { passive: true });
+
+        // Initial update
+        updateUI();
+
+        // Hide swipe hint after 5 seconds
+        setTimeout(() => swipeHint.classList.add('hidden'), 5000);
     </script>
 </body>
 </html>

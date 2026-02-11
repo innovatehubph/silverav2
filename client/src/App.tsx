@@ -19,6 +19,7 @@ import Profile from './pages/Profile';
 import Orders from './pages/Orders';
 import OrderDetail from './pages/OrderDetail';
 import OrderSuccess from './pages/OrderSuccess';
+import PaymentStatus from './pages/PaymentStatus';
 import Wishlist from './pages/Wishlist';
 import Contact from './pages/Contact';
 import FAQ from './pages/FAQ';
@@ -67,6 +68,7 @@ function App() {
         <Route path="/orders" element={<RequireAuth><MainLayout><Orders /></MainLayout></RequireAuth>} />
         <Route path="/orders/:id" element={<RequireAuth><MainLayout><OrderDetail /></MainLayout></RequireAuth>} />
         <Route path="/order-success" element={<MainLayout><OrderSuccess /></MainLayout>} />
+        <Route path="/payment/:ref" element={<RequireAuth><MainLayout><PaymentStatus /></MainLayout></RequireAuth>} />
         <Route path="/wishlist" element={<RequireAuth><MainLayout><Wishlist /></MainLayout></RequireAuth>} />
         <Route path="/contact" element={<MainLayout><Contact /></MainLayout>} />
         <Route path="/faq" element={<MainLayout><FAQ /></MainLayout>} />

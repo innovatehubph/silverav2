@@ -8,9 +8,9 @@ export default function Cart() {
   if (items.length === 0) {
     return (
       <div className="container-custom py-16 text-center">
-        <ShoppingBag className="w-16 h-16 mx-auto text-gray-300 mb-4" />
+        <ShoppingBag className="w-16 h-16 mx-auto text-txt-tertiary mb-4" />
         <h1 className="section-title">Your Cart is Empty</h1>
-        <p className="text-gray-600 mb-8">Add some items to get started</p>
+        <p className="text-txt-secondary mb-8">Add some items to get started</p>
         <Link to="/shop" className="btn-primary">Continue Shopping</Link>
       </div>
     );
@@ -32,12 +32,12 @@ export default function Cart() {
               
               <div className="flex-grow">
                 <h3 className="font-semibold">{item.name}</h3>
-                <p className="text-gray-600">₱{(item.sale_price || item.price).toFixed(2)}</p>
+                <p className="text-txt-secondary">₱{(item.sale_price || item.price).toFixed(2)}</p>
                 
                 <div className="flex items-center gap-2 mt-2">
                   <button
                     onClick={() => updateQuantity(item.product_id, item.quantity - 1)}
-                    className="p-1 border rounded hover:bg-gray-100"
+                    className="p-1 border border-bdr rounded hover:bg-bg-hover"
                   >
                     <Minus className="w-4 h-4" />
                   </button>
@@ -46,7 +46,7 @@ export default function Cart() {
                   
                   <button
                     onClick={() => updateQuantity(item.product_id, item.quantity + 1)}
-                    className="p-1 border rounded hover:bg-gray-100"
+                    className="p-1 border border-bdr rounded hover:bg-bg-hover"
                   >
                     <Plus className="w-4 h-4" />
                   </button>
@@ -55,7 +55,7 @@ export default function Cart() {
               
               <button
                 onClick={() => removeItem(item.product_id)}
-                className="p-2 text-red-500 hover:bg-red-50 rounded"
+                className="p-2 text-red-500 hover:bg-red-500/10 rounded"
               >
                 <Trash2 className="w-5 h-5" />
               </button>

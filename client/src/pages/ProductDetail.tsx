@@ -107,7 +107,7 @@ export default function ProductDetail() {
       <div className="container-custom py-8 animate-fade-in">
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-gray-600 hover:text-primary-600 mb-6"
+          className="flex items-center gap-2 text-txt-secondary hover:text-gold mb-6"
         >
           <ArrowLeft className="w-5 h-5" />
           Back
@@ -116,7 +116,7 @@ export default function ProductDetail() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
         {/* Image Gallery */}
         <div>
-          <div className="relative aspect-square rounded-2xl overflow-hidden bg-gray-100">
+          <div className="relative aspect-square rounded-2xl overflow-hidden bg-bg-secondary">
             <OptimizedImage
               src={images[activeImage]}
               alt={product.name}
@@ -138,7 +138,7 @@ export default function ProductDetail() {
                   key={idx}
                   onClick={() => setActiveImage(idx)}
                   className={`w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 border-2 transition-all ${
-                    activeImage === idx ? 'border-primary-600' : 'border-transparent'
+                    activeImage === idx ? 'border-gold' : 'border-transparent'
                   }`}
                 >
                   <OptimizedImage
@@ -156,8 +156,8 @@ export default function ProductDetail() {
         {/* Product Info */}
         <div className="space-y-6">
           <div>
-            <p className="text-gray-500 text-sm mb-2">{product.category_name || 'Category'}</p>
-            <h1 className="text-3xl md:text-4xl font-serif font-bold text-gray-900">
+            <p className="text-txt-tertiary text-sm mb-2">{product.category_name || 'Category'}</p>
+            <h1 className="text-3xl md:text-4xl font-serif font-bold text-txt-primary">
               {product.name}
             </h1>
             
@@ -167,44 +167,44 @@ export default function ProductDetail() {
                   <Star key={star} className="w-5 h-5 fill-gold-400 text-gold-400" />
                 ))}
               </div>
-              <span className="text-gray-500">(24 reviews)</span>
+              <span className="text-txt-tertiary">(24 reviews)</span>
             </div>
           </div>
 
           <div className="flex items-baseline gap-3">
-            <span className="text-4xl font-bold text-gray-900">
+            <span className="text-4xl font-bold text-txt-primary">
               ₱{(product.sale_price || product.price).toFixed(2)}
             </span>
             {product.sale_price && product.price !== product.sale_price && (
-              <span className="text-xl text-gray-400 line-through">
+              <span className="text-xl text-txt-tertiary line-through">
                 ₱{product.price.toFixed(2)}
               </span>
             )}
           </div>
 
-          <p className="text-gray-600 leading-relaxed">
+          <p className="text-txt-secondary leading-relaxed">
             {product.description || 'Premium quality product with excellent craftsmanship. Made with the finest materials for lasting durability and style.'}
           </p>
 
           {/* Quantity */}
           <div className="flex items-center gap-4">
-            <span className="text-gray-700 font-medium">Quantity:</span>
-            <div className="flex items-center border rounded-lg">
+            <span className="text-txt-secondary font-medium">Quantity:</span>
+            <div className="flex items-center border border-bdr rounded-lg">
               <button
                 onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                className="p-3 hover:bg-gray-100"
+                className="p-3 hover:bg-bg-hover"
               >
                 <Minus className="w-4 h-4" />
               </button>
               <span className="w-12 text-center font-medium">{quantity}</span>
               <button
                 onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
-                className="p-3 hover:bg-gray-100"
+                className="p-3 hover:bg-bg-hover"
               >
                 <Plus className="w-4 h-4" />
               </button>
             </div>
-            <span className="text-gray-500 text-sm">
+            <span className="text-txt-tertiary text-sm">
               {product.stock} items available
             </span>
           </div>
@@ -229,35 +229,35 @@ export default function ProductDetail() {
 
           {/* Secondary Actions */}
           <div className="flex gap-4 pt-2">
-            <button className="flex items-center gap-2 text-gray-600 hover:text-red-500 transition-colors">
+            <button className="flex items-center gap-2 text-txt-tertiary hover:text-red-400 transition-colors">
               <Heart className="w-5 h-5" />
               Add to Wishlist
             </button>
-            <button className="flex items-center gap-2 text-gray-600 hover:text-primary-600 transition-colors">
+            <button className="flex items-center gap-2 text-txt-tertiary hover:text-gold transition-colors">
               <Share2 className="w-5 h-5" />
               Share
             </button>
           </div>
 
           {/* Features */}
-          <div className="border-t pt-6 mt-6">
+          <div className="border-t border-bdr pt-6 mt-6">
             <div className="grid grid-cols-2 gap-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
-                  <span className="text-primary-600 text-lg">🚚</span>
+                <div className="w-10 h-10 bg-gold/10 rounded-full flex items-center justify-center">
+                  <span className="text-gold text-lg">🚚</span>
                 </div>
                 <div>
                   <p className="font-medium">Free Shipping</p>
-                  <p className="text-sm text-gray-500">On orders over ₱1,000</p>
+                  <p className="text-sm text-txt-tertiary">On orders over ₱1,000</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
-                  <span className="text-primary-600 text-lg">↩️</span>
+                <div className="w-10 h-10 bg-gold/10 rounded-full flex items-center justify-center">
+                  <span className="text-gold text-lg">↩️</span>
                 </div>
                 <div>
                   <p className="font-medium">Easy Returns</p>
-                  <p className="text-sm text-gray-500">30-day return policy</p>
+                  <p className="text-sm text-txt-tertiary">30-day return policy</p>
                 </div>
               </div>
             </div>

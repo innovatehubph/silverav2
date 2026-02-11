@@ -39,20 +39,20 @@ export default function Orders() {
       case 'processing':
         return <Clock className="w-5 h-5 text-yellow-500" />;
       default:
-        return <Package className="w-5 h-5 text-gray-500" />;
+        return <Package className="w-5 h-5 text-txt-tertiary" />;
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'delivered':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-900/30 text-green-400';
       case 'shipped':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-blue-900/30 text-blue-400';
       case 'processing':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-yellow-900/30 text-yellow-400';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-bg-tertiary text-txt-tertiary';
     }
   };
 
@@ -75,11 +75,11 @@ export default function Orders() {
   if (orders.length === 0) {
     return (
       <div className="container-custom py-16 text-center">
-        <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Package className="w-10 h-10 text-gray-400" />
+        <div className="w-20 h-20 bg-bg-tertiary rounded-full flex items-center justify-center mx-auto mb-4">
+          <Package className="w-10 h-10 text-txt-tertiary" />
         </div>
         <h1 className="section-title">No Orders Yet</h1>
-        <p className="text-gray-600 mb-6">You haven't placed any orders yet.</p>
+        <p className="text-txt-secondary mb-6">You haven't placed any orders yet.</p>
         <Link to="/shop" className="btn-primary">
           Start Shopping
         </Link>
@@ -98,7 +98,7 @@ export default function Orders() {
             to={`/orders/${order.id}`}
             className="card p-6 flex items-center gap-4 hover:shadow-lg transition-shadow"
           >
-            <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+            <div className="w-12 h-12 bg-bg-tertiary rounded-full flex items-center justify-center">
               {getStatusIcon(order.status)}
             </div>
 
@@ -110,7 +110,7 @@ export default function Orders() {
                 </span>
               </div>
               
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-txt-tertiary">
                 {new Date(order.created_at).toLocaleDateString('en-PH', {
                   year: 'numeric',
                   month: 'long',
@@ -118,14 +118,14 @@ export default function Orders() {
                 })}
               </p>
               
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm text-txt-secondary mt-1">
                 {order.items?.length || 0} item(s)
               </p>
             </div>
 
             <div className="text-right">
               <p className="font-bold text-lg">₱{order.total.toFixed(2)}</p>
-              <ChevronRight className="w-5 h-5 text-gray-400 ml-auto" />
+              <ChevronRight className="w-5 h-5 text-txt-tertiary ml-auto" />
             </div>
           </Link>
         ))}
