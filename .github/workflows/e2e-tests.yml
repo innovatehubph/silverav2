@@ -41,22 +41,9 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps ${{ matrix.browser }}
 
-      - name: Start server
-        run: |
-          DATABASE_PATH=./data/silvera-test.db node server/index.js &
-          echo "Waiting for server..."
-          for i in $(seq 1 30); do
-            if curl -s http://localhost:3865/api/products > /dev/null 2>&1; then
-              echo "Server ready on port 3865"
-              break
-            fi
-            sleep 2
-          done
-
       - name: Run E2E tests
         run: npx playwright test --project=${{ matrix.browser }}
         env:
-          CI: 'true'
           DATABASE_PATH: ./data/silvera-test.db
 
       - name: Upload test results
