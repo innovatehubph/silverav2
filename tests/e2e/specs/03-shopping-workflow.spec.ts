@@ -17,6 +17,7 @@ test.describe('Shopping Workflows', () => {
     const shopPage = new ShopPage(page);
     await shopPage.navigate();
     await page.waitForLoadState('domcontentloaded');
+    await page.locator('a[href^="/product/"]').first().waitFor({ timeout: 10000 }).catch(() => {});
 
     const count = await shopPage.getProductsCount();
     expect(count).toBeGreaterThan(0);
@@ -26,6 +27,7 @@ test.describe('Shopping Workflows', () => {
     const shopPage = new ShopPage(page);
     await shopPage.navigate();
     await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(2000);
 
     const categoryTab = shopPage.categoryTabs.first();
     if (await categoryTab.isVisible()) {
@@ -41,6 +43,7 @@ test.describe('Shopping Workflows', () => {
     const productPage = new ProductDetailPage(page);
     await productPage.navigate(1);
     await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(2000);
 
     await expect(productPage.productName).toBeVisible();
     const name = await productPage.productName.textContent();
@@ -54,6 +57,7 @@ test.describe('Shopping Workflows', () => {
     const productPage = new ProductDetailPage(page);
     await productPage.navigate(1);
     await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(2000);
 
     const sizeCount = await productPage.sizeButtons.count();
     if (sizeCount > 0) {
@@ -89,6 +93,7 @@ test.describe('Shopping Workflows', () => {
     const cartPage = new CartPage(page);
     await cartPage.navigate();
     await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(2000);
 
     const itemCount = await cartPage.getCartItemsCount();
     expect(itemCount).toBeGreaterThan(0);
@@ -101,6 +106,7 @@ test.describe('Shopping Workflows', () => {
     const cartPage = new CartPage(page);
     await cartPage.navigate();
     await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(2000);
 
     const sizeBadges = await cartPage.sizeBadges.count();
     const colorBadges = await cartPage.colorBadges.count();
@@ -114,6 +120,7 @@ test.describe('Shopping Workflows', () => {
     const cartPage = new CartPage(page);
     await cartPage.navigate();
     await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(2000);
 
     const initialCount = await cartPage.getCartItemsCount();
     expect(initialCount).toBeGreaterThan(0);
@@ -131,6 +138,7 @@ test.describe('Shopping Workflows', () => {
     const cartPage = new CartPage(page);
     await cartPage.navigate();
     await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(2000);
 
     const isEmpty = await cartPage.isCartEmpty();
     expect(isEmpty).toBeTruthy();
@@ -142,6 +150,7 @@ test.describe('Shopping Workflows', () => {
     const cartPage = new CartPage(page);
     await cartPage.navigate();
     await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(2000);
 
     if (await cartPage.continueShoppingLink.isVisible()) {
       await cartPage.continueShoppingLink.click();
@@ -154,6 +163,7 @@ test.describe('Shopping Workflows', () => {
     const productPage = new ProductDetailPage(page);
     await productPage.navigate(1);
     await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(2000);
 
     const priceText = await productPage.productPrice.textContent();
     expect(priceText).toMatch(/₱[\d,]+(\.\d{2})?/);

@@ -21,6 +21,7 @@ test.describe('Payment Flows', () => {
     const cartPage = new CartPage(page);
     await cartPage.navigate();
     await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(2000);
 
     if (await cartPage.checkoutLink.isVisible()) {
       await cartPage.checkoutLink.click();
@@ -36,6 +37,7 @@ test.describe('Payment Flows', () => {
     const checkoutPage = new CheckoutPage(page);
     await checkoutPage.navigate();
     await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(2000);
 
     const paymentLabels = await checkoutPage.paymentMethodLabels.count();
     expect(paymentLabels).toBeGreaterThan(0);
@@ -48,6 +50,7 @@ test.describe('Payment Flows', () => {
     const checkoutPage = new CheckoutPage(page);
     await checkoutPage.navigate();
     await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(2000);
 
     await checkoutPage.selectCOD();
     await expect(checkoutPage.codRadio).toBeChecked();
@@ -60,6 +63,7 @@ test.describe('Payment Flows', () => {
     const checkoutPage = new CheckoutPage(page);
     await checkoutPage.navigate();
     await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(2000);
 
     await checkoutPage.selectCOD();
     await checkoutPage.placeOrder();
@@ -77,6 +81,7 @@ test.describe('Payment Flows', () => {
     const checkoutPage = new CheckoutPage(page);
     await checkoutPage.navigate();
     await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(2000);
 
     const gcashVisible = await checkoutPage.gcashRadio.isVisible().catch(() => false);
     expect(gcashVisible).toBeTruthy();
@@ -89,6 +94,7 @@ test.describe('Payment Flows', () => {
     const checkoutPage = new CheckoutPage(page);
     await checkoutPage.navigate();
     await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(2000);
 
     const cardVisible = await checkoutPage.cardRadio.isVisible().catch(() => false);
     expect(cardVisible).toBeTruthy();
@@ -100,6 +106,7 @@ test.describe('Payment Flows', () => {
     const checkoutPage = new CheckoutPage(page);
     await checkoutPage.navigate();
     await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(2000);
 
     const emptyVisible = await checkoutPage.emptyCartMessage.isVisible().catch(() => false);
     const redirectedToCart = page.url().includes('/cart');
