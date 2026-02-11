@@ -23,38 +23,53 @@ export default function Cart() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-4">
           {items.map((item) => (
-            <div key={item.product_id} className="card p-4 flex gap-4">
+            <div key={`${item.product_id}-${item.size}-${item.color}`} className="card p-4 flex gap-4">
               <img
                 src={item.images || 'assets/images/product-images/01.webp'}
                 alt={item.name}
                 className="w-24 h-24 object-cover rounded-lg"
               />
-              
+
               <div className="flex-grow">
                 <h3 className="font-semibold">{item.name}</h3>
                 <p className="text-txt-secondary">₱{(item.sale_price || item.price).toFixed(2)}</p>
-                
+
+                {(item.size || item.color) && (
+                  <div className="flex gap-2 mt-1">
+                    {item.size && (
+                      <span className="text-xs bg-bg-tertiary text-txt-tertiary px-2 py-0.5 rounded-full">
+                        {item.size}
+                      </span>
+                    )}
+                    {item.color && (
+                      <span className="text-xs bg-bg-tertiary text-txt-tertiary px-2 py-0.5 rounded-full">
+                        {item.color}
+                      </span>
+                    )}
+                  </div>
+                )}
+
                 <div className="flex items-center gap-2 mt-2">
                   <button
-                    onClick={() => updateQuantity(item.product_id, item.quantity - 1)}
+                    onClick={() => updateQuantity(item.product_id, item.quantity - 1, item.size, item.color)}
                     className="p-1 border border-bdr rounded hover:bg-bg-hover"
                   >
                     <Minus className="w-4 h-4" />
                   </button>
-                  
+
                   <span className="w-8 text-center">{item.quantity}</span>
-                  
+
                   <button
-                    onClick={() => updateQuantity(item.product_id, item.quantity + 1)}
+                    onClick={() => updateQuantity(item.product_id, item.quantity + 1, item.size, item.color)}
                     className="p-1 border border-bdr rounded hover:bg-bg-hover"
                   >
                     <Plus className="w-4 h-4" />
                   </button>
                 </div>
               </div>
-              
+
               <button
-                onClick={() => removeItem(item.product_id)}
+                onClick={() => removeItem(item.product_id, item.size, item.color)}
                 className="p-2 text-red-500 hover:bg-red-500/10 rounded"
               >
                 <Trash2 className="w-5 h-5" />

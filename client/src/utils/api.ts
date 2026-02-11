@@ -105,4 +105,21 @@ export const wishlistApi = {
   remove: (productId: number) => api.delete(`/wishlist/${productId}`),
 };
 
+// Admin API
+export const adminApi = {
+  getDashboard: () => api.get('/admin/dashboard'),
+  getProducts: () => api.get('/admin/products'),
+  createProduct: (data: FormData) => api.post('/admin/products', data, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  }),
+  updateProduct: (id: number, data: FormData) => api.put(`/admin/products/${id}`, data, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  }),
+  deleteProduct: (id: number) => api.delete(`/admin/products/${id}`),
+  getOrders: () => api.get('/admin/orders'),
+  updateOrder: (id: number, data: { status?: string; payment_status?: string }) =>
+    api.put(`/admin/orders/${id}`, data),
+  getUsers: () => api.get('/admin/users'),
+};
+
 export default api;

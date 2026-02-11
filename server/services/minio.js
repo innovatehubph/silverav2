@@ -12,7 +12,7 @@ class MinIOService {
   constructor() {
     this.bucket = process.env.MINIO_BUCKET || 'silvera';
     // Use internal endpoint for uploads, public URL for generated links
-    this.endpoint = process.env.MINIO_INTERNAL_ENDPOINT || 'http://172.20.0.2:9000';
+    this.endpoint = process.env.MINIO_INTERNAL_ENDPOINT || 'http://innobase-minio-vu1n6w-minio-1:9000';
     this.publicUrl = process.env.MINIO_PUBLIC_URL || 'https://s3.innoserver.cloud';
     
     this.client = new S3Client({

@@ -2,12 +2,56 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Product, CartItem, User } from '../types';
 
+// =============================================================================
+// THEME STORE
+// =============================================================================
+
+type Theme = 'dark' | 'light';
+
+interface ThemeStore {
+  theme: Theme;
+  setTheme: (theme: Theme) => void;
+  toggleTheme: () => void;
+}
+
+export const useThemeStore = create<ThemeStore>()(
+  persist(
+    (set, get) => ({
+      theme: 'dark',
+      
+      setTheme: (theme) => {
+        document.documentElement.setAttribute('data-theme', theme);
+        set({ theme });
+      },
+      
+      toggleTheme: () => {
+        const newTheme = get().theme === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', newTheme);
+        set({ theme: newTheme });
+      },
+    }),
+    {
+      name: 'silvera-theme',
+      onRehydrateStorage: () => (state) => {
+        // Apply theme on page load
+        if (state?.theme) {
+          document.documentElement.setAttribute('data-theme', state.theme);
+        }
+      },
+    }
+  )
+);
+
+// =============================================================================
+// CART STORE
+// =============================================================================
+
 interface CartStore {
   items: CartItem[];
   isLoading: boolean;
-  addItem: (product: Product, quantity?: number, size?: string) => void;
-  removeItem: (productId: number) => void;
-  updateQuantity: (productId: number, quantity: number) => void;
+  addItem: (product: Product, quantity?: number, size?: string, color?: string) => void;
+  removeItem: (productId: number, size?: string, color?: string) => void;
+  updateQuantity: (productId: number, quantity: number, size?: string, color?: string) => void;
   clearCart: () => void;
   getTotalItems: () => number;
   getTotalPrice: () => number;
@@ -20,32 +64,34 @@ export const useCartStore = create<CartStore>()(
       items: [],
       isLoading: false,
 
-      addItem: (product, quantity = 1, size = 'M') => {
+      addItem: (product, quantity = 1, size, color) => {
         // Check authentication before adding to cart
         const authToken = localStorage.getItem('auth_token');
         if (!authToken) {
-          // Redirect to splash flow
           window.location.href = '/login';
           return;
         }
-        
+
         set((state) => {
-          const existingItem = state.items.find(
-            (item) => item.product_id === product.id && item.size === size
-          );
+          const matchItem = (item: CartItem) =>
+            item.product_id === product.id &&
+            item.size === size &&
+            item.color === color;
+
+          const existingItem = state.items.find(matchItem);
 
           if (existingItem) {
             return {
               items: state.items.map((item) =>
-                item.product_id === product.id && item.size === size
+                matchItem(item)
                   ? { ...item, quantity: item.quantity + quantity }
                   : item
               ),
             };
           }
 
-          const images = typeof product.images === 'string' 
-            ? product.images 
+          const images = typeof product.images === 'string'
+            ? product.images
             : product.images?.[0] || '';
 
           return {
@@ -59,26 +105,31 @@ export const useCartStore = create<CartStore>()(
                 quantity,
                 images,
                 size,
+                color,
               },
             ],
           };
         });
       },
 
-      removeItem: (productId) => {
+      removeItem: (productId, size, color) => {
         set((state) => ({
-          items: state.items.filter((item) => item.product_id !== productId),
+          items: state.items.filter((item) =>
+            !(item.product_id === productId && item.size === size && item.color === color)
+          ),
         }));
       },
 
-      updateQuantity: (productId, quantity) => {
+      updateQuantity: (productId, quantity, size, color) => {
         if (quantity <= 0) {
-          get().removeItem(productId);
+          get().removeItem(productId, size, color);
           return;
         }
         set((state) => ({
           items: state.items.map((item) =>
-            item.product_id === productId ? { ...item, quantity } : item
+            item.product_id === productId && item.size === size && item.color === color
+              ? { ...item, quantity }
+              : item
           ),
         }));
       },
