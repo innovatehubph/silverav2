@@ -44,6 +44,7 @@ jobs:
       - name: Run E2E tests
         run: npx playwright test --project=${{ matrix.browser }}
         env:
+          NODE_ENV: test
           DATABASE_PATH: ./data/silvera-test.db
 
       - name: Upload test results
