@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, lazy, Suspense } from 'react';
 import { Toaster } from 'sonner';
 import { useAuthStore, useThemeStore } from './stores';
 
@@ -27,11 +27,22 @@ import FAQ from './pages/FAQ';
 import Shipping from './pages/Shipping';
 import NotFound from './pages/NotFound';
 
-// Admin Pages
-import AdminDashboard from './pages/admin/AdminDashboard';
-import AdminProducts from './pages/admin/AdminProducts';
-import AdminOrders from './pages/admin/AdminOrders';
-import AdminUsers from './pages/admin/AdminUsers';
+// Admin Pages - lazy loaded for bundle splitting
+const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
+const AdminProducts = lazy(() => import('./pages/admin/AdminProducts'));
+const AdminOrders = lazy(() => import('./pages/admin/AdminOrders'));
+const AdminUsers = lazy(() => import('./pages/admin/AdminUsers'));
+
+function AdminLoader() {
+  return (
+    <div className="flex items-center justify-center h-64">
+      <div className="flex flex-col items-center gap-3">
+        <div className="w-8 h-8 border-2 border-accent-gold border-t-transparent rounded-full animate-spin" />
+        <span className="text-sm text-txt-secondary">Loading...</span>
+      </div>
+    </div>
+  );
+}
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore();
@@ -92,12 +103,12 @@ function App() {
         <Route path="/faq" element={<MainLayout><FAQ /></MainLayout>} />
         <Route path="/shipping" element={<MainLayout><Shipping /></MainLayout>} />
 
-        {/* Admin Routes */}
+        {/* Admin Routes - lazy loaded */}
         <Route path="/admin" element={<RequireAdmin><AdminLayout /></RequireAdmin>}>
-          <Route index element={<AdminDashboard />} />
-          <Route path="products" element={<AdminProducts />} />
-          <Route path="orders" element={<AdminOrders />} />
-          <Route path="users" element={<AdminUsers />} />
+          <Route index element={<Suspense fallback={<AdminLoader />}><AdminDashboard /></Suspense>} />
+          <Route path="products" element={<Suspense fallback={<AdminLoader />}><AdminProducts /></Suspense>} />
+          <Route path="orders" element={<Suspense fallback={<AdminLoader />}><AdminOrders /></Suspense>} />
+          <Route path="users" element={<Suspense fallback={<AdminLoader />}><AdminUsers /></Suspense>} />
         </Route>
 
         <Route path="*" element={<MainLayout><NotFound /></MainLayout>} />
