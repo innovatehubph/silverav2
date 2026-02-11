@@ -16,7 +16,7 @@ test.describe('User Account Management', () => {
   test('5.1: Profile page loads with user info', async ({ page }) => {
     const profilePage = new ProfilePage(page);
     await profilePage.navigate();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     await expect(profilePage.nameDisplay).toBeVisible();
     await expect(profilePage.emailDisplay).toBeVisible();
@@ -25,7 +25,7 @@ test.describe('User Account Management', () => {
   test('5.2: Profile shows authenticated user name', async ({ page }) => {
     const profilePage = new ProfilePage(page);
     await profilePage.navigate();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const nameText = await profilePage.nameDisplay.textContent();
     expect(nameText).toBeTruthy();
@@ -35,7 +35,7 @@ test.describe('User Account Management', () => {
   test('5.3: Orders page accessible', async ({ page }) => {
     const ordersPage = new OrdersPage(page);
     await ordersPage.navigate();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     expect(page.url()).toContain('/orders');
 
@@ -47,7 +47,7 @@ test.describe('User Account Management', () => {
   test('5.4: Orders page shows order cards or empty message', async ({ page }) => {
     const ordersPage = new OrdersPage(page);
     await ordersPage.navigate();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const orderCount = await ordersPage.getOrdersCount();
     if (orderCount > 0) {
@@ -61,7 +61,7 @@ test.describe('User Account Management', () => {
   test('5.5: Profile has logout option', async ({ page }) => {
     const profilePage = new ProfilePage(page);
     await profilePage.navigate();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const logoutVisible = await profilePage.logoutButton.isVisible().catch(() => false);
     expect(logoutVisible).toBeTruthy();
@@ -69,7 +69,7 @@ test.describe('User Account Management', () => {
 
   test('5.6: Wishlist page accessible', async ({ page }) => {
     await page.goto('/wishlist');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     expect(page.url()).toContain('/wishlist');
   });

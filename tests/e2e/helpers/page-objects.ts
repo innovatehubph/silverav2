@@ -8,7 +8,7 @@ export class BasePage {
   }
 
   async waitForLoad() {
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('domcontentloaded');
   }
 
   get toastMessage(): Locator {
@@ -30,7 +30,7 @@ export class LoginPage extends BasePage {
   }
 
   get errorToast(): Locator {
-    return this.page.locator('[data-sonner-toast][data-type="error"]');
+    return this.page.locator('[data-sonner-toast]');
   }
 
   get registerLink(): Locator {

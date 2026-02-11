@@ -16,7 +16,7 @@ test.describe('Shopping Workflows', () => {
   test('3.1: Shop page shows products', async ({ page }) => {
     const shopPage = new ShopPage(page);
     await shopPage.navigate();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const count = await shopPage.getProductsCount();
     expect(count).toBeGreaterThan(0);
@@ -25,12 +25,12 @@ test.describe('Shopping Workflows', () => {
   test('3.2: Filter products by category', async ({ page }) => {
     const shopPage = new ShopPage(page);
     await shopPage.navigate();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const categoryTab = shopPage.categoryTabs.first();
     if (await categoryTab.isVisible()) {
       await categoryTab.click();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       const count = await shopPage.getProductsCount();
       expect(count).toBeGreaterThanOrEqual(0);
@@ -40,7 +40,7 @@ test.describe('Shopping Workflows', () => {
   test('3.3: Product detail page loads correctly', async ({ page }) => {
     const productPage = new ProductDetailPage(page);
     await productPage.navigate(1);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     await expect(productPage.productName).toBeVisible();
     const name = await productPage.productName.textContent();
@@ -53,7 +53,7 @@ test.describe('Shopping Workflows', () => {
   test('3.4: Product variant selector works - sizes', async ({ page }) => {
     const productPage = new ProductDetailPage(page);
     await productPage.navigate(1);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const sizeCount = await productPage.sizeButtons.count();
     if (sizeCount > 0) {
@@ -88,7 +88,7 @@ test.describe('Shopping Workflows', () => {
 
     const cartPage = new CartPage(page);
     await cartPage.navigate();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const itemCount = await cartPage.getCartItemsCount();
     expect(itemCount).toBeGreaterThan(0);
@@ -100,7 +100,7 @@ test.describe('Shopping Workflows', () => {
 
     const cartPage = new CartPage(page);
     await cartPage.navigate();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const sizeBadges = await cartPage.sizeBadges.count();
     const colorBadges = await cartPage.colorBadges.count();
@@ -113,7 +113,7 @@ test.describe('Shopping Workflows', () => {
 
     const cartPage = new CartPage(page);
     await cartPage.navigate();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const initialCount = await cartPage.getCartItemsCount();
     expect(initialCount).toBeGreaterThan(0);
@@ -130,7 +130,7 @@ test.describe('Shopping Workflows', () => {
 
     const cartPage = new CartPage(page);
     await cartPage.navigate();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const isEmpty = await cartPage.isCartEmpty();
     expect(isEmpty).toBeTruthy();
@@ -141,11 +141,11 @@ test.describe('Shopping Workflows', () => {
 
     const cartPage = new CartPage(page);
     await cartPage.navigate();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     if (await cartPage.continueShoppingLink.isVisible()) {
       await cartPage.continueShoppingLink.click();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       expect(page.url()).toContain('/shop');
     }
   });
@@ -153,7 +153,7 @@ test.describe('Shopping Workflows', () => {
   test('3.12: Product pricing displays in PHP format', async ({ page }) => {
     const productPage = new ProductDetailPage(page);
     await productPage.navigate(1);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const priceText = await productPage.productPrice.textContent();
     expect(priceText).toMatch(/₱[\d,]+(\.\d{2})?/);

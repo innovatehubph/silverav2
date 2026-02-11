@@ -12,7 +12,7 @@ test.describe('Responsive Design - Mobile (375px)', () => {
 
   test('7.1: Mobile hamburger menu visible', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const menuButton = page.locator('button:has(svg.lucide-menu)');
     await expect(menuButton).toBeVisible();
@@ -20,7 +20,7 @@ test.describe('Responsive Design - Mobile (375px)', () => {
 
   test('7.2: Mobile nav drawer opens and closes', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const menuButton = page.locator('button:has(svg.lucide-menu)');
     await menuButton.click();
@@ -39,7 +39,7 @@ test.describe('Responsive Design - Mobile (375px)', () => {
 
   test('7.3: No horizontal scroll on mobile', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const bodyWidth = await page.evaluate(() => document.body.scrollWidth);
     const windowWidth = await page.evaluate(() => window.innerWidth);
@@ -48,7 +48,7 @@ test.describe('Responsive Design - Mobile (375px)', () => {
 
   test('7.4: Mobile login form usable', async ({ page }) => {
     await page.goto('/login');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const emailInput = page.locator('input[type="email"]');
     const passwordInput = page.locator('input[type="password"]');
@@ -64,7 +64,7 @@ test.describe('Responsive Design - Mobile (375px)', () => {
 
   test('7.5: Mobile product cards display', async ({ page }) => {
     await page.goto('/shop');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const productCards = page.locator('a[href^="/product/"]');
     const count = await productCards.count();
@@ -77,7 +77,7 @@ test.describe('Responsive Design - Mobile (375px)', () => {
 
   test('7.6: Mobile cart icon visible', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const cartLink = page.locator('a[href="/cart"]');
     await expect(cartLink).toBeVisible();
@@ -85,7 +85,7 @@ test.describe('Responsive Design - Mobile (375px)', () => {
 
   test('7.7: Mobile product images scale properly', async ({ page }) => {
     await page.goto('/product/1');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const images = page.locator('img').first();
     if (await images.isVisible()) {
@@ -101,7 +101,7 @@ test.describe('Responsive Design - Tablet (768px)', () => {
 
   test('7.8: Tablet product grid displays', async ({ page }) => {
     await page.goto('/shop');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const products = page.locator('a[href^="/product/"]');
     const count = await products.count();
@@ -110,7 +110,7 @@ test.describe('Responsive Design - Tablet (768px)', () => {
 
   test('7.9: Tablet no horizontal overflow', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const bodyWidth = await page.evaluate(() => document.body.scrollWidth);
     const windowWidth = await page.evaluate(() => window.innerWidth);
@@ -121,7 +121,7 @@ test.describe('Responsive Design - Tablet (768px)', () => {
     await login(page, TEST_USERS.validUser.email, TEST_USERS.validUser.password);
 
     await page.goto('/checkout');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const formElements = page.locator('input, select, button[type="submit"]');
     const count = await formElements.count();
@@ -134,7 +134,7 @@ test.describe('Responsive Design - Desktop (1920px)', () => {
 
   test('7.11: Desktop multi-column product grid', async ({ page }) => {
     await page.goto('/shop');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const products = page.locator('a[href^="/product/"]');
     const count = await products.count();
@@ -143,7 +143,7 @@ test.describe('Responsive Design - Desktop (1920px)', () => {
 
   test('7.12: Desktop navigation bar shows links', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const shopLink = page.locator('header a[href="/shop"]');
     const isVisible = await shopLink.isVisible().catch(() => false);
@@ -156,7 +156,7 @@ test.describe('Responsive Design - Desktop (1920px)', () => {
 
   test('7.13: Desktop content uses available width', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const mainContent = page.locator('main').first();
     if (await mainContent.isVisible()) {
@@ -170,7 +170,7 @@ test.describe('Responsive Design - Cross-Device', () => {
   test('7.14: Orientation change portrait to landscape', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     await page.setViewportSize({ width: 667, height: 375 });
     await page.waitForTimeout(500);
