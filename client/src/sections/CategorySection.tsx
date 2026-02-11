@@ -1,4 +1,5 @@
 import { useRef, useLayoutEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Plus } from 'lucide-react';
@@ -19,6 +20,7 @@ interface CategorySectionProps {
   isDark?: boolean;
   zIndex: number;
   product?: Product;
+  categorySlug?: string;
 }
 
 export default function CategorySection({
@@ -31,7 +33,9 @@ export default function CategorySection({
   isDark = false,
   zIndex,
   product,
+  categorySlug,
 }: CategorySectionProps) {
+  const navigate = useNavigate();
   const sectionRef = useRef<HTMLElement>(null);
   const headlineRef = useRef<HTMLHeadingElement>(null);
   const subheadlineRef = useRef<HTMLParagraphElement>(null);
@@ -40,6 +44,14 @@ export default function CategorySection({
   const addButtonRef = useRef<HTMLButtonElement>(null);
   const glowRef = useRef<HTMLDivElement>(null);
   const { addItem } = useCartStore();
+
+  const handleCategoryClick = () => {
+    if (categorySlug) {
+      navigate(`/shop?category=${categorySlug}`);
+    } else {
+      navigate('/shop');
+    }
+  };
 
   useLayoutEffect(() => {
     const section = sectionRef.current;
@@ -218,7 +230,7 @@ export default function CategorySection({
           </p>
           <button
             ref={ctaRef}
-            onClick={() => window.location.href = '/shop'}
+            onClick={handleCategoryClick}
             className="cta-button"
           >
             {cta}

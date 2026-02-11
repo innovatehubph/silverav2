@@ -2162,13 +2162,9 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
-// SPA fallback
+// SPA fallback - serve React client for all routes including /admin
 app.get('*', (req, res) => {
-  if (req.path.startsWith('/admin')) {
-    res.sendFile(path.join(__dirname, '../admin/index.html'));
-  } else {
-    res.sendFile(path.join(__dirname, '../client/dist/index.html'));
-  }
+  res.sendFile(path.join(__dirname, '../client/dist/index.html'));
 });
 
 app.listen(PORT, '0.0.0.0', () => {
