@@ -52,8 +52,8 @@ test.describe('Error Handling & Edge Cases', () => {
     await page.goto('/login');
     await page.waitForLoadState('networkidle');
 
-    await page.locator('input[type="email"]').fill(AUTH_CREDENTIALS.malicious.email);
-    await page.locator('input[type="password"]').fill(AUTH_CREDENTIALS.malicious.password);
+    await page.locator('input[type="email"]').fill(AUTH_CREDENTIALS.maliciousCredentials.email);
+    await page.locator('input[type="password"]').fill(AUTH_CREDENTIALS.maliciousCredentials.password);
     await page.locator('button[type="submit"]').click();
     await page.waitForTimeout(1000);
 
