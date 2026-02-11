@@ -37,6 +37,8 @@ export const productsApi = {
     api.get('/products', { params }),
   getById: (id: number) => api.get(`/products/${id}`),
   getReviews: (id: number) => api.get(`/products/${id}/reviews`),
+  createReview: (id: number, data: { rating: number; title: string; comment: string }) =>
+    api.post(`/products/${id}/reviews`, data),
 };
 
 // Categories API
