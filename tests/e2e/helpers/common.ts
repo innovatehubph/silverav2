@@ -3,15 +3,16 @@ import { Page, expect } from '@playwright/test';
 const BASE_URL = 'http://localhost:3865';
 
 export async function waitForPageLoad(page: Page) {
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
 }
 
 export async function login(page: Page, email: string, password: string) {
   await page.goto('/login');
+  await page.waitForLoadState('domcontentloaded');
   await page.locator('input[type="email"]').fill(email);
   await page.locator('input[type="password"]').fill(password);
   await page.locator('button[type="submit"]').click();
-  await page.waitForURL('**/');
+  await page.waitForURL('**/', { timeout: 15000, waitUntil: 'domcontentloaded' });
 }
 
 export async function logout(page: Page) {
@@ -39,7 +40,8 @@ export async function getAuthUser(page: Page) {
 
 export async function addToCart(page: Page, productId: number) {
   await page.goto(`/product/${productId}`);
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
+  await page.waitForTimeout(1000);
   const sizeBtn = page.locator('button').filter({ hasText: /^(XS|S|M|L|XL|XXL|Free Size|\d+)$/ }).first();
   if (await sizeBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
     await sizeBtn.click();

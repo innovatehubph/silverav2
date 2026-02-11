@@ -20,11 +20,11 @@ test.describe('Payment Flows', () => {
 
     const cartPage = new CartPage(page);
     await cartPage.navigate();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     if (await cartPage.checkoutLink.isVisible()) {
       await cartPage.checkoutLink.click();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       expect(page.url()).toContain('/checkout');
     }
   });
@@ -35,7 +35,7 @@ test.describe('Payment Flows', () => {
 
     const checkoutPage = new CheckoutPage(page);
     await checkoutPage.navigate();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const paymentLabels = await checkoutPage.paymentMethodLabels.count();
     expect(paymentLabels).toBeGreaterThan(0);
@@ -47,7 +47,7 @@ test.describe('Payment Flows', () => {
 
     const checkoutPage = new CheckoutPage(page);
     await checkoutPage.navigate();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     await checkoutPage.selectCOD();
     await expect(checkoutPage.codRadio).toBeChecked();
@@ -59,7 +59,7 @@ test.describe('Payment Flows', () => {
 
     const checkoutPage = new CheckoutPage(page);
     await checkoutPage.navigate();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     await checkoutPage.selectCOD();
     await checkoutPage.placeOrder();
@@ -76,7 +76,7 @@ test.describe('Payment Flows', () => {
 
     const checkoutPage = new CheckoutPage(page);
     await checkoutPage.navigate();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const gcashVisible = await checkoutPage.gcashRadio.isVisible().catch(() => false);
     expect(gcashVisible).toBeTruthy();
@@ -88,7 +88,7 @@ test.describe('Payment Flows', () => {
 
     const checkoutPage = new CheckoutPage(page);
     await checkoutPage.navigate();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const cardVisible = await checkoutPage.cardRadio.isVisible().catch(() => false);
     expect(cardVisible).toBeTruthy();
@@ -99,7 +99,7 @@ test.describe('Payment Flows', () => {
 
     const checkoutPage = new CheckoutPage(page);
     await checkoutPage.navigate();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const emptyVisible = await checkoutPage.emptyCartMessage.isVisible().catch(() => false);
     const redirectedToCart = page.url().includes('/cart');

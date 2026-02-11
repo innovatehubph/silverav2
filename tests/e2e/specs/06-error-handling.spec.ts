@@ -10,7 +10,7 @@ import { login, simulateNetworkError, restoreNetwork } from '../helpers/common';
 test.describe('Error Handling & Edge Cases', () => {
   test('6.1: 404 page on invalid route', async ({ page }) => {
     await page.goto('/this-page-does-not-exist');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const bodyText = await page.textContent('body');
     const has404 = bodyText?.includes('404') || bodyText?.toLowerCase().includes('not found');
@@ -20,7 +20,7 @@ test.describe('Error Handling & Edge Cases', () => {
 
   test('6.2: Login form - invalid email format', async ({ page }) => {
     await page.goto('/login');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     await page.locator('input[type="email"]').fill('notanemail');
     await page.locator('input[type="password"]').fill('password123');
@@ -31,7 +31,7 @@ test.describe('Error Handling & Edge Cases', () => {
 
   test('6.3: Login form - empty fields', async ({ page }) => {
     await page.goto('/login');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     await page.locator('button[type="submit"]').click();
     expect(page.url()).toContain('/login');
@@ -39,7 +39,7 @@ test.describe('Error Handling & Edge Cases', () => {
 
   test('6.4: Invalid product ID shows error or fallback', async ({ page }) => {
     await page.goto('/product/99999');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const bodyText = await page.textContent('body');
     const hasError = bodyText?.toLowerCase().includes('not found') ||
@@ -50,7 +50,7 @@ test.describe('Error Handling & Edge Cases', () => {
 
   test('6.5: SQL injection prevention on login', async ({ page }) => {
     await page.goto('/login');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     await page.locator('input[type="email"]').fill(AUTH_CREDENTIALS.maliciousCredentials.email);
     await page.locator('input[type="password"]').fill(AUTH_CREDENTIALS.maliciousCredentials.password);
@@ -62,7 +62,7 @@ test.describe('Error Handling & Edge Cases', () => {
 
   test('6.6: XSS prevention - script in search', async ({ page }) => {
     await page.goto('/shop');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const searchInput = page.locator('input[placeholder*="search" i], input[type="search"]');
     if (await searchInput.isVisible().catch(() => false)) {
@@ -76,14 +76,14 @@ test.describe('Error Handling & Edge Cases', () => {
 
   test('6.7: Network error handled gracefully', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     await simulateNetworkError(page);
     await page.goto('/shop').catch(() => {});
     await restoreNetwork(page);
 
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     expect(true).toBeTruthy();
   });
 
