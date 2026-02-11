@@ -12,7 +12,7 @@ export async function login(page: Page, email: string, password: string) {
   await page.locator('input[type="email"]').fill(email);
   await page.locator('input[type="password"]').fill(password);
   await page.locator('button[type="submit"]').click();
-  await page.waitForURL('**/', { timeout: 15000, waitUntil: 'domcontentloaded' });
+  await page.waitForURL(url => !url.toString().includes('/login'), { timeout: 15000 });
 }
 
 export async function logout(page: Page) {
@@ -51,7 +51,7 @@ export async function addToCart(page: Page, productId: number) {
 }
 
 export async function getCartBadgeCount(page: Page): Promise<number> {
-  const badge = page.locator('header span').filter({ hasText: /^\d+$/ }).first();
+  const badge = page.locator('a[href="/cart"] span.absolute').first();
   if (await badge.isVisible({ timeout: 2000 }).catch(() => false)) {
     const text = await badge.textContent();
     return parseInt(text || '0', 10);
