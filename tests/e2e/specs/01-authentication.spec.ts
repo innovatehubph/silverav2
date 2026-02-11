@@ -20,7 +20,7 @@ test.describe('Authentication Flows', () => {
     await loginPage.navigate();
     await loginPage.login(TEST_USERS.validUser.email, TEST_USERS.validUser.password);
 
-    await page.waitForURL(url => !url.toString().includes('/login'), { timeout: 15000 });
+    await page.waitForURL(url => !url.toString().includes('/login'), { timeout: 15000, waitUntil: 'domcontentloaded' });
     await assertUserAuthenticated(page);
     await assertOnHomePage(page);
   });
