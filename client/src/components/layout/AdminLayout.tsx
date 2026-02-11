@@ -4,31 +4,94 @@ import { useAuthStore } from '../../stores';
 import {
   LayoutDashboard,
   Package,
+  FolderTree,
   ShoppingCart,
   Users,
+  BarChart3,
+  Settings,
+  Ticket,
+  RotateCcw,
   Menu,
   X,
   LogOut,
   Store,
   ChevronLeft,
+  ChevronDown,
 } from 'lucide-react';
 
-const navItems = [
-  { to: '/admin', icon: LayoutDashboard, label: 'Dashboard', end: true },
-  { to: '/admin/products', icon: Package, label: 'Products' },
-  { to: '/admin/orders', icon: ShoppingCart, label: 'Orders' },
-  { to: '/admin/users', icon: Users, label: 'Users' },
+interface NavItem {
+  to: string;
+  icon: React.ElementType;
+  label: string;
+  end?: boolean;
+}
+
+interface NavSection {
+  title: string;
+  items: NavItem[];
+}
+
+const navSections: NavSection[] = [
+  {
+    title: 'Overview',
+    items: [
+      { to: '/admin', icon: LayoutDashboard, label: 'Dashboard', end: true },
+      { to: '/admin/reports', icon: BarChart3, label: 'Reports' },
+    ],
+  },
+  {
+    title: 'Store',
+    items: [
+      { to: '/admin/products', icon: Package, label: 'Products' },
+      { to: '/admin/categories', icon: FolderTree, label: 'Categories' },
+    ],
+  },
+  {
+    title: 'Orders',
+    items: [
+      { to: '/admin/orders', icon: ShoppingCart, label: 'Orders' },
+      { to: '/admin/returns', icon: RotateCcw, label: 'Returns' },
+    ],
+  },
+  {
+    title: 'Customers',
+    items: [
+      { to: '/admin/users', icon: Users, label: 'Users' },
+    ],
+  },
+  {
+    title: 'Marketing',
+    items: [
+      { to: '/admin/coupons', icon: Ticket, label: 'Coupons' },
+    ],
+  },
+  {
+    title: 'System',
+    items: [
+      { to: '/admin/settings', icon: Settings, label: 'Settings' },
+    ],
+  },
 ];
 
 export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [expandedSections, setExpandedSections] = useState<string[]>(navSections.map(s => s.title));
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  const toggleSection = (title: string) => {
+    if (collapsed) return;
+    setExpandedSections(prev =>
+      prev.includes(title)
+        ? prev.filter(s => s !== title)
+        : [...prev, title]
+    );
   };
 
   return (
@@ -73,26 +136,55 @@ export default function AdminLayout() {
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 py-4 space-y-1 px-2">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              onClick={() => setSidebarOpen(false)}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all text-sm font-medium
-                ${isActive
-                  ? 'bg-gold/10 text-accent-gold border-l-2 border-accent-gold'
-                  : 'text-txt-secondary hover:text-txt-primary hover:bg-bg-hover'
-                }
-                ${collapsed ? 'justify-center' : ''}
-                `
-              }
-            >
-              <item.icon size={20} />
-              {!collapsed && <span>{item.label}</span>}
-            </NavLink>
+        <nav className="flex-1 py-4 space-y-2 px-2 overflow-y-auto">
+          {navSections.map((section) => (
+            <div key={section.title}>
+              {/* Section Header */}
+              {!collapsed && (
+                <button
+                  onClick={() => toggleSection(section.title)}
+                  className="w-full flex items-center justify-between px-3 py-1.5 text-xs font-medium text-txt-tertiary uppercase tracking-wider hover:text-txt-secondary transition-colors"
+                >
+                  <span>{section.title}</span>
+                  <ChevronDown
+                    size={14}
+                    className={`transition-transform ${expandedSections.includes(section.title) ? '' : '-rotate-90'}`}
+                  />
+                </button>
+              )}
+
+              {/* Section Items */}
+              {(collapsed || expandedSections.includes(section.title)) && (
+                <div className={collapsed ? 'space-y-1' : 'space-y-0.5 mb-2'}>
+                  {section.items.map((item) => (
+                    <NavLink
+                      key={item.to}
+                      to={item.to}
+                      end={item.end}
+                      onClick={() => setSidebarOpen(false)}
+                      className={({ isActive }) =>
+                        `flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-sm font-medium
+                        ${isActive
+                          ? 'bg-gold/10 text-accent-gold border-l-2 border-accent-gold'
+                          : 'text-txt-secondary hover:text-txt-primary hover:bg-bg-hover'
+                        }
+                        ${collapsed ? 'justify-center px-2' : ''}
+                        `
+                      }
+                      title={collapsed ? item.label : undefined}
+                    >
+                      <item.icon size={20} />
+                      {!collapsed && <span>{item.label}</span>}
+                    </NavLink>
+                  ))}
+                </div>
+              )}
+
+              {/* Divider */}
+              {!collapsed && section.title !== navSections[navSections.length - 1].title && (
+                <div className="border-t border-bdr-subtle my-2" />
+              )}
+            </div>
           ))}
         </nav>
 
@@ -100,14 +192,16 @@ export default function AdminLayout() {
         <div className="p-4 border-t border-bdr-subtle space-y-2">
           <NavLink
             to="/"
-            className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-txt-secondary hover:text-txt-primary hover:bg-bg-hover transition-colors"
+            className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-txt-secondary hover:text-txt-primary hover:bg-bg-hover transition-colors ${collapsed ? 'justify-center px-2' : ''}`}
+            title={collapsed ? 'Back to Shop' : undefined}
           >
             <Store size={18} />
             {!collapsed && <span>Back to Shop</span>}
           </NavLink>
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-red-400 hover:bg-red-900/20 transition-colors w-full"
+            className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-red-400 hover:bg-red-900/20 transition-colors w-full ${collapsed ? 'justify-center px-2' : ''}`}
+            title={collapsed ? 'Logout' : undefined}
           >
             <LogOut size={18} />
             {!collapsed && <span>Logout</span>}

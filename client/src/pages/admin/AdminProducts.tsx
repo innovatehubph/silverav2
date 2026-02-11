@@ -24,6 +24,7 @@ interface Product {
   featured: boolean;
   status: 'active' | 'inactive' | 'draft';
   images: string[] | string;
+  low_stock_threshold?: number;
   created_at: string;
 }
 
@@ -42,6 +43,7 @@ const emptyForm = {
   category_id: '',
   status: 'active' as 'active' | 'inactive' | 'draft',
   featured: false,
+  low_stock_threshold: '10',
 };
 
 export default function AdminProducts() {
@@ -92,6 +94,7 @@ export default function AdminProducts() {
       category_id: product.category_id?.toString() || '',
       status: product.status,
       featured: product.featured,
+      low_stock_threshold: product.low_stock_threshold?.toString() || '10',
     });
     setImages([]);
     setShowForm(true);
@@ -113,6 +116,7 @@ export default function AdminProducts() {
       if (form.category_id) fd.append('category_id', form.category_id);
       fd.append('status', form.status);
       fd.append('featured', form.featured.toString());
+      fd.append('low_stock_threshold', form.low_stock_threshold || '10');
       images.forEach((img) => fd.append('images', img));
 
       if (editingId) {
@@ -234,7 +238,7 @@ export default function AdminProducts() {
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm text-txt-secondary mb-1">Stock</label>
                   <input
@@ -242,6 +246,16 @@ export default function AdminProducts() {
                     className="input-field w-full py-2 text-sm"
                     value={form.stock}
                     onChange={(e) => setForm({ ...form, stock: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-txt-secondary mb-1">Low Stock Alert</label>
+                  <input
+                    type="number"
+                    className="input-field w-full py-2 text-sm"
+                    value={form.low_stock_threshold}
+                    onChange={(e) => setForm({ ...form, low_stock_threshold: e.target.value })}
+                    placeholder="10"
                   />
                 </div>
                 <div>

@@ -30,8 +30,13 @@ import NotFound from './pages/NotFound';
 // Admin Pages - lazy loaded for bundle splitting
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
 const AdminProducts = lazy(() => import('./pages/admin/AdminProducts'));
+const AdminCategories = lazy(() => import('./pages/admin/AdminCategories'));
 const AdminOrders = lazy(() => import('./pages/admin/AdminOrders'));
 const AdminUsers = lazy(() => import('./pages/admin/AdminUsers'));
+const AdminSettings = lazy(() => import('./pages/admin/AdminSettings'));
+const AdminReturns = lazy(() => import('./pages/admin/AdminReturns'));
+const AdminReports = lazy(() => import('./pages/admin/AdminReports'));
+const AdminCoupons = lazy(() => import('./pages/admin/AdminCoupons'));
 
 function AdminLoader() {
   return (
@@ -107,8 +112,13 @@ function App() {
         <Route path="/admin" element={<RequireAdmin><AdminLayout /></RequireAdmin>}>
           <Route index element={<Suspense fallback={<AdminLoader />}><AdminDashboard /></Suspense>} />
           <Route path="products" element={<Suspense fallback={<AdminLoader />}><AdminProducts /></Suspense>} />
+          <Route path="categories" element={<Suspense fallback={<AdminLoader />}><AdminCategories /></Suspense>} />
           <Route path="orders" element={<Suspense fallback={<AdminLoader />}><AdminOrders /></Suspense>} />
+          <Route path="returns" element={<Suspense fallback={<AdminLoader />}><AdminReturns /></Suspense>} />
           <Route path="users" element={<Suspense fallback={<AdminLoader />}><AdminUsers /></Suspense>} />
+          <Route path="reports" element={<Suspense fallback={<AdminLoader />}><AdminReports /></Suspense>} />
+          <Route path="settings" element={<Suspense fallback={<AdminLoader />}><AdminSettings /></Suspense>} />
+          <Route path="coupons" element={<Suspense fallback={<AdminLoader />}><AdminCoupons /></Suspense>} />
         </Route>
 
         <Route path="*" element={<MainLayout><NotFound /></MainLayout>} />

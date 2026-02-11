@@ -71,7 +71,28 @@ export interface Order {
   total: number;
   shipping_address: string;
   payment_method: string;
-  payment_status: 'pending' | 'paid' | 'failed';
+  payment_status: 'pending' | 'paid' | 'failed' | 'refunded';
+  tracking_number?: string;
+  carrier?: string;
+  shipped_at?: string;
+  delivered_at?: string;
   items: CartItem[];
   created_at: string;
+}
+
+export interface ReturnRequest {
+  id: number;
+  order_id: number;
+  user_id: number;
+  reason: string;
+  status: 'pending' | 'approved' | 'rejected' | 'refunded';
+  admin_notes?: string;
+  refund_amount?: number;
+  created_at: string;
+  resolved_at?: string;
+  customer_name?: string;
+  customer_email?: string;
+  order_total?: number;
+  order_status?: string;
+  order_payment_status?: string;
 }
