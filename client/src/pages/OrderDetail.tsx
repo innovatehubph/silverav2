@@ -37,7 +37,7 @@ export default function OrderDetail() {
   if (isLoading) {
     return (
       <div className="container-custom py-16 text-center">
-        <div className="w-8 h-8 border-2 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto" />
+        <div className="w-8 h-8 border-2 border-gold border-t-transparent rounded-full animate-spin mx-auto" />
       </div>
     );
   }
@@ -56,16 +56,16 @@ export default function OrderDetail() {
 
   return (
     <div className="container-custom py-8 animate-fade-in">
-      <Link to="/orders" className="inline-flex items-center gap-2 text-primary-600 hover:underline mb-6">
+      <Link to="/orders" className="inline-flex items-center gap-2 text-gold hover:text-gold-300 transition-colors mb-6">
         <ArrowLeft className="w-4 h-4" /> Back to Orders
       </Link>
 
       <div className="flex items-center justify-between mb-8">
         <h1 className="section-title">Order #{order.id}</h1>
         <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-          order.status === 'delivered' ? 'bg-green-100 text-green-700' :
-          order.status === 'shipped' ? 'bg-blue-100 text-blue-700' :
-          'bg-yellow-100 text-yellow-700'
+          order.status === 'delivered' ? 'bg-green-900/30 text-green-400' :
+          order.status === 'shipped' ? 'bg-blue-900/30 text-blue-400' :
+          'bg-yellow-900/30 text-yellow-400'
         }`}>
           {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
         </span>
@@ -77,7 +77,7 @@ export default function OrderDetail() {
           {statusSteps.map((step, i) => (
             <div key={step} className="flex items-center flex-1">
               <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                i <= currentStep ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-500'
+                i <= currentStep ? 'bg-gold text-white' : 'bg-bg-hover text-txt-tertiary'
               }`}>
                 {i === 0 && <Package className="w-5 h-5" />}
                 {i === 1 && <Package className="w-5 h-5" />}
@@ -85,12 +85,12 @@ export default function OrderDetail() {
                 {i === 3 && <CheckCircle className="w-5 h-5" />}
               </div>
               {i < statusSteps.length - 1 && (
-                <div className={`flex-1 h-1 mx-2 ${i < currentStep ? 'bg-primary-600' : 'bg-gray-200'}`} />
+                <div className={`flex-1 h-1 mx-2 ${i < currentStep ? 'bg-gold' : 'bg-bg-hover'}`} />
               )}
             </div>
           ))}
         </div>
-        <div className="flex justify-between mt-2 text-xs text-gray-500">
+        <div className="flex justify-between mt-2 text-xs text-txt-tertiary">
           {statusSteps.map(step => (
             <span key={step}>{step.charAt(0).toUpperCase() + step.slice(1)}</span>
           ))}
@@ -112,7 +112,7 @@ export default function OrderDetail() {
                   />
                   <div className="flex-1">
                     <p className="font-medium">{item.name}</p>
-                    <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
+                    <p className="text-sm text-txt-tertiary">Qty: {item.quantity}</p>
                   </div>
                   <p className="font-medium">₱{(item.price * item.quantity).toFixed(2)}</p>
                 </div>
@@ -127,15 +127,15 @@ export default function OrderDetail() {
             <h2 className="text-xl font-semibold mb-4">Summary</h2>
             <dl className="space-y-3 text-sm">
               <div className="flex justify-between">
-                <dt className="text-gray-500">Date</dt>
+                <dt className="text-txt-tertiary">Date</dt>
                 <dd>{new Date(order.created_at).toLocaleDateString()}</dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-gray-500">Payment</dt>
+                <dt className="text-txt-tertiary">Payment</dt>
                 <dd className="uppercase">{order.payment_method}</dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-gray-500">Shipping</dt>
+                <dt className="text-txt-tertiary">Shipping</dt>
                 <dd className="text-xs text-right max-w-[60%]">{order.shipping_address}</dd>
               </div>
               <hr />

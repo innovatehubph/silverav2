@@ -24,7 +24,7 @@ export default function Contact() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+            <label className="block text-sm font-medium text-txt-secondary mb-1">Name</label>
             <input
               type="text"
               required
@@ -34,7 +34,7 @@ export default function Contact() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <label className="block text-sm font-medium text-txt-secondary mb-1">Email</label>
             <input
               type="email"
               required
@@ -44,7 +44,7 @@ export default function Contact() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Message</label>
+            <label className="block text-sm font-medium text-txt-secondary mb-1">Message</label>
             <textarea
               required
               rows={5}
@@ -60,24 +60,24 @@ export default function Contact() {
 
         <div className="space-y-8">
           <div className="flex items-start gap-4">
-            <Mail className="w-6 h-6 text-primary-600 mt-1" />
+            <Mail className="w-6 h-6 text-gold flex-shrink-0 mt-1" />
             <div>
               <h3 className="font-semibold mb-1">Email</h3>
-              <p className="text-gray-600">support@silvera.ph</p>
+              <p className="text-txt-secondary">support@silvera.ph</p>
             </div>
           </div>
           <div className="flex items-start gap-4">
-            <Phone className="w-6 h-6 text-primary-600 mt-1" />
+            <Phone className="w-6 h-6 text-gold flex-shrink-0 mt-1" />
             <div>
               <h3 className="font-semibold mb-1">Phone</h3>
-              <p className="text-gray-600">+63 912 345 6789</p>
+              <p className="text-txt-secondary">+63 912 345 6789</p>
             </div>
           </div>
           <div className="flex items-start gap-4">
-            <MapPin className="w-6 h-6 text-primary-600 mt-1" />
+            <MapPin className="w-6 h-6 text-gold flex-shrink-0 mt-1" />
             <div>
               <h3 className="font-semibold mb-1">Address</h3>
-              <p className="text-gray-600">Manila, Philippines</p>
+              <p className="text-txt-secondary">Manila, Philippines</p>
             </div>
           </div>
         </div>

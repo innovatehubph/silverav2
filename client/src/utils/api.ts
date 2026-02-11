@@ -79,6 +79,25 @@ export const ordersApi = {
   }) => api.post('/orders', data),
 };
 
+// Payments API
+export const paymentsApi = {
+  getMethods: () => api.get('/payments/methods'),
+  create: (data: {
+    order_id: number;
+    payment_method: string;
+    payment_type: string;
+  }) => api.post('/payments/qrph/create', data),
+  getStatus: (paymentRef: string) =>
+    api.get(`/payments/${paymentRef}/status`),
+  callback: (data: {
+    ref: string;
+    status: string;
+    amount?: string;
+    timestamp?: number;
+    signature?: string;
+  }) => api.post('/payments/callback', data),
+};
+
 // Wishlist API
 export const wishlistApi = {
   get: () => api.get('/wishlist'),

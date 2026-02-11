@@ -34,18 +34,31 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-cream flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
+    <div className="min-h-screen bg-bg-primary flex items-center justify-center p-4 relative">
+      {/* Ambient glow */}
+      <div
+        className="absolute w-[500px] h-[500px] rounded-full pointer-events-none"
+        style={{
+          top: '10%',
+          left: '20%',
+          background: 'radial-gradient(circle, rgba(212, 175, 55, 0.08) 0%, transparent 70%)',
+          filter: 'blur(60px)',
+        }}
+      />
+
+      <div className="glass-strong rounded-2xl p-8 w-full max-w-md relative">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-serif font-bold text-navy-900">Create Account</h1>
-          <p className="text-gray-600 mt-2">Join Silvera today</p>
+          <h1 className="text-3xl font-serif font-bold">
+            <span className="text-gradient-gold">Create Account</span>
+          </h1>
+          <p className="text-txt-secondary mt-2">Join Silvera today</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+            <label className="block text-sm font-medium text-txt-secondary mb-2">Full Name</label>
             <div className="relative">
-              <User className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+              <User className="absolute left-3 top-3 w-5 h-5 text-txt-tertiary" />
               <input
                 type="text"
                 name="name"
@@ -57,9 +70,9 @@ export default function Register() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+            <label className="block text-sm font-medium text-txt-secondary mb-2">Email</label>
             <div className="relative">
-              <Mail className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+              <Mail className="absolute left-3 top-3 w-5 h-5 text-txt-tertiary" />
               <input
                 type="email"
                 name="email"
@@ -71,9 +84,9 @@ export default function Register() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+            <label className="block text-sm font-medium text-txt-secondary mb-2">Password</label>
             <div className="relative">
-              <Lock className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+              <Lock className="absolute left-3 top-3 w-5 h-5 text-txt-tertiary" />
               <input
                 type="password"
                 name="password"
@@ -90,9 +103,9 @@ export default function Register() {
           </button>
         </form>
 
-        <p className="text-center mt-6 text-gray-600">
+        <p className="text-center mt-6 text-txt-secondary">
           Already have an account?{' '}
-          <Link to="/login" className="text-primary-600 hover:underline">Sign in</Link>
+          <Link to="/login" className="text-gold hover:text-gold-300 transition-colors">Sign in</Link>
         </p>
       </div>
     </div>
