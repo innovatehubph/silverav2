@@ -46,7 +46,7 @@ export default defineConfig({
   webServer: {
     command: 'node server/index.js',
     url: 'http://localhost:3865',
-    reuseExistingServer: true,
+    reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
   },
 });
