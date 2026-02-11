@@ -7,12 +7,27 @@ export async function waitForPageLoad(page: Page) {
 }
 
 export async function login(page: Page, email: string, password: string) {
-  await page.goto('/login');
+  // Use API-based login to avoid UI race conditions in CI.
+  // UI login is tested separately in 01-authentication.spec.ts.
+  const response = await page.request.post(`${BASE_URL}/api/auth/login`, {
+    data: { email, password },
+  });
+  const body = await response.json();
+  const { user, token } = body.data ?? body;
+
+  // Seed localStorage so the Zustand persist store and axios interceptor pick up the session
+  await page.goto('/');
+  await page.evaluate(({ user, token }) => {
+    localStorage.setItem('auth_token', token);
+    localStorage.setItem('silvera-auth', JSON.stringify({
+      state: { user, token, isAuthenticated: true },
+      version: 0,
+    }));
+  }, { user, token });
+
+  // Reload so the app rehydrates with the authenticated state
+  await page.reload();
   await page.waitForLoadState('domcontentloaded');
-  await page.locator('input[type="email"]').fill(email);
-  await page.locator('input[type="password"]').fill(password);
-  await page.locator('button[type="submit"]').click();
-  await page.waitForURL(url => !url.toString().includes('/login'), { timeout: 15000, waitUntil: 'domcontentloaded' });
 }
 
 export async function logout(page: Page) {
