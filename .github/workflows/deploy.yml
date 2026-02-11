@@ -1,0 +1,53 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT || 22 }}
+          script_stop: true
+          command_timeout: 10m
+          script: |
+            set -e
+
+            APP_DIR="/etc/dokploy/applications/app-hack-back-end-feed-k88xup/code"
+            IMAGE_NAME="silverav2:latest"
+            SERVICE_NAME="app-hack-back-end-feed-k88xup"
+
+            echo "==> Pulling latest code..."
+            cd "$APP_DIR"
+            git fetch origin main
+            git reset --hard origin/main
+
+            echo "==> Building Docker image..."
+            docker build -t "$IMAGE_NAME" .
+
+            echo "==> Updating swarm service..."
+            docker service update --force --image "$IMAGE_NAME" "$SERVICE_NAME"
+
+            echo "==> Waiting for health check..."
+            sleep 10
+            if curl -sf http://127.0.0.1:3865/api/health > /dev/null; then
+              echo "==> Deployment successful!"
+              curl -s http://127.0.0.1:3865/api/health
+            else
+              echo "==> WARNING: Health check failed, service may still be starting"
+              docker service ps "$SERVICE_NAME" --no-trunc | head -5
+              exit 1
+            fi
+
+            echo "==> Cleaning up old Docker images..."
+            docker image prune -f --filter "until=24h"
