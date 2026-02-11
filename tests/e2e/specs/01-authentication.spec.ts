@@ -12,8 +12,6 @@ import {
   assertUserNotAuthenticated,
   assertOnLoginPage,
   assertOnHomePage,
-  assertToastVisible,
-  assertErrorToast,
 } from '../helpers/assertions';
 
 test.describe('Authentication Flows', () => {
@@ -30,7 +28,7 @@ test.describe('Authentication Flows', () => {
   test('1.2: Login fails with invalid credentials', async ({ page }) => {
     const loginPage = new LoginPage(page);
     await loginPage.navigate();
-    await loginPage.login(AUTH_CREDENTIALS.invalid.email, AUTH_CREDENTIALS.invalid.password);
+    await loginPage.login(AUTH_CREDENTIALS.invalidCredentials.email, AUTH_CREDENTIALS.invalidCredentials.password);
 
     await assertOnLoginPage(page);
     const errorToast = page.locator('[data-sonner-toast][data-type="error"]').first();
@@ -90,7 +88,7 @@ test.describe('Authentication Flows', () => {
   test('1.8: SQL injection prevention', async ({ page }) => {
     const loginPage = new LoginPage(page);
     await loginPage.navigate();
-    await loginPage.login(AUTH_CREDENTIALS.malicious.email, AUTH_CREDENTIALS.malicious.password);
+    await loginPage.login(AUTH_CREDENTIALS.maliciousCredentials.email, AUTH_CREDENTIALS.maliciousCredentials.password);
 
     await page.waitForTimeout(1000);
     expect(page.url()).toContain('/login');
