@@ -2,13 +2,13 @@ import { useRef, useLayoutEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { Plus } from 'lucide-react';
-import { toast } from 'sonner';
-import { useCartStore } from '../stores';
+import { ChevronUp, ChevronDown } from 'lucide-react';
 import OptimizedImage from '../components/OptimizedImage';
 import type { Product } from '../types';
 
 gsap.registerPlugin(ScrollTrigger);
+
+const SECTION_ORDER = ['hero', 'apparel', 'footwear', 'accessories', 'dresses', 'how-it-works'];
 
 interface CategorySectionProps {
   id: string;
@@ -41,9 +41,8 @@ export default function CategorySection({
   const subheadlineRef = useRef<HTMLParagraphElement>(null);
   const ctaRef = useRef<HTMLButtonElement>(null);
   const imageRef = useRef<HTMLDivElement>(null);
-  const addButtonRef = useRef<HTMLButtonElement>(null);
+  const navRef = useRef<HTMLDivElement>(null);
   const glowRef = useRef<HTMLDivElement>(null);
-  const { addItem } = useCartStore();
 
   const handleCategoryClick = () => {
     if (categorySlug) {
@@ -51,6 +50,16 @@ export default function CategorySection({
     } else {
       navigate('/shop');
     }
+  };
+
+  const scrollToSection = (direction: 'prev' | 'next') => {
+    const idx = SECTION_ORDER.indexOf(id);
+    const targetId = direction === 'prev'
+      ? SECTION_ORDER[idx - 1]
+      : SECTION_ORDER[idx + 1];
+    if (!targetId) return;
+    const el = document.getElementById(targetId);
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
   };
 
   useLayoutEffect(() => {
@@ -70,7 +79,6 @@ export default function CategorySection({
 
       const imageStartX = imagePosition === 'left' ? '-60vw' : '+60vw';
       const headlineStartX = imagePosition === 'left' ? '+40vw' : '-40vw';
-      const addButtonExitX = imagePosition === 'left' ? '-6vw' : '+6vw';
       const headlineExitX = imagePosition === 'left' ? '+12vw' : '-12vw';
       const imageExitX = imagePosition === 'left' ? '-18vw' : '+18vw';
       const imageExitY = imagePosition === 'left' ? '-8vh' : '+8vh';
@@ -98,7 +106,7 @@ export default function CategorySection({
       );
 
       scrollTl.fromTo(
-        addButtonRef.current,
+        navRef.current,
         { scale: 0, opacity: 0 },
         { scale: 1, opacity: 1, ease: 'back.out(2)' },
         0.1
@@ -134,9 +142,9 @@ export default function CategorySection({
       );
 
       scrollTl.fromTo(
-        addButtonRef.current,
-        { x: 0, opacity: 1 },
-        { x: addButtonExitX, opacity: 0, ease: 'power2.in' },
+        navRef.current,
+        { opacity: 1 },
+        { opacity: 0, ease: 'power2.in' },
         0.7
       );
 
@@ -152,9 +160,10 @@ export default function CategorySection({
   }, [imagePosition]);
 
   const isLeft = imagePosition === 'left';
-
-  // Alternate between dark and slightly lighter dark backgrounds
   const bgClass = isDark ? 'bg-bg-secondary' : 'bg-bg-primary';
+  const idx = SECTION_ORDER.indexOf(id);
+  const hasPrev = idx > 0;
+  const hasNext = idx < SECTION_ORDER.length - 1;
 
   return (
     <section
@@ -179,14 +188,13 @@ export default function CategorySection({
 
       {/* Content Container */}
       <div className="relative w-full h-full flex items-center">
-        {/* Image */}
+        {/* Image — z-0 so it stays behind text */}
         <div
           ref={imageRef}
-          className={`absolute ${
+          className={`absolute z-0 ${
             isLeft ? 'left-[6vw]' : 'left-[58vw]'
           } top-[14vh] w-[40vw] h-[72vh]`}
         >
-          {/* Glow behind image */}
           <div
             className="absolute -inset-3 rounded-2xl opacity-30 blur-xl pointer-events-none"
             style={{
@@ -199,13 +207,12 @@ export default function CategorySection({
             className="relative w-full h-full rounded-2xl border border-bdr-subtle"
             sizes="40vw"
           />
-          {/* Gold border on hover area */}
           <div className="absolute inset-0 rounded-2xl border border-gold/10 pointer-events-none" />
         </div>
 
-        {/* Text Content */}
+        {/* Text Content — z-10 so it stays above image */}
         <div
-          className={`absolute ${
+          className={`absolute z-10 ${
             isLeft ? 'right-[6vw]' : 'left-[6vw]'
           } top-[18vh] w-[50vw] ${isLeft ? 'text-right' : 'text-left'}`}
         >
@@ -218,7 +225,7 @@ export default function CategorySection({
         </div>
 
         <div
-          className={`absolute ${
+          className={`absolute z-10 ${
             isLeft ? 'right-[6vw]' : 'left-[6vw]'
           } top-[56vh] w-[34vw] ${isLeft ? 'text-right' : 'text-left'}`}
         >
@@ -237,24 +244,34 @@ export default function CategorySection({
           </button>
         </div>
 
-        {/* Add Button */}
-        <button
-          ref={addButtonRef}
-          onClick={() => {
-            if (product) {
-              addItem(product, 1);
-              toast.success('Added to cart!');
-            }
-          }}
-          className="absolute w-14 h-14 bg-gold rounded-full flex items-center justify-center hover:bg-gold-300 transition-colors shadow-glow-gold"
+        {/* Prev / Next Navigation Buttons */}
+        <div
+          ref={navRef}
+          className="absolute z-10 flex flex-col gap-3"
           style={{
             [isLeft ? 'left' : 'right']: '8vw',
             bottom: '10vh',
           }}
-          aria-label="Add to cart"
         >
-          <Plus className="w-5 h-5 text-bg-primary" />
-        </button>
+          {hasPrev && (
+            <button
+              onClick={() => scrollToSection('prev')}
+              className="w-12 h-12 rounded-full border border-gold/40 bg-bg-primary/60 backdrop-blur flex items-center justify-center hover:bg-gold/20 transition-colors"
+              aria-label="Previous section"
+            >
+              <ChevronUp className="w-5 h-5 text-gold" />
+            </button>
+          )}
+          {hasNext && (
+            <button
+              onClick={() => scrollToSection('next')}
+              className="w-12 h-12 rounded-full border border-gold/40 bg-bg-primary/60 backdrop-blur flex items-center justify-center hover:bg-gold/20 transition-colors"
+              aria-label="Next section"
+            >
+              <ChevronDown className="w-5 h-5 text-gold" />
+            </button>
+          )}
+        </div>
       </div>
     </section>
   );
