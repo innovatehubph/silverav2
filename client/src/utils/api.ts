@@ -175,6 +175,10 @@ export const adminApi = {
   // Performance Monitoring
   getPerformanceMetrics: () => api.get('/admin/performance/metrics'),
 
+  // Site Analytics
+  getAnalyticsVisitors: (period?: string) =>
+    api.get('/admin/analytics/visitors', { params: { period } }),
+
   // Returns
   getReturns: () => api.get('/admin/returns'),
   processReturn: (id: number, data: { status: 'approved' | 'rejected'; admin_notes?: string }) =>

@@ -57,7 +57,7 @@ if (!process.env.JWT_SECRET) {
 const ALLOWED_ORIGINS = [
   'http://localhost:3865',
   'http://127.0.0.1:3865',
-  'http://37.44.244.226:3865',
+  'https://silvera.innoserver.cloud',
   'https://silvera.ph',
   'https://www.silvera.ph',
   'https://silveraph.shop',
@@ -316,6 +316,36 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_webhook_logs_source ON webhook_logs(source);
 `);
 
+// Analytics tables (privacy-friendly, cookie-free)
+db.exec(`
+  CREATE TABLE IF NOT EXISTS analytics_page_views (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    visitor_hash TEXT,
+    path TEXT,
+    referrer TEXT,
+    screen_width INTEGER,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS analytics_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    visitor_hash TEXT,
+    name TEXT,
+    props TEXT,
+    path TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS analytics_salt (
+    date TEXT PRIMARY KEY,
+    salt TEXT NOT NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_apv_created_at ON analytics_page_views(created_at);
+  CREATE INDEX IF NOT EXISTS idx_apv_path ON analytics_page_views(path);
+  CREATE INDEX IF NOT EXISTS idx_apv_visitor_hash ON analytics_page_views(visitor_hash);
+  CREATE INDEX IF NOT EXISTS idx_ae_created_at ON analytics_events(created_at);
+  CREATE INDEX IF NOT EXISTS idx_ae_name ON analytics_events(name);
+`);
+
 // Migration: Add low_stock_threshold to products
 try {
   const prodColumns = db.prepare("PRAGMA table_info(products)").all();
@@ -479,7 +509,7 @@ app.use(helmet({
       defaultSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      imgSrc: ["'self'", "data:", "https:", "http:"],
+      imgSrc: ["'self'", "data:", "https:"],
       scriptSrc: ["'self'", "'unsafe-inline'", "https://www.googletagmanager.com"],
       connectSrc: ["'self'", "https://silvera.innoserver.cloud", "https://nexuspay.cloud", "https://sandbox.directpayph.com", "https://www.google-analytics.com"],
     },
@@ -500,14 +530,15 @@ app.use(helmet({
 // CORS configuration
 app.use(cors({
   origin: function(origin, callback) {
-    // Allow requests with no origin (mobile apps, curl, etc.)
+    // No-origin requests: allowed for server-to-server calls (webhooks, health checks)
+    // but blocked in production for browser requests (prevents CSRF via no-origin trick)
     if (!origin) return callback(null, true);
     if (ALLOWED_ORIGINS.includes(origin)) {
       return callback(null, true);
     }
     return callback(null, false);
   },
-  credentials: true,
+  credentials: false, // No cookies used — JWT via Authorization header only
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
@@ -593,6 +624,14 @@ const apiLimiter = rateLimit({
   legacyHeaders: false
 });
 
+const analyticsLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: isTestEnv ? 1000 : 30, // 30 in prod, 1000 in test
+  message: { error: 'Too many analytics requests' },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
 // Apply rate limiting to API routes
 app.use('/api/', apiLimiter);
 
@@ -630,6 +669,53 @@ const sanitizeString = (str) => {
   if (!str || typeof str !== 'string') return '';
   return str.trim().slice(0, 1000);
 };
+
+// ==================== ANALYTICS HELPERS ====================
+
+function getAnalyticsSalt() {
+  const today = new Date().toISOString().slice(0, 10);
+  const existing = db.prepare('SELECT salt FROM analytics_salt WHERE date = ?').get(today);
+  if (existing) return existing.salt;
+  const salt = crypto.randomBytes(32).toString('hex');
+  db.prepare('INSERT OR IGNORE INTO analytics_salt (date, salt) VALUES (?, ?)').run(today, salt);
+  return salt;
+}
+
+function hashVisitor(ip, ua) {
+  const salt = getAnalyticsSalt();
+  return crypto.createHash('sha256').update(`${ip}${ua}${salt}`).digest('hex').slice(0, 16);
+}
+
+function extractReferrerDomain(referrer, host) {
+  if (!referrer || typeof referrer !== 'string') return null;
+  try {
+    const url = new URL(referrer);
+    const domain = url.hostname.replace(/^www\./, '');
+    // Ignore same-site referrers
+    if (host) {
+      const hostClean = host.replace(/^www\./, '').split(':')[0];
+      if (domain === hostClean) return null;
+    }
+    return domain;
+  } catch {
+    return null;
+  }
+}
+
+function pruneAnalytics() {
+  try {
+    const cutoff = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
+    db.prepare('DELETE FROM analytics_page_views WHERE created_at < ?').run(cutoff);
+    db.prepare('DELETE FROM analytics_events WHERE created_at < ?').run(cutoff);
+    db.prepare('DELETE FROM analytics_salt WHERE date < ?').run(cutoff.slice(0, 10));
+  } catch (e) {
+    console.error('Analytics prune error:', e.message);
+  }
+}
+
+// Prune old analytics on startup + every 24 hours
+pruneAnalytics();
+setInterval(pruneAnalytics, 24 * 60 * 60 * 1000);
 
 // ==================== LOW STOCK HELPER ====================
 
@@ -760,7 +846,7 @@ app.post('/api/auth/forgot-password', authLimiter, async (req, res) => {
     }
 
     // Generate OTP (6 digits)
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otp = crypto.randomInt(100000, 1000000).toString();
     const resetToken = crypto.randomBytes(32).toString('hex');
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
@@ -1806,17 +1892,16 @@ function verifyPaymentSignature(payload, receivedSignature) {
     const DIRECTPAY_MERCHANT_KEY = process.env.DIRECTPAY_MERCHANT_KEY;
 
     if (!DIRECTPAY_MERCHANT_KEY) {
-      console.warn('⚠️  DIRECTPAY_MERCHANT_KEY not configured, skipping signature verification');
-      return true; // Allow in development if key not set
+      // In production, reject unsigned webhooks; in dev/test, allow
+      if (process.env.NODE_ENV === 'production') {
+        console.error('❌ DIRECTPAY_MERCHANT_KEY not configured in production');
+        return false;
+      }
+      console.warn('⚠️  DIRECTPAY_MERCHANT_KEY not configured, skipping signature verification (non-production)');
+      return true;
     }
 
     if (!receivedSignature) {
-      // For sandbox/testing, allow webhooks without signature
-      const isSandbox = process.env.DIRECTPAY_BASE_URL?.includes('sandbox');
-      if (isSandbox) {
-        console.warn('⚠️  No signature provided, but sandbox mode - allowing');
-        return true;
-      }
       console.error('❌ No signature provided in webhook');
       return false;
     }
@@ -1828,10 +1913,13 @@ function verifyPaymentSignature(payload, receivedSignature) {
       .update(signatureData)
       .digest('hex');
 
-    const isValid = expectedSignature === receivedSignature;
+    // Use timing-safe comparison to prevent timing attacks
+    const expectedBuf = Buffer.from(expectedSignature, 'hex');
+    const receivedBuf = Buffer.from(receivedSignature, 'hex');
+    const isValid = expectedBuf.length === receivedBuf.length && crypto.timingSafeEqual(expectedBuf, receivedBuf);
 
     if (!isValid) {
-      console.error('❌ Signature mismatch:', { expected: expectedSignature, received: receivedSignature });
+      console.error('❌ Signature mismatch');
     }
 
     return isValid;
@@ -3862,6 +3950,148 @@ app.get('/api/admin/webhooks/health', auth, adminOnly, (req, res) => {
   } catch (e) {
     console.error('Webhook health check error:', e.message);
     res.status(500).json({ error: 'Failed to fetch webhook health data' });
+  }
+});
+
+// ==================== SELF-HOSTED ANALYTICS ====================
+
+// Public: collect page view (no auth, rate-limited)
+app.post('/api/analytics/collect', analyticsLimiter, (req, res) => {
+  try {
+    const { path: pagePath, referrer, screenWidth } = req.body;
+    if (!pagePath || typeof pagePath !== 'string') {
+      return res.status(400).json({ error: 'path required' });
+    }
+    const ip = req.ip || req.connection.remoteAddress || '';
+    const ua = req.headers['user-agent'] || '';
+    const visitorHash = hashVisitor(ip, ua);
+    const cleanPath = pagePath.slice(0, 500);
+    const cleanReferrer = extractReferrerDomain(referrer, req.headers.host);
+    const sw = typeof screenWidth === 'number' && screenWidth > 0 ? Math.round(screenWidth) : null;
+    db.prepare('INSERT INTO analytics_page_views (visitor_hash, path, referrer, screen_width) VALUES (?, ?, ?, ?)').run(
+      visitorHash, cleanPath, cleanReferrer, sw
+    );
+    res.status(202).json({ ok: true });
+  } catch (e) {
+    console.error('Analytics collect error:', e.message);
+    res.status(500).json({ error: 'Failed to record page view' });
+  }
+});
+
+// Public: collect custom event (no auth, rate-limited)
+app.post('/api/analytics/event', analyticsLimiter, (req, res) => {
+  try {
+    const { name, props, path: pagePath } = req.body;
+    if (!name || typeof name !== 'string') {
+      return res.status(400).json({ error: 'name required' });
+    }
+    const ip = req.ip || req.connection.remoteAddress || '';
+    const ua = req.headers['user-agent'] || '';
+    const visitorHash = hashVisitor(ip, ua);
+    const cleanName = name.slice(0, 200);
+    const cleanPath = (pagePath && typeof pagePath === 'string') ? pagePath.slice(0, 500) : null;
+    const cleanProps = props ? JSON.stringify(props).slice(0, 1000) : null;
+    db.prepare('INSERT INTO analytics_events (visitor_hash, name, props, path) VALUES (?, ?, ?, ?)').run(
+      visitorHash, cleanName, cleanProps, cleanPath
+    );
+    res.status(202).json({ ok: true });
+  } catch (e) {
+    console.error('Analytics event error:', e.message);
+    res.status(500).json({ error: 'Failed to record event' });
+  }
+});
+
+// Admin: query analytics visitors
+app.get('/api/admin/analytics/visitors', auth, adminOnly, (req, res) => {
+  try {
+    const period = req.query.period || 'week';
+    let days;
+    switch (period) {
+      case 'day': days = 1; break;
+      case 'month': days = 30; break;
+      default: days = 7; break;
+    }
+
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+    const periodStart = new Date(now - days * 24 * 60 * 60 * 1000).toISOString();
+
+    // Today stats
+    const todayStats = db.prepare(`
+      SELECT COUNT(*) as views, COUNT(DISTINCT visitor_hash) as visitors
+      FROM analytics_page_views WHERE created_at >= ?
+    `).get(todayStart);
+
+    // Period stats
+    const periodStats = db.prepare(`
+      SELECT COUNT(*) as views, COUNT(DISTINCT visitor_hash) as visitors
+      FROM analytics_page_views WHERE created_at >= ?
+    `).get(periodStart);
+
+    // Top pages
+    const topPages = db.prepare(`
+      SELECT path, COUNT(*) as views, COUNT(DISTINCT visitor_hash) as visitors
+      FROM analytics_page_views WHERE created_at >= ?
+      GROUP BY path ORDER BY views DESC LIMIT 10
+    `).all(periodStart);
+
+    // Top referrers
+    const topReferrers = db.prepare(`
+      SELECT referrer, COUNT(*) as views
+      FROM analytics_page_views WHERE created_at >= ? AND referrer IS NOT NULL
+      GROUP BY referrer ORDER BY views DESC LIMIT 5
+    `).all(periodStart);
+
+    // Hourly breakdown (last 24 hours)
+    const hourly = [];
+    for (let h = 23; h >= 0; h--) {
+      const hourStart = new Date(now - (h + 1) * 60 * 60 * 1000).toISOString();
+      const hourEnd = new Date(now - h * 60 * 60 * 1000).toISOString();
+      const row = db.prepare(`
+        SELECT COUNT(*) as views, COUNT(DISTINCT visitor_hash) as visitors
+        FROM analytics_page_views WHERE created_at >= ? AND created_at < ?
+      `).get(hourStart, hourEnd);
+      hourly.push({
+        hour: new Date(now - h * 60 * 60 * 1000).getHours(),
+        views: row.views,
+        visitors: row.visitors,
+      });
+    }
+
+    // Top events
+    const topEvents = db.prepare(`
+      SELECT name, COUNT(*) as count
+      FROM analytics_events WHERE created_at >= ?
+      GROUP BY name ORDER BY count DESC LIMIT 10
+    `).all(periodStart);
+
+    // Device breakdown (mobile < 768, tablet 768-1024, desktop > 1024)
+    const devices = db.prepare(`
+      SELECT
+        COALESCE(SUM(CASE WHEN screen_width IS NOT NULL AND screen_width < 768 THEN 1 ELSE 0 END), 0) as mobile,
+        COALESCE(SUM(CASE WHEN screen_width >= 768 AND screen_width <= 1024 THEN 1 ELSE 0 END), 0) as tablet,
+        COALESCE(SUM(CASE WHEN screen_width > 1024 THEN 1 ELSE 0 END), 0) as desktop,
+        COALESCE(SUM(CASE WHEN screen_width IS NULL THEN 1 ELSE 0 END), 0) as unknown
+      FROM analytics_page_views WHERE created_at >= ?
+    `).get(periodStart);
+
+    // Pages per visitor
+    const pagesPerVisitor = periodStats.visitors > 0
+      ? Math.round((periodStats.views / periodStats.visitors) * 10) / 10
+      : 0;
+
+    res.json({
+      today: { views: todayStats.views, visitors: todayStats.visitors },
+      period: { days, views: periodStats.views, visitors: periodStats.visitors, pagesPerVisitor },
+      topPages,
+      topReferrers,
+      hourly,
+      topEvents,
+      devices,
+    });
+  } catch (e) {
+    console.error('Analytics visitors error:', e.message);
+    res.status(500).json({ error: 'Failed to fetch analytics' });
   }
 });
 

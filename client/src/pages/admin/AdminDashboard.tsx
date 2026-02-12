@@ -7,6 +7,7 @@ import {
   Users,
   TrendingUp,
   AlertTriangle,
+  BarChart3,
 } from 'lucide-react';
 
 interface LowStockProduct {
@@ -33,6 +34,16 @@ interface Order {
   created_at: string;
 }
 
+interface AnalyticsData {
+  today: { views: number; visitors: number };
+  period: { days: number; views: number; visitors: number; pagesPerVisitor: number };
+  topPages: { path: string; views: number; visitors: number }[];
+  hourly: { hour: number; views: number; visitors: number }[];
+  topReferrers: { referrer: string; views: number }[];
+  topEvents: { name: string; count: number }[];
+  devices: { mobile: number; tablet: number; desktop: number; unknown: number };
+}
+
 const statCards = [
   { key: 'totalOrders', label: 'Total Orders', icon: ShoppingCart, format: (v: number) => v.toString() },
   { key: 'totalRevenue', label: 'Revenue', icon: DollarSign, format: (v: number) => `₱${v.toLocaleString()}` },
@@ -57,9 +68,36 @@ function stockBadge(stock: number, threshold: number) {
   return 'bg-zinc-800 text-zinc-400';
 }
 
+function HourlySparkline({ data }: { data: AnalyticsData['hourly'] }) {
+  const maxViews = Math.max(...data.map((d) => d.views), 1);
+  const barW = 100 / data.length;
+  const currentHour = new Date().getHours();
+  return (
+    <svg viewBox="0 0 100 32" className="w-full h-16" preserveAspectRatio="none">
+      {data.map((d, i) => {
+        const h = (d.views / maxViews) * 28 + 1;
+        const isCurrent = d.hour === currentHour;
+        return (
+          <rect
+            key={i}
+            x={i * barW + barW * 0.1}
+            y={32 - h}
+            width={barW * 0.8}
+            height={h}
+            rx={0.5}
+            fill={isCurrent ? '#D4AF37' : '#52525b'}
+            opacity={isCurrent ? 1 : 0.6}
+          />
+        );
+      })}
+    </svg>
+  );
+}
+
 export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -68,12 +106,14 @@ export default function AdminDashboard() {
 
   const loadData = async () => {
     try {
-      const [dashRes, ordersRes] = await Promise.all([
+      const [dashRes, ordersRes, analyticsRes] = await Promise.all([
         adminApi.getDashboard(),
         adminApi.getOrders(),
+        adminApi.getAnalyticsVisitors('week').catch(() => null),
       ]);
       setStats(dashRes.data);
       setOrders(Array.isArray(ordersRes.data) ? ordersRes.data : []);
+      if (analyticsRes?.data) setAnalytics(analyticsRes.data);
     } catch (error) {
       console.error('Failed to load dashboard:', error);
     } finally {
@@ -114,6 +154,65 @@ export default function AdminDashboard() {
           </div>
         ))}
       </div>
+
+      {/* Site Analytics Widget */}
+      {analytics && (
+        <div className="card p-5 mb-8">
+          <h2 className="text-lg font-semibold text-txt-primary mb-4 flex items-center gap-2">
+            <BarChart3 size={18} className="text-accent-gold" />
+            Site Analytics
+            <span className="text-xs text-txt-tertiary font-normal ml-auto">Last 7 days</span>
+          </h2>
+
+          {/* Mini stat blocks */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+            <div className="bg-bg-tertiary/50 rounded-lg p-3">
+              <div className="text-xl font-bold text-txt-primary">{analytics.period.views.toLocaleString()}</div>
+              <div className="text-xs text-txt-tertiary">Page Views</div>
+            </div>
+            <div className="bg-bg-tertiary/50 rounded-lg p-3">
+              <div className="text-xl font-bold text-txt-primary">{analytics.period.visitors.toLocaleString()}</div>
+              <div className="text-xs text-txt-tertiary">Unique Visitors</div>
+            </div>
+            <div className="bg-bg-tertiary/50 rounded-lg p-3">
+              <div className="text-xl font-bold text-txt-primary">{analytics.period.pagesPerVisitor}</div>
+              <div className="text-xs text-txt-tertiary">Pages / Visitor</div>
+            </div>
+            <div className="bg-bg-tertiary/50 rounded-lg p-3">
+              <div className="text-xl font-bold text-txt-primary">{analytics.devices.mobile.toLocaleString()}</div>
+              <div className="text-xs text-txt-tertiary">Mobile Visitors</div>
+            </div>
+          </div>
+
+          {/* Hourly sparkline */}
+          <div className="mb-5">
+            <div className="text-xs text-txt-tertiary mb-1">Hourly page views (24h)</div>
+            <HourlySparkline data={analytics.hourly} />
+          </div>
+
+          {/* Top 5 pages */}
+          {analytics.topPages.length > 0 && (
+            <div>
+              <div className="text-xs text-txt-tertiary mb-2">Top Pages</div>
+              <div className="space-y-1.5">
+                {analytics.topPages.slice(0, 5).map((page) => {
+                  const maxViews = analytics.topPages[0]?.views || 1;
+                  const pct = Math.round((page.views / maxViews) * 100);
+                  return (
+                    <div key={page.path} className="flex items-center gap-3 text-sm">
+                      <span className="text-txt-primary truncate flex-1 min-w-0">{page.path}</span>
+                      <span className="text-txt-tertiary text-xs tabular-nums w-12 text-right shrink-0">{page.views}</span>
+                      <div className="w-24 h-1.5 bg-bg-tertiary rounded-full overflow-hidden shrink-0">
+                        <div className="h-full bg-accent-gold/70 rounded-full" style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Recent Orders */}
