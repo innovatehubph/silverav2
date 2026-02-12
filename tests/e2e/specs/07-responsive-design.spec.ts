@@ -140,12 +140,14 @@ test.describe('Responsive Design - Tablet (768px)', () => {
     await page.waitForLoadState('domcontentloaded');
 
     // Wait for React + Zustand hydration to render checkout content
+    // Either shows payment form (cod radio) or empty cart message
     await page.locator('input[value="cod"]')
       .or(page.getByText(/cart is empty/i))
-      .or(page.locator('input, select, button[type="submit"]'))
+      .or(page.getByText(/Continue Shopping/i))
       .first().waitFor({ state: 'visible', timeout: 15000 });
 
-    const formElements = page.locator('input, select, button[type="submit"]');
+    // Count visible form-related elements on the checkout page
+    const formElements = page.locator('main input:visible, main select:visible, main button[type="submit"]:visible');
     const count = await formElements.count();
     expect(count).toBeGreaterThan(0);
   });
