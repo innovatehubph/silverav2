@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { type ReactNode, useEffect, useState, lazy, Suspense } from 'react';
 import { Toaster } from 'sonner';
 import { useAuthStore, useThemeStore } from './stores';
+import RouteChangeTracker from './components/RouteChangeTracker';
 
 // Layouts
 import MainLayout from './components/layout/MainLayout';
@@ -37,6 +38,7 @@ const AdminSettings = lazy(() => import('./pages/admin/AdminSettings'));
 const AdminReturns = lazy(() => import('./pages/admin/AdminReturns'));
 const AdminReports = lazy(() => import('./pages/admin/AdminReports'));
 const AdminCoupons = lazy(() => import('./pages/admin/AdminCoupons'));
+const AdminPerformance = lazy(() => import('./pages/admin/AdminPerformance'));
 
 function AdminLoader() {
   return (
@@ -110,6 +112,7 @@ function App() {
 
   return (
     <Router>
+      <RouteChangeTracker />
       <Toaster position="top-right" richColors />
       <Routes>
         <Route path="/" element={<MainLayout><Home /></MainLayout>} />
@@ -141,6 +144,7 @@ function App() {
           <Route path="reports" element={<Suspense fallback={<AdminLoader />}><AdminReports /></Suspense>} />
           <Route path="settings" element={<Suspense fallback={<AdminLoader />}><AdminSettings /></Suspense>} />
           <Route path="coupons" element={<Suspense fallback={<AdminLoader />}><AdminCoupons /></Suspense>} />
+          <Route path="performance" element={<Suspense fallback={<AdminLoader />}><AdminPerformance /></Suspense>} />
         </Route>
 
         <Route path="*" element={<MainLayout><NotFound /></MainLayout>} />

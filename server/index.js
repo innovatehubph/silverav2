@@ -493,6 +493,41 @@ app.use(cors({
 
 app.use(compression());
 
+// ==================== PERFORMANCE METRICS ====================
+const SERVER_START_TIME = Date.now();
+const METRICS_WINDOW_MS = 60 * 60 * 1000; // 1 hour rolling window
+const metricsStore = {}; // keyed by "METHOD:path" → [{time, status, duration}]
+
+function pruneMetrics() {
+  const cutoff = Date.now() - METRICS_WINDOW_MS;
+  for (const key of Object.keys(metricsStore)) {
+    metricsStore[key] = metricsStore[key].filter(e => e.time > cutoff);
+    if (metricsStore[key].length === 0) delete metricsStore[key];
+  }
+}
+
+// Normalize route paths: collapse IDs/slugs to `:id` for grouping
+function normalizePath(url) {
+  return url.split('?')[0].replace(/\/\d+/g, '/:id');
+}
+
+// Metrics middleware — record request duration
+app.use((req, res, next) => {
+  // Skip static files & non-API routes
+  if (!req.path.startsWith('/api/')) return next();
+  const start = Date.now();
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    const key = `${req.method}:${normalizePath(req.path)}`;
+    if (!metricsStore[key]) metricsStore[key] = [];
+    metricsStore[key].push({ time: Date.now(), status: res.statusCode, duration });
+  });
+  next();
+});
+
+// Prune old entries every 5 minutes
+setInterval(pruneMetrics, 5 * 60 * 1000);
+
 // HTTPS enforcement (redirect HTTP to HTTPS in production)
 if (process.env.NODE_ENV === 'production') {
   app.use((req, res, next) => {
@@ -3557,6 +3592,97 @@ app.post('/api/coupons/validate', auth, (req, res) => {
   } catch (e) {
     console.error('Validate coupon error:', e.message);
     res.status(500).json({ error: 'Failed to validate coupon' });
+  }
+});
+
+// ==================== PERFORMANCE METRICS API ====================
+
+app.get('/api/admin/performance/metrics', auth, adminOnly, (req, res) => {
+  try {
+    pruneMetrics();
+    const now = Date.now();
+    const cutoff = now - METRICS_WINDOW_MS;
+
+    // Flatten all entries
+    const allEntries = [];
+    for (const entries of Object.values(metricsStore)) {
+      for (const e of entries) allEntries.push(e);
+    }
+
+    // Overall stats
+    const totalRequests = allEntries.length;
+    const durations = allEntries.map(e => e.duration).sort((a, b) => a - b);
+    const errorCount = allEntries.filter(e => e.status >= 400).length;
+    const avgResponseTime = totalRequests > 0
+      ? Math.round(durations.reduce((a, b) => a + b, 0) / totalRequests)
+      : 0;
+    const p95ResponseTime = totalRequests > 0
+      ? durations[Math.floor(totalRequests * 0.95)] || durations[durations.length - 1]
+      : 0;
+    const p99ResponseTime = totalRequests > 0
+      ? durations[Math.floor(totalRequests * 0.99)] || durations[durations.length - 1]
+      : 0;
+    const errorRate = totalRequests > 0
+      ? Math.round((errorCount / totalRequests) * 10000) / 100
+      : 0;
+    const uptimeMs = now - SERVER_START_TIME;
+    const uptimeHours = Math.round(uptimeMs / 3600000 * 10) / 10;
+
+    // Per-endpoint breakdown
+    const endpoints = Object.entries(metricsStore).map(([key, entries]) => {
+      const [method, ...pathParts] = key.split(':');
+      const ePath = pathParts.join(':');
+      const eDurations = entries.map(e => e.duration).sort((a, b) => a - b);
+      const eErrors = entries.filter(e => e.status >= 400).length;
+      const eAvg = Math.round(eDurations.reduce((a, b) => a + b, 0) / eDurations.length);
+      const eP95 = eDurations[Math.floor(eDurations.length * 0.95)] || eDurations[eDurations.length - 1];
+      return {
+        method,
+        path: ePath,
+        avgTime: eAvg,
+        p95Time: eP95,
+        calls: entries.length,
+        errorRate: Math.round((eErrors / entries.length) * 10000) / 100,
+      };
+    });
+
+    // Sort by avg time descending, take top 20
+    endpoints.sort((a, b) => b.avgTime - a.avgTime);
+    const topEndpoints = endpoints.slice(0, 20);
+
+    // Time-series: per-minute averages for last 60 minutes
+    const timeSeries = [];
+    for (let m = 59; m >= 0; m--) {
+      const minuteStart = now - (m + 1) * 60000;
+      const minuteEnd = now - m * 60000;
+      const minuteEntries = allEntries.filter(e => e.time >= minuteStart && e.time < minuteEnd);
+      const minuteAvg = minuteEntries.length > 0
+        ? Math.round(minuteEntries.reduce((sum, e) => sum + e.duration, 0) / minuteEntries.length)
+        : 0;
+      const minuteErrors = minuteEntries.filter(e => e.status >= 400).length;
+      timeSeries.push({
+        time: new Date(minuteEnd).toISOString(),
+        avgResponseTime: minuteAvg,
+        requests: minuteEntries.length,
+        errors: minuteErrors,
+      });
+    }
+
+    res.json({
+      overall: {
+        avgResponseTime,
+        p95ResponseTime,
+        p99ResponseTime,
+        totalRequests,
+        errorRate,
+        uptimeHours,
+      },
+      endpoints: topEndpoints,
+      timeSeries,
+    });
+  } catch (e) {
+    console.error('Performance metrics error:', e.message);
+    res.status(500).json({ error: 'Failed to fetch performance metrics' });
   }
 });
 
