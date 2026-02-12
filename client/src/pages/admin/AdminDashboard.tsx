@@ -108,7 +108,7 @@ export default function AdminDashboard() {
               <card.icon size={20} className="text-accent-gold" />
             </div>
             <div className="text-2xl font-bold text-txt-primary">
-              {card.format((stats as any)?.[card.key] || 0)}
+              {card.format(stats?.[card.key as keyof DashboardStats] as number || 0)}
             </div>
             <div className="text-sm text-txt-secondary mt-1">{card.label}</div>
           </div>

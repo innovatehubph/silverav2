@@ -84,7 +84,7 @@ export default function AdminSettings() {
       if (Array.isArray(response.data)) {
         response.data.forEach((item: { key: string; value: string }) => {
           if (item.key in loadedSettings) {
-            (loadedSettings as any)[item.key] = item.value;
+            (loadedSettings as Record<string, string>)[item.key] = item.value;
           }
         });
       }

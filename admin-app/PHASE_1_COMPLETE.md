@@ -119,7 +119,7 @@
 
 ### 8. ✅ Backend Credentials Verified
 - **Admin Email**: boss@silveraph.shop ✅
-- **Admin Password**: 839e3c443a938a25c246d79f679e6df5 ✅
+- **Admin Password**: [REDACTED] ✅
 - **Credentials Source**: `/root/silverav2/.env` (environment variables)
 - **No Hardcoding**: All credentials stored securely in .env
 
@@ -159,7 +159,7 @@ npm run type-check
 
 **Credentials**:
 - **Email**: boss@silveraph.shop
-- **Password**: 839e3c443a938a25c246d79f679e6df5
+- **Password**: [REDACTED]
 
 The login page displays these credentials for easy testing.
 
@@ -209,7 +209,7 @@ The login page displays these credentials for easy testing.
 ## Admin Credentials Confirmed
 
 ✅ **Email**: boss@silveraph.shop
-✅ **Password**: 839e3c443a938a25c246d79f679e6df5
+✅ **Password**: [REDACTED]
 ✅ **Source**: /root/silverav2/.env (ADMIN_EMAIL, ADMIN_PASSWORD)
 ✅ **Backend**: Express.js at localhost:3865
 ✅ **Database**: SQLite3 at /root/silverav2/silvera.db

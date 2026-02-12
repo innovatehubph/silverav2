@@ -200,7 +200,7 @@ export default function Checkout() {
         items: items.map(item => ({ product_id: item.product_id, quantity: item.quantity })),
         shipping_address: shippingAddress,
         payment_method: formData.paymentMethod,
-      } as any);
+      });
 
       const orderId: number = orderResponse.data.id || orderResponse.data.orderId;
 
