@@ -10,6 +10,7 @@ interface Category {
   name: string;
   slug: string;
   image?: string;
+  description?: string;
 }
 
 export default function Shop() {
@@ -116,10 +117,11 @@ export default function Shop() {
     setSearchParams({});
   };
 
-  // Get active category name for display
-  const activeCategoryName = categoryParam === 'all' 
-    ? 'All Products' 
-    : categories.find(c => c.slug === categoryParam || c.name.toLowerCase() === categoryParam.toLowerCase())?.name || categoryParam;
+  // Get active category for display
+  const activeCategory = categoryParam === 'all'
+    ? null
+    : categories.find(c => c.slug === categoryParam || c.name.toLowerCase() === categoryParam.toLowerCase());
+  const activeCategoryName = activeCategory?.name || (categoryParam === 'all' ? 'All Products' : categoryParam);
 
   return (
     <div className="container-custom py-8 animate-fade-in">
@@ -285,7 +287,7 @@ export default function Shop() {
                 {activeCategoryName}
               </h2>
               <p className="text-txt-secondary">
-                Explore our collection of {activeCategoryName.toLowerCase()} products
+                {activeCategory?.description || `Explore our collection of ${activeCategoryName.toLowerCase()} products`}
               </p>
             </div>
           )}
