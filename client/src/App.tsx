@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { useEffect, lazy, Suspense } from 'react';
+import React, { useEffect, useState, lazy, Suspense } from 'react';
 import { Toaster } from 'sonner';
 import { useAuthStore, useThemeStore } from './stores';
 
@@ -51,9 +51,9 @@ function AdminLoader() {
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore();
-  const [waited, setWaited] = React.useState(false);
+  const [waited, setWaited] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isAuthenticated) {
       const t = setTimeout(() => setWaited(true), 500);
       return () => clearTimeout(t);
@@ -76,9 +76,9 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
 
 function RequireAdmin({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, user } = useAuthStore();
-  const [waited, setWaited] = React.useState(false);
+  const [waited, setWaited] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isAuthenticated) {
       const t = setTimeout(() => setWaited(true), 500);
       return () => clearTimeout(t);
