@@ -28,6 +28,9 @@ export async function login(page: Page, email: string, password: string) {
   // Reload so the app rehydrates with the authenticated state
   await page.reload();
   await page.waitForLoadState('domcontentloaded');
+
+  // Brief pause for Zustand persist to hydrate auth from localStorage
+  await page.waitForTimeout(800);
 }
 
 export async function logout(page: Page) {
@@ -56,12 +59,17 @@ export async function getAuthUser(page: Page) {
 export async function addToCart(page: Page, productId: number) {
   await page.goto(`/product/${productId}`);
   await page.waitForLoadState('domcontentloaded');
-  await page.waitForTimeout(1000);
+  await page.waitForTimeout(2000);
+
+  // Wait for the Add to Cart button to appear (React render can be slow in CI)
+  const addBtn = page.locator('button:has-text("Add to Cart")');
+  await addBtn.waitFor({ state: 'visible', timeout: 30000 });
+
   const sizeBtn = page.locator('button').filter({ hasText: /^(XS|S|M|L|XL|XXL|Free Size|\d+)$/ }).first();
   if (await sizeBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
     await sizeBtn.click();
   }
-  await page.locator('button:has-text("Add to Cart")').click();
+  await addBtn.click();
   await page.locator('[data-sonner-toast]').waitFor({ timeout: 5000 }).catch(() => {});
 }
 

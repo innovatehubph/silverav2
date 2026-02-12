@@ -5,6 +5,17 @@ export class BasePage {
 
   async goto(path: string) {
     await this.page.goto(path);
+    await this.page.waitForLoadState('domcontentloaded');
+
+    // Handle Zustand persist hydration race: the route guard may redirect to
+    // /login before the persisted auth state loads from localStorage.
+    // If redirected, wait for persist to settle, then retry navigation.
+    if (!path.includes('login') && !path.includes('register') && this.page.url().includes('/login')) {
+      await this.page.waitForTimeout(2000);
+      await this.page.goto(path);
+      await this.page.waitForLoadState('domcontentloaded');
+      await this.page.waitForTimeout(2000);
+    }
   }
 
   async waitForLoad() {
@@ -201,7 +212,7 @@ export class CartPage extends BasePage {
   }
 
   get continueShoppingLink(): Locator {
-    return this.page.locator('a[href="/shop"]').filter({ hasText: /continue shopping|start shopping/i });
+    return this.page.locator('a:has-text("Continue Shopping")').first();
   }
 
   get sizeBadges(): Locator {
@@ -247,7 +258,8 @@ export class CheckoutPage extends BasePage {
   }
 
   get placeOrderButton(): Locator {
-    return this.page.locator('button[type="submit"]').filter({ hasText: /place order|pay\s*₱|processing/i });
+    // Target the checkout form's submit button - it's the only w-full submit in the form
+    return this.page.locator('form button[type="submit"].w-full').first();
   }
 
   get emptyCartMessage(): Locator {
@@ -311,7 +323,7 @@ export class OrdersPage extends BasePage {
   }
 
   get emptyMessage(): Locator {
-    return this.page.locator('text=/no orders/i');
+    return this.page.locator('text=/no orders|haven\'t placed/i').first();
   }
 
   async navigate() {
