@@ -10,14 +10,15 @@ import { login } from '../helpers/common';
 
 /**
  * Wait for Zustand auth store to fully hydrate after page navigation.
- * The _hasHydrated flag is set by onRehydrateStorage in the auth store.
- * Once hydrated, RequireAuth renders children instead of null/redirect.
+ * Checks that localStorage has valid auth state with a real user object.
  */
 async function waitForAuthHydration(page: import('@playwright/test').Page) {
   await page.waitForFunction(() => {
     try {
       const raw = localStorage.getItem('silvera-auth');
-      return raw ? JSON.parse(raw)?.state?.isAuthenticated === true : false;
+      if (!raw) return false;
+      const parsed = JSON.parse(raw);
+      return parsed?.state?.isAuthenticated === true && !!parsed?.state?.user;
     } catch { return false; }
   }, { timeout: 10000 });
 }
@@ -123,7 +124,7 @@ test.describe('User Account Management', () => {
 
     // Profile content is gated by {user && ...}. With the _hasHydrated fix,
     // RequireAuth no longer renders children until hydration is complete, so
-    // by the time we're on /profile the user object should be available.
+    // by the time we are on /profile the user object should be available.
     // Wait for the Sign Out button inside the user-gated block.
     const signOutBtn = page.locator('button:has-text("Sign Out")');
     await expect(signOutBtn).toBeVisible({ timeout: 15000 });
