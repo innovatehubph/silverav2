@@ -182,8 +182,10 @@ interface AuthStore {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
+  hasHydrated: boolean;
   login: (user: User, token: string) => void;
   logout: () => void;
+  setHasHydrated: (v: boolean) => void;
 }
 
 export const useAuthStore = create<AuthStore>()(
@@ -192,6 +194,7 @@ export const useAuthStore = create<AuthStore>()(
       user: null,
       token: null,
       isAuthenticated: false,
+      hasHydrated: false,
 
       login: (user, token) => {
         localStorage.setItem('auth_token', token);
@@ -202,9 +205,19 @@ export const useAuthStore = create<AuthStore>()(
         localStorage.removeItem('auth_token');
         set({ user: null, token: null, isAuthenticated: false });
       },
+
+      setHasHydrated: (v) => set({ hasHydrated: v }),
     }),
     {
       name: 'silvera-auth',
+      partialize: (state) => ({
+        user: state.user,
+        token: state.token,
+        isAuthenticated: state.isAuthenticated,
+      }),
+      onRehydrateStorage: () => () => {
+        useAuthStore.getState().setHasHydrated(true);
+      },
     }
   )
 );
