@@ -32,7 +32,6 @@ export default function CategorySection({
   imagePosition,
   isDark = false,
   zIndex,
-  product,
   categorySlug,
 }: CategorySectionProps) {
   const navigate = useNavigate();
