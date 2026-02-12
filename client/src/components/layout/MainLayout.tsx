@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { ShoppingBag, User, X, Search, LogOut, Home, ShoppingCart, Package, UserPlus } from 'lucide-react';
-import { useCartStore, useAuthStore, useThemeStore } from '../../stores';
+import { ShoppingBag, User, X, Search, LogOut, Home, ShoppingCart, Package, UserPlus, Heart, Phone, HelpCircle, Truck } from 'lucide-react';
+import { useCartStore, useAuthStore, useThemeStore, useWishlistStore } from '../../stores';
+import { useScrollDirection } from '../../hooks/useScrollDirection';
+import { wishlistApi } from '../../utils/api';
 import ThemeToggle, { ThemeToggleCompact } from '../ThemeToggle';
 
 // Logo component that switches based on theme
@@ -32,6 +34,17 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const navigate = useNavigate();
   const { getTotalItems } = useCartStore();
   const { isAuthenticated, user, logout } = useAuthStore();
+  const scrollDirection = useScrollDirection();
+  const { count: wishlistCount, setCount: setWishlistCount } = useWishlistStore();
+
+  // Fetch wishlist count on mount when authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      wishlistApi.get()
+        .then(res => setWishlistCount((res.data || []).length))
+        .catch(() => {});
+    }
+  }, [isAuthenticated, setWishlistCount]);
 
   // Touch handling refs
   const drawerRef = useRef<HTMLDivElement>(null);
@@ -415,6 +428,65 @@ export default function MainLayout({ children }: MainLayoutProps) {
                 </div>
               </>
             )}
+
+            {/* More section */}
+            <hr className="my-3 border-bdr-subtle mx-4" />
+            <p className="px-4 pt-1 pb-2 text-xs font-semibold uppercase tracking-wider text-txt-tertiary">More</p>
+            <div className="space-y-1">
+              <Link
+                to="/wishlist"
+                onClick={() => setIsMenuOpen(false)}
+                className={`flex items-center gap-3 py-3.5 px-4 rounded-xl text-sm font-medium transition-all duration-200 ${
+                  isActive('/wishlist')
+                    ? 'bg-gold/10 text-gold border border-gold/20'
+                    : 'text-txt-secondary hover:bg-bg-hover hover:text-txt-primary active:bg-bg-hover'
+                }`}
+              >
+                <Heart className="w-5 h-5" />
+                Wishlist
+                {wishlistCount > 0 && (
+                  <span className="ml-auto bg-gold text-bg-primary text-xs w-5 h-5 rounded-full flex items-center justify-center font-semibold">
+                    {wishlistCount}
+                  </span>
+                )}
+              </Link>
+              <Link
+                to="/contact"
+                onClick={() => setIsMenuOpen(false)}
+                className={`flex items-center gap-3 py-3.5 px-4 rounded-xl text-sm font-medium transition-all duration-200 ${
+                  isActive('/contact')
+                    ? 'bg-gold/10 text-gold border border-gold/20'
+                    : 'text-txt-secondary hover:bg-bg-hover hover:text-txt-primary active:bg-bg-hover'
+                }`}
+              >
+                <Phone className="w-5 h-5" />
+                Contact
+              </Link>
+              <Link
+                to="/faq"
+                onClick={() => setIsMenuOpen(false)}
+                className={`flex items-center gap-3 py-3.5 px-4 rounded-xl text-sm font-medium transition-all duration-200 ${
+                  isActive('/faq')
+                    ? 'bg-gold/10 text-gold border border-gold/20'
+                    : 'text-txt-secondary hover:bg-bg-hover hover:text-txt-primary active:bg-bg-hover'
+                }`}
+              >
+                <HelpCircle className="w-5 h-5" />
+                FAQ
+              </Link>
+              <Link
+                to="/shipping"
+                onClick={() => setIsMenuOpen(false)}
+                className={`flex items-center gap-3 py-3.5 px-4 rounded-xl text-sm font-medium transition-all duration-200 ${
+                  isActive('/shipping')
+                    ? 'bg-gold/10 text-gold border border-gold/20'
+                    : 'text-txt-secondary hover:bg-bg-hover hover:text-txt-primary active:bg-bg-hover'
+                }`}
+              >
+                <Truck className="w-5 h-5" />
+                Shipping
+              </Link>
+            </div>
           </nav>
 
           {/* Bottom section - Auth buttons for non-authenticated users */}
@@ -444,8 +516,78 @@ export default function MainLayout({ children }: MainLayoutProps) {
         <div className="absolute top-1/2 -translate-y-1/2 left-1.5 w-1 h-8 bg-bdr-strong rounded-full opacity-40" />
       </div>
 
+      {/* Mobile Bottom Tab Bar */}
+      <nav
+        className={`fixed bottom-0 left-0 right-0 z-50 glass-strong shadow-lg md:hidden transition-transform duration-300 ${
+          scrollDirection === 'down' ? 'translate-y-full' : 'translate-y-0'
+        }`}
+        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+      >
+        <div className="flex items-center justify-around h-16">
+          <Link
+            to="/"
+            className={`flex flex-col items-center justify-center gap-1 flex-1 h-full transition-colors ${
+              isActive('/') ? 'text-gold' : 'text-txt-tertiary'
+            }`}
+          >
+            <Home className="w-5 h-5" />
+            <span className="text-[10px] font-medium">Home</span>
+          </Link>
+          <Link
+            to="/shop"
+            className={`flex flex-col items-center justify-center gap-1 flex-1 h-full transition-colors ${
+              isActive('/shop') ? 'text-gold' : 'text-txt-tertiary'
+            }`}
+          >
+            <ShoppingCart className="w-5 h-5" />
+            <span className="text-[10px] font-medium">Shop</span>
+          </Link>
+          <Link
+            to="/cart"
+            className={`flex flex-col items-center justify-center gap-1 flex-1 h-full transition-colors relative ${
+              isActive('/cart') ? 'text-gold' : 'text-txt-tertiary'
+            }`}
+          >
+            <div className="relative">
+              <ShoppingBag className="w-5 h-5" />
+              {getTotalItems() > 0 && (
+                <span className="absolute -top-1.5 -right-2.5 bg-gold text-bg-primary text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-semibold">
+                  {getTotalItems()}
+                </span>
+              )}
+            </div>
+            <span className="text-[10px] font-medium">Cart</span>
+          </Link>
+          <Link
+            to="/wishlist"
+            className={`flex flex-col items-center justify-center gap-1 flex-1 h-full transition-colors relative ${
+              isActive('/wishlist') ? 'text-gold' : 'text-txt-tertiary'
+            }`}
+          >
+            <div className="relative">
+              <Heart className="w-5 h-5" />
+              {wishlistCount > 0 && (
+                <span className="absolute -top-1.5 -right-2.5 bg-gold text-bg-primary text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-semibold">
+                  {wishlistCount}
+                </span>
+              )}
+            </div>
+            <span className="text-[10px] font-medium">Wishlist</span>
+          </Link>
+          <Link
+            to={isAuthenticated ? '/profile' : '/login'}
+            className={`flex flex-col items-center justify-center gap-1 flex-1 h-full transition-colors ${
+              isActive('/profile') || isActive('/login') ? 'text-gold' : 'text-txt-tertiary'
+            }`}
+          >
+            <User className="w-5 h-5" />
+            <span className="text-[10px] font-medium">Account</span>
+          </Link>
+        </div>
+      </nav>
+
       {/* Main Content */}
-      <main className="flex-grow pt-20">
+      <main className="flex-grow pt-20 pb-20 md:pb-0">
         {children}
       </main>
 
