@@ -8,6 +8,7 @@ tests/e2e/reports/
 .env
 .env.*
 !.env.example
+!.env.production.example
 
 # OS files
 .DS_Store

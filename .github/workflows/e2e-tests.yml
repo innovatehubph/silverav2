@@ -10,7 +10,49 @@ on:
     - cron: '0 2 * * *'
 
 jobs:
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Scan for hardcoded secrets
+        run: |
+          echo "Scanning for hardcoded secrets..."
+          FOUND=0
+
+          # Patterns that indicate hardcoded secrets (skip .env.example, test fixtures, and this workflow)
+          for pattern in \
+            'SMTP_PASSWORD=(?!\$)(?!\{)(?!$)[^\s]+' \
+            'JWT_SECRET=[a-f0-9]{32,}' \
+            'NEXUSPAY_PASSWORD=(?!\\$)(?!\\{)[^\s]+' \
+            'NEXUSPAY_KEY=(?!\\$)(?!\\{)[^\s]+' \
+            'DIRECTPAY_PASSWORD=(?!\\$)(?!\\{)[^\s]+' \
+            'DIRECTPAY_MERCHANT_KEY=(?!\\$)(?!\\{)[^\s]+' \
+            'MINIO_SECRET_KEY=(?!\\$)(?!\\{)[^\s]+' \
+            'ADMIN_PASSWORD=[a-f0-9]{32,}'; do
+            MATCHES=$(grep -rPn "$pattern" --include='*.yml' --include='*.yaml' --include='*.js' --include='*.ts' --include='*.json' --include='*.tsx' . \
+              --exclude-dir=node_modules --exclude-dir=.git \
+              --exclude='.github/workflows/e2e-tests.yml' \
+              --exclude='*.example' \
+              --exclude='tests/e2e/fixtures/*' || true)
+            if [ -n "$MATCHES" ]; then
+              echo "::error::Potential secret found matching pattern: $pattern"
+              echo "$MATCHES"
+              FOUND=1
+            fi
+          done
+
+          if [ "$FOUND" -eq 1 ]; then
+            echo ""
+            echo "::error::Hardcoded secrets detected! Remove them and use environment variables instead."
+            exit 1
+          fi
+
+          echo "No hardcoded secrets found."
+
   e2e-tests:
+    needs: secret-scan
     timeout-minutes: 60
     runs-on: ubuntu-latest
 
