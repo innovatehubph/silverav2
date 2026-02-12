@@ -140,7 +140,9 @@ test.describe('Responsive Design - Tablet (768px)', () => {
     await page.waitForLoadState('domcontentloaded');
 
     // Wait for React + Zustand hydration to render checkout content
-    await page.locator("input[value='cod'], text=/cart is empty/i, input, select, button[type='submit']")
+    await page.locator('input[value="cod"]')
+      .or(page.getByText(/cart is empty/i))
+      .or(page.locator('input, select, button[type="submit"]'))
       .first().waitFor({ state: 'visible', timeout: 15000 });
 
     const formElements = page.locator('input, select, button[type="submit"]');

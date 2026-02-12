@@ -41,11 +41,11 @@ test.describe('User Account Management', () => {
 
     // Wait for user-gated content (the {user && ...} block in Profile.tsx)
     const signOutBtn = page.locator('button:has-text("Sign Out")');
-    await signOutBtn.waitFor({ state: 'visible', timeout: 15000 }).catch(() => {});
+    await signOutBtn.waitFor({ state: 'visible', timeout: 15000 });
 
     const profilePage = new ProfilePage(page);
-    await expect(profilePage.nameDisplay).toBeVisible();
-    await expect(profilePage.emailDisplay).toBeVisible();
+    await expect(profilePage.nameDisplay).toBeVisible({ timeout: 10000 });
+    await expect(profilePage.emailDisplay).toBeVisible({ timeout: 10000 });
   });
 
   test('5.2: Profile shows authenticated user name', async ({ page }) => {
@@ -87,9 +87,11 @@ test.describe('User Account Management', () => {
     // Wait for the Orders API to respond and React to render real content.
     // The page shows a loading skeleton first, then either order cards or an
     // empty-state message. Wait for either signal.
-    await page.locator(
-      'a[href^="/orders/"]:has-text("Order"), text=/No Orders Yet/i, text=/Start Shopping/i, text=/no orders/i'
-    ).first().waitFor({ timeout: 20000 }).catch(() => {});
+    await page.locator('a[href^="/orders/"]:has-text("Order")')
+      .or(page.getByText(/No Orders Yet/i))
+      .or(page.getByText(/Start Shopping/i))
+      .or(page.getByText(/no orders/i))
+      .first().waitFor({ timeout: 20000 }).catch(() => {});
 
     const ordersPage = new OrdersPage(page);
     const orderCount = await ordersPage.getOrdersCount();

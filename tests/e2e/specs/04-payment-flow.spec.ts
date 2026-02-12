@@ -15,9 +15,11 @@ import { login, addToCart } from '../helpers/common';
  * the payment form (if cart has items) or the "Cart is Empty" message.
  */
 async function waitForCheckoutContent(page: import('@playwright/test').Page) {
-  await page.locator(
-    "input[value='cod'], text=/cart is empty/i, text=/Continue Shopping/i"
-  ).first().waitFor({ state: 'visible', timeout: 15000 });
+  // Use .or() to combine CSS and text engine selectors (can't mix in one string)
+  await page.locator('input[value="cod"]')
+    .or(page.getByText(/cart is empty/i))
+    .or(page.getByText(/Continue Shopping/i))
+    .first().waitFor({ state: 'visible', timeout: 15000 });
 }
 
 test.describe('Payment Flows', () => {
