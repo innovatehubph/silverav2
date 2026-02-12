@@ -58,6 +58,7 @@
   /* Layout */
   --navbar-height: 72px;
   --navbar-height-mobile: 56px;
+  --bottom-bar-height: 64px;
 
   /* Transitions */
   --duration-fast: 150ms;
@@ -474,5 +475,15 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* =============================================================================
+   iOS SAFE AREA SUPPORT
+   ============================================================================= */
+
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  :root {
+    --bottom-bar-height: calc(64px + env(safe-area-inset-bottom));
   }
 }

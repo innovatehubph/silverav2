@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Heart, ShoppingBag, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { wishlistApi } from '../utils/api';
-import { useCartStore } from '../stores';
+import { useCartStore, useWishlistStore } from '../stores';
 
 interface WishlistItem {
   id: number;
@@ -18,18 +18,24 @@ export default function Wishlist() {
   const [items, setItems] = useState<WishlistItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { addItem } = useCartStore();
+  const { setCount: setWishlistCount } = useWishlistStore();
 
   useEffect(() => {
     wishlistApi.get()
-      .then(res => setItems(res.data || []))
+      .then(res => {
+        const data = res.data || [];
+        setItems(data);
+        setWishlistCount(data.length);
+      })
       .catch(err => console.error('Failed to fetch wishlist:', err))
       .finally(() => setIsLoading(false));
-  }, []);
+  }, [setWishlistCount]);
 
   const handleRemove = async (productId: number) => {
     try {
       await wishlistApi.remove(productId);
       setItems(items.filter(item => item.product_id !== productId));
+      setWishlistCount(items.length - 1);
       toast.success('Removed from wishlist');
     } catch {
       toast.error('Failed to remove item');
