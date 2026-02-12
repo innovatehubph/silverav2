@@ -1,9 +1,5 @@
-import { useRef, useLayoutEffect } from 'react';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { useRef, useEffect } from 'react';
 import { MessageSquare, Search, Truck } from 'lucide-react';
-
-gsap.registerPlugin(ScrollTrigger);
 
 const steps = [
   {
@@ -28,49 +24,64 @@ export default function HowItWorksSection() {
   const titleRef = useRef<HTMLHeadingElement>(null);
   const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
 
-  useLayoutEffect(() => {
-    const section = sectionRef.current;
-    if (!section) return;
+  useEffect(() => {
+    let ctx: any;
+    let cancelled = false;
 
-    const ctx = gsap.context(() => {
-      gsap.fromTo(
-        titleRef.current,
-        { y: 24, opacity: 0 },
-        {
-          y: 0,
-          opacity: 1,
-          duration: 0.8,
-          ease: 'power2.out',
-          scrollTrigger: {
-            trigger: titleRef.current,
-            start: 'top 80%',
-            toggleActions: 'play none none reverse',
-          },
-        }
-      );
+    (async () => {
+      const [{ gsap }, { ScrollTrigger }] = await Promise.all([
+        import('gsap'),
+        import('gsap/ScrollTrigger'),
+      ]);
+      if (cancelled) return;
+      gsap.registerPlugin(ScrollTrigger);
 
-      cardsRef.current.forEach((card, index) => {
-        if (!card) return;
+      const section = sectionRef.current;
+      if (!section) return;
+
+      ctx = gsap.context(() => {
         gsap.fromTo(
-          card,
-          { y: 40, opacity: 0 },
+          titleRef.current,
+          { y: 24, opacity: 0 },
           {
             y: 0,
             opacity: 1,
-            duration: 0.6,
-            delay: index * 0.12,
+            duration: 0.8,
             ease: 'power2.out',
             scrollTrigger: {
-              trigger: card,
-              start: 'top 85%',
+              trigger: titleRef.current,
+              start: 'top 80%',
               toggleActions: 'play none none reverse',
             },
           }
         );
-      });
-    }, section);
 
-    return () => ctx.revert();
+        cardsRef.current.forEach((card, index) => {
+          if (!card) return;
+          gsap.fromTo(
+            card,
+            { y: 40, opacity: 0 },
+            {
+              y: 0,
+              opacity: 1,
+              duration: 0.6,
+              delay: index * 0.12,
+              ease: 'power2.out',
+              scrollTrigger: {
+                trigger: card,
+                start: 'top 85%',
+                toggleActions: 'play none none reverse',
+              },
+            }
+          );
+        });
+      }, section);
+    })();
+
+    return () => {
+      cancelled = true;
+      ctx?.revert();
+    };
   }, []);
 
   return (

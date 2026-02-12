@@ -1,12 +1,8 @@
-import { useRef, useLayoutEffect } from 'react';
+import { useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ChevronUp, ChevronDown } from 'lucide-react';
 import OptimizedImage from '../components/OptimizedImage';
 import type { Product } from '../types';
-
-gsap.registerPlugin(ScrollTrigger);
 
 const SECTION_ORDER = ['hero', 'apparel', 'footwear', 'accessories', 'dresses', 'how-it-works'];
 
@@ -61,101 +57,116 @@ export default function CategorySection({
     if (el) el.scrollIntoView({ behavior: 'smooth' });
   };
 
-  useLayoutEffect(() => {
-    const section = sectionRef.current;
-    if (!section) return;
+  useEffect(() => {
+    let ctx: any;
+    let cancelled = false;
 
-    const ctx = gsap.context(() => {
-      const scrollTl = gsap.timeline({
-        scrollTrigger: {
-          trigger: section,
-          start: 'top top',
-          end: '+=130%',
-          pin: true,
-          scrub: 0.6,
-        },
-      });
+    (async () => {
+      const [{ gsap }, { ScrollTrigger }] = await Promise.all([
+        import('gsap'),
+        import('gsap/ScrollTrigger'),
+      ]);
+      if (cancelled) return;
+      gsap.registerPlugin(ScrollTrigger);
 
-      const imageStartX = imagePosition === 'left' ? '-60vw' : '+60vw';
-      const headlineStartX = imagePosition === 'left' ? '+40vw' : '-40vw';
-      const headlineExitX = imagePosition === 'left' ? '+12vw' : '-12vw';
-      const imageExitX = imagePosition === 'left' ? '-18vw' : '+18vw';
-      const imageExitY = imagePosition === 'left' ? '-8vh' : '+8vh';
+      const section = sectionRef.current;
+      if (!section) return;
 
-      // ENTRANCE (0-30%)
-      scrollTl.fromTo(
-        imageRef.current,
-        { x: imageStartX, opacity: 0, scale: 0.96 },
-        { x: 0, opacity: 1, scale: 1, ease: 'none' },
-        0
-      );
+      ctx = gsap.context(() => {
+        const scrollTl = gsap.timeline({
+          scrollTrigger: {
+            trigger: section,
+            start: 'top top',
+            end: '+=130%',
+            pin: true,
+            scrub: 0.6,
+          },
+        });
 
-      scrollTl.fromTo(
-        headlineRef.current,
-        { x: headlineStartX, opacity: 0 },
-        { x: 0, opacity: 1, ease: 'none' },
-        0
-      );
+        const imageStartX = imagePosition === 'left' ? '-60vw' : '+60vw';
+        const headlineStartX = imagePosition === 'left' ? '+40vw' : '-40vw';
+        const headlineExitX = imagePosition === 'left' ? '+12vw' : '-12vw';
+        const imageExitX = imagePosition === 'left' ? '-18vw' : '+18vw';
+        const imageExitY = imagePosition === 'left' ? '-8vh' : '+8vh';
 
-      scrollTl.fromTo(
-        [subheadlineRef.current, ctaRef.current],
-        { y: '10vh', opacity: 0 },
-        { y: 0, opacity: 1, ease: 'none' },
-        0.05
-      );
+        // ENTRANCE (0-30%)
+        scrollTl.fromTo(
+          imageRef.current,
+          { x: imageStartX, opacity: 0, scale: 0.96 },
+          { x: 0, opacity: 1, scale: 1, ease: 'none' },
+          0
+        );
 
-      scrollTl.fromTo(
-        navRef.current,
-        { scale: 0, opacity: 0 },
-        { scale: 1, opacity: 1, ease: 'back.out(2)' },
-        0.1
-      );
+        scrollTl.fromTo(
+          headlineRef.current,
+          { x: headlineStartX, opacity: 0 },
+          { x: 0, opacity: 1, ease: 'none' },
+          0
+        );
 
-      scrollTl.fromTo(
-        glowRef.current,
-        { opacity: 0, scale: 0.9 },
-        { opacity: 0.25, scale: 1, ease: 'none' },
-        0
-      );
+        scrollTl.fromTo(
+          [subheadlineRef.current, ctaRef.current],
+          { y: '10vh', opacity: 0 },
+          { y: 0, opacity: 1, ease: 'none' },
+          0.05
+        );
 
-      // EXIT (70-100%)
-      scrollTl.fromTo(
-        imageRef.current,
-        { x: 0, y: 0, opacity: 1 },
-        { x: imageExitX, y: imageExitY, opacity: 0, ease: 'power2.in' },
-        0.7
-      );
+        scrollTl.fromTo(
+          navRef.current,
+          { scale: 0, opacity: 0 },
+          { scale: 1, opacity: 1, ease: 'back.out(2)' },
+          0.1
+        );
 
-      scrollTl.fromTo(
-        headlineRef.current,
-        { x: 0, opacity: 1 },
-        { x: headlineExitX, opacity: 0, ease: 'power2.in' },
-        0.7
-      );
+        scrollTl.fromTo(
+          glowRef.current,
+          { opacity: 0, scale: 0.9 },
+          { opacity: 0.25, scale: 1, ease: 'none' },
+          0
+        );
 
-      scrollTl.fromTo(
-        [subheadlineRef.current, ctaRef.current],
-        { y: 0, opacity: 1 },
-        { y: '10vh', opacity: 0, ease: 'power2.in' },
-        0.7
-      );
+        // EXIT (70-100%)
+        scrollTl.fromTo(
+          imageRef.current,
+          { x: 0, y: 0, opacity: 1 },
+          { x: imageExitX, y: imageExitY, opacity: 0, ease: 'power2.in' },
+          0.7
+        );
 
-      scrollTl.fromTo(
-        navRef.current,
-        { opacity: 1 },
-        { opacity: 0, ease: 'power2.in' },
-        0.7
-      );
+        scrollTl.fromTo(
+          headlineRef.current,
+          { x: 0, opacity: 1 },
+          { x: headlineExitX, opacity: 0, ease: 'power2.in' },
+          0.7
+        );
 
-      scrollTl.fromTo(
-        glowRef.current,
-        { opacity: 0.25 },
-        { opacity: 0, ease: 'power2.in' },
-        0.7
-      );
-    }, section);
+        scrollTl.fromTo(
+          [subheadlineRef.current, ctaRef.current],
+          { y: 0, opacity: 1 },
+          { y: '10vh', opacity: 0, ease: 'power2.in' },
+          0.7
+        );
 
-    return () => ctx.revert();
+        scrollTl.fromTo(
+          navRef.current,
+          { opacity: 1 },
+          { opacity: 0, ease: 'power2.in' },
+          0.7
+        );
+
+        scrollTl.fromTo(
+          glowRef.current,
+          { opacity: 0.25 },
+          { opacity: 0, ease: 'power2.in' },
+          0.7
+        );
+      }, section);
+    })();
+
+    return () => {
+      cancelled = true;
+      ctx?.revert();
+    };
   }, [imagePosition]);
 
   const isLeft = imagePosition === 'left';

@@ -1,11 +1,7 @@
-import { useEffect, useRef, useLayoutEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ArrowRight, ShoppingBag } from 'lucide-react';
 import OptimizedImage from '../components/OptimizedImage';
-
-gsap.registerPlugin(ScrollTrigger);
 
 const HERO_IMAGE = 'https://s3.innoserver.cloud/silvera/hero/hero-main.jpg';
 
@@ -20,60 +16,70 @@ export default function HeroSection() {
   const labelRef = useRef<HTMLParagraphElement>(null);
   const navigate = useNavigate();
 
-  // Load animation
   useEffect(() => {
-    const ctx = gsap.context(() => {
-      const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+    let ctx: any;
+    let cancelled = false;
 
-      tl.fromTo(goldGlowRef.current, { opacity: 0, scale: 0.8 }, { opacity: 0.3, scale: 1, duration: 1.2 }, 0);
-      tl.fromTo(accentGlowRef.current, { opacity: 0, scale: 0.9 }, { opacity: 0.2, scale: 1, duration: 1 }, 0.2);
-      tl.fromTo(labelRef.current, { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6 }, 0.1);
-      tl.fromTo(headlineRef.current, { y: 60, opacity: 0 }, { y: 0, opacity: 1, duration: 1 }, 0.2);
-      tl.fromTo(subheadlineRef.current, { y: 24, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7 }, 0.5);
-      tl.fromTo(ctaRef.current, { y: 18, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6 }, 0.6);
-      tl.fromTo(imageRef.current, { x: '8vw', opacity: 0, scale: 0.92 }, { x: 0, opacity: 1, scale: 1, duration: 1.2 }, 0.3);
-    }, sectionRef);
-    return () => ctx.revert();
-  }, []);
+    (async () => {
+      const [{ gsap }, { ScrollTrigger }] = await Promise.all([
+        import('gsap'),
+        import('gsap/ScrollTrigger'),
+      ]);
+      if (cancelled) return;
+      gsap.registerPlugin(ScrollTrigger);
 
-  // Scroll-driven exit animation
-  useLayoutEffect(() => {
-    const section = sectionRef.current;
-    if (!section) return;
+      const section = sectionRef.current;
+      if (!section) return;
 
-    const ctx = gsap.context(() => {
-      const scrollTl = gsap.timeline({
-        scrollTrigger: {
-          trigger: section,
-          start: 'top top',
-          end: '+=130%',
-          pin: true,
-          scrub: 0.6,
-          onLeaveBack: () => {
-            gsap.set([headlineRef.current, subheadlineRef.current, ctaRef.current, labelRef.current], { opacity: 1, x: 0, y: 0 });
-            gsap.set(imageRef.current, { opacity: 1, x: 0, y: 0, scale: 1 });
+      ctx = gsap.context(() => {
+        // Load animation
+        const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+
+        tl.fromTo(goldGlowRef.current, { opacity: 0, scale: 0.8 }, { opacity: 0.3, scale: 1, duration: 1.2 }, 0);
+        tl.fromTo(accentGlowRef.current, { opacity: 0, scale: 0.9 }, { opacity: 0.2, scale: 1, duration: 1 }, 0.2);
+        tl.fromTo(labelRef.current, { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6 }, 0.1);
+        tl.fromTo(headlineRef.current, { y: 60, opacity: 0 }, { y: 0, opacity: 1, duration: 1 }, 0.2);
+        tl.fromTo(subheadlineRef.current, { y: 24, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7 }, 0.5);
+        tl.fromTo(ctaRef.current, { y: 18, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6 }, 0.6);
+        tl.fromTo(imageRef.current, { x: '8vw', opacity: 0, scale: 0.92 }, { x: 0, opacity: 1, scale: 1, duration: 1.2 }, 0.3);
+
+        // Scroll-driven exit animation
+        const scrollTl = gsap.timeline({
+          scrollTrigger: {
+            trigger: section,
+            start: 'top top',
+            end: '+=130%',
+            pin: true,
+            scrub: 0.6,
+            onLeaveBack: () => {
+              gsap.set([headlineRef.current, subheadlineRef.current, ctaRef.current, labelRef.current], { opacity: 1, x: 0, y: 0 });
+              gsap.set(imageRef.current, { opacity: 1, x: 0, y: 0, scale: 1 });
+            },
           },
-        },
-      });
+        });
 
-      scrollTl.fromTo(imageRef.current, { x: 0, y: 0, scale: 1, opacity: 1 }, { x: '-22vw', y: '-10vh', scale: 0.88, opacity: 0, ease: 'power2.in' }, 0.7);
-      scrollTl.fromTo(headlineRef.current, { x: 0, opacity: 1 }, { x: '-18vw', opacity: 0, ease: 'power2.in' }, 0.7);
-      scrollTl.fromTo([labelRef.current, subheadlineRef.current], { y: 0, opacity: 1 }, { y: '8vh', opacity: 0, ease: 'power2.in' }, 0.7);
-      scrollTl.fromTo(ctaRef.current, { y: 0, opacity: 1 }, { y: '10vh', opacity: 0, ease: 'power2.in' }, 0.72);
-      scrollTl.fromTo([goldGlowRef.current, accentGlowRef.current], { opacity: 0.3 }, { opacity: 0, ease: 'power2.in' }, 0.7);
-    }, section);
+        scrollTl.fromTo(imageRef.current, { x: 0, y: 0, scale: 1, opacity: 1 }, { x: '-22vw', y: '-10vh', scale: 0.88, opacity: 0, ease: 'power2.in' }, 0.7);
+        scrollTl.fromTo(headlineRef.current, { x: 0, opacity: 1 }, { x: '-18vw', opacity: 0, ease: 'power2.in' }, 0.7);
+        scrollTl.fromTo([labelRef.current, subheadlineRef.current], { y: 0, opacity: 1 }, { y: '8vh', opacity: 0, ease: 'power2.in' }, 0.7);
+        scrollTl.fromTo(ctaRef.current, { y: 0, opacity: 1 }, { y: '10vh', opacity: 0, ease: 'power2.in' }, 0.72);
+        scrollTl.fromTo([goldGlowRef.current, accentGlowRef.current], { opacity: 0.3 }, { opacity: 0, ease: 'power2.in' }, 0.7);
+      }, section);
+    })();
 
-    return () => ctx.revert();
+    return () => {
+      cancelled = true;
+      ctx?.revert();
+    };
   }, []);
 
   return (
     <section ref={sectionRef} id="hero" className="section-pinned bg-bg-primary z-10">
       {/* Ambient Gold Glow */}
       <div ref={goldGlowRef} className="absolute w-[700px] h-[700px] rounded-full pointer-events-none" style={{ top: '-15%', right: '5%', background: 'radial-gradient(circle, rgba(212, 175, 55, 0.15) 0%, transparent 70%)', filter: 'blur(60px)' }} />
-      
+
       {/* Secondary Violet Glow */}
       <div ref={accentGlowRef} className="absolute w-[400px] h-[400px] rounded-full pointer-events-none" style={{ bottom: '10%', left: '5%', background: 'radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%)', filter: 'blur(80px)' }} />
-      
+
       {/* Grid Pattern */}
       <div className="absolute inset-0 pointer-events-none opacity-[0.03]" style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)', backgroundSize: '60px 60px' }} />
 
