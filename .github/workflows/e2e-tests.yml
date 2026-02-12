@@ -31,6 +31,7 @@ jobs:
             | grep -v 'e2e-tests.yml' \
             | grep -v '\.example' \
             | grep -v 'test-users' \
+            | grep -v 'playwright.config' \
             | grep -v 'process\.env\.' \
             | grep -vF '=${' \
             | grep -v '=$' \
