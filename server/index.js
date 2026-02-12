@@ -293,6 +293,29 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_returns_status ON returns(status);
 `);
 
+// Webhook audit log table
+db.exec(`
+  CREATE TABLE IF NOT EXISTS webhook_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    source TEXT NOT NULL,
+    event_type TEXT,
+    payment_ref TEXT,
+    transaction_id TEXT,
+    status TEXT,
+    amount REAL,
+    signature_valid INTEGER DEFAULT 0,
+    response_code INTEGER DEFAULT 200,
+    error_message TEXT,
+    raw_payload TEXT,
+    processed INTEGER DEFAULT 0,
+    duplicate INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE INDEX IF NOT EXISTS idx_webhook_logs_payment_ref ON webhook_logs(payment_ref);
+  CREATE INDEX IF NOT EXISTS idx_webhook_logs_created_at ON webhook_logs(created_at);
+  CREATE INDEX IF NOT EXISTS idx_webhook_logs_source ON webhook_logs(source);
+`);
+
 // Migration: Add low_stock_threshold to products
 try {
   const prodColumns = db.prepare("PRAGMA table_info(products)").all();
@@ -1712,6 +1735,69 @@ app.get('/api/orders/:id/return', auth, (req, res) => {
 // ==================== PAYMENT (DirectPay/NexusPay) ====================
 
 /**
+ * Webhook audit logging and alerting
+ */
+const TELEGRAM_CHAT_ID = '1104423387';
+let _telegramBotToken = null;
+
+function getTelegramBotToken() {
+  if (_telegramBotToken) return _telegramBotToken;
+  try {
+    const fs = require('fs');
+    const config = JSON.parse(fs.readFileSync('/root/.openclaw/openclaw.json', 'utf8'));
+    _telegramBotToken = config.channels.telegram.botToken;
+    return _telegramBotToken;
+  } catch {
+    return null;
+  }
+}
+
+async function sendTelegramAlert(message) {
+  const token = getTelegramBotToken();
+  if (!token) return;
+  try {
+    const https = require('https');
+    const data = JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: message, parse_mode: 'Markdown' });
+    const options = {
+      hostname: 'api.telegram.org',
+      path: `/bot${token}/sendMessage`,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data) }
+    };
+    await new Promise((resolve, reject) => {
+      const req = https.request(options, (res) => { res.on('data', () => {}); res.on('end', resolve); });
+      req.on('error', reject);
+      req.write(data);
+      req.end();
+    });
+  } catch (err) {
+    console.error('Telegram alert failed:', err.message);
+  }
+}
+
+function logWebhook({ source, event_type, payment_ref, transaction_id, status, amount, signature_valid, response_code, error_message, raw_payload, processed, duplicate }) {
+  try {
+    db.prepare(`INSERT INTO webhook_logs (source, event_type, payment_ref, transaction_id, status, amount, signature_valid, response_code, error_message, raw_payload, processed, duplicate)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+      source || 'unknown', event_type || null, payment_ref || null, transaction_id || null,
+      status || null, amount || null, signature_valid ? 1 : 0, response_code || 200,
+      error_message || null, raw_payload ? JSON.stringify(raw_payload).slice(0, 4000) : null,
+      processed ? 1 : 0, duplicate ? 1 : 0
+    );
+  } catch (err) {
+    console.error('Webhook log insert error:', err.message);
+  }
+}
+
+function isDuplicateWebhook(payment_ref, status) {
+  if (!payment_ref || !status) return false;
+  const existing = db.prepare(
+    'SELECT id FROM webhook_logs WHERE payment_ref = ? AND status = ? AND processed = 1 AND duplicate = 0 LIMIT 1'
+  ).get(payment_ref, status);
+  return !!existing;
+}
+
+/**
  * Verify NexusPay/DirectPay webhook signature
  * Uses HMAC-SHA256 with DIRECTPAY_MERCHANT_KEY as secret
  */
@@ -1955,24 +2041,35 @@ app.get('/api/payments/:paymentRef/status', auth, (req, res) => {
 
 // DirectPay Callback Handler (called when user returns from payment)
 app.post('/api/payments/callback', async (req, res) => {
+  const logData = { source: 'callback', raw_payload: req.body };
   try {
     const { ref, status, amount, signature, timestamp } = req.body;
 
     if (!ref || !status) {
-      console.error('Invalid callback: missing ref or status');
+      logWebhook({ ...logData, event_type: 'invalid', response_code: 400, error_message: 'Missing ref or status' });
       return res.status(400).json({ error: 'Invalid callback data' });
     }
 
-    console.log(`[DirectPay Callback] Ref: ${ref}, Status: ${status}, Amount: ${amount}`);
+    logData.payment_ref = ref;
+    logData.status = status;
+    logData.amount = amount;
 
     // Verify signature for callback
     const callbackTimestamp = timestamp || Date.now();
-    if (!verifyPaymentSignature({ payment_ref: ref, status, amount, timestamp: callbackTimestamp }, signature)) {
-      console.error('❌ Invalid callback signature');
+    const sigValid = verifyPaymentSignature({ payment_ref: ref, status, amount, timestamp: callbackTimestamp }, signature);
+    logData.signature_valid = sigValid;
+
+    if (!sigValid) {
+      logWebhook({ ...logData, event_type: 'signature_fail', response_code: 401, error_message: 'Invalid signature' });
+      sendTelegramAlert(`⚠️ *Silvera Webhook Alert*\nInvalid callback signature\nRef: \`${ref}\`\nStatus: ${status}`).catch(() => {});
       return res.status(401).json({ error: 'Invalid signature' });
     }
 
-    console.log('✅ Callback signature verified');
+    // Check for duplicate
+    if (isDuplicateWebhook(ref, status)) {
+      logWebhook({ ...logData, event_type: 'callback', duplicate: true, processed: false, response_code: 200 });
+      return res.json({ success: true, message: 'Duplicate callback ignored', payment_ref: ref, status });
+    }
 
     // Update order based on payment status
     if (status === 'success' || status === 'completed' || status === 'paid') {
@@ -1980,62 +2077,49 @@ app.post('/api/payments/callback', async (req, res) => {
         .run('paid', 'processing', ref);
 
       if (result.changes > 0) {
-        console.log(`✅ [Payment Confirmed] Order updated: ${ref}`);
-
-        // Get order ID and send confirmation email
         const order = db.prepare('SELECT id FROM orders WHERE payment_ref = ?').get(ref);
         if (order) {
-          // Send confirmation email asynchronously
           sendOrderConfirmationEmail(order.id).catch(err =>
             console.error('Error sending confirmation email:', err)
           );
         }
 
-        res.json({
-          success: true,
-          message: 'Payment confirmed',
-          payment_ref: ref,
-          status: 'paid'
-        });
+        logWebhook({ ...logData, event_type: 'payment_success', processed: true, response_code: 200 });
+        res.json({ success: true, message: 'Payment confirmed', payment_ref: ref, status: 'paid' });
       } else {
-        console.error(`❌ [Payment Error] Order not found: ${ref}`);
+        logWebhook({ ...logData, event_type: 'order_not_found', processed: false, response_code: 404, error_message: 'Order not found' });
+        sendTelegramAlert(`⚠️ *Silvera Webhook Alert*\nCallback for unknown order\nRef: \`${ref}\`\nStatus: ${status}`).catch(() => {});
         res.status(404).json({ error: 'Order not found' });
       }
     } else if (status === 'failed' || status === 'cancelled') {
       db.prepare('UPDATE orders SET payment_status = ? WHERE payment_ref = ?')
         .run('failed', ref);
 
-      res.json({
-        success: false,
-        message: 'Payment failed or cancelled',
-        payment_ref: ref,
-        status: 'failed'
-      });
+      logWebhook({ ...logData, event_type: 'payment_failed', processed: true, response_code: 200 });
+      sendTelegramAlert(`❌ *Silvera Payment Failed*\nRef: \`${ref}\`\nStatus: ${status}\nAmount: ${amount || 'N/A'}`).catch(() => {});
+
+      res.json({ success: false, message: 'Payment failed or cancelled', payment_ref: ref, status: 'failed' });
     } else if (status === 'pending') {
-      res.json({
-        success: true,
-        message: 'Payment pending',
-        payment_ref: ref,
-        status: 'pending'
-      });
+      logWebhook({ ...logData, event_type: 'payment_pending', processed: true, response_code: 200 });
+      res.json({ success: true, message: 'Payment pending', payment_ref: ref, status: 'pending' });
     }
   } catch (e) {
-    console.error('[Callback Error]', e.message);
+    logWebhook({ ...logData, event_type: 'error', response_code: 500, error_message: e.message, processed: false });
+    sendTelegramAlert(`🔴 *Silvera Webhook Error*\nCallback processing failed\nError: ${e.message}`).catch(() => {});
     res.status(500).json({ error: 'Callback processing failed' });
   }
 });
 
 // DirectPay Webhook Handler (server-to-server notification)
 app.post('/api/payments/webhook', async (req, res) => {
+  const logData = { source: 'webhook', raw_payload: req.body };
   try {
     // Support both DirectPay format and legacy format
     const {
-      // DirectPay format
       reference_number,
       transaction_status,
       total_amount,
       merchantpaymentreferences,
-      // Legacy format
       payment_ref: legacyPaymentRef,
       status: legacyStatus,
       amount: legacyAmount,
@@ -2049,46 +2133,52 @@ app.post('/api/payments/webhook', async (req, res) => {
     const amount = total_amount || legacyAmount;
     const transactionId = reference_number;
 
+    logData.payment_ref = payment_ref;
+    logData.transaction_id = transactionId;
+    logData.status = status;
+    logData.amount = amount;
+
     if (!payment_ref && !transactionId) {
-      console.error('Invalid webhook: missing payment reference');
+      logWebhook({ ...logData, event_type: 'invalid', response_code: 400, error_message: 'Missing payment reference' });
       return res.status(400).json({ error: 'Invalid webhook data' });
     }
 
-    console.log(`[DirectPay Webhook] TxID: ${transactionId}, Ref: ${payment_ref}, Status: ${status}, Amount: ${amount}`);
-
     // Verify webhook signature
-    if (!verifyPaymentSignature({ payment_ref, status, amount, timestamp }, signature)) {
-      console.error('❌ Invalid webhook signature');
+    const sigValid = verifyPaymentSignature({ payment_ref, status, amount, timestamp }, signature);
+    logData.signature_valid = sigValid;
+
+    if (!sigValid) {
+      logWebhook({ ...logData, event_type: 'signature_fail', response_code: 401, error_message: 'Invalid webhook signature' });
+      sendTelegramAlert(`⚠️ *Silvera Webhook Alert*\nInvalid webhook signature\nRef: \`${payment_ref}\`\nTxID: \`${transactionId || 'N/A'}\``).catch(() => {});
       return res.status(401).json({ error: 'Invalid webhook signature' });
     }
 
-    console.log('✅ Webhook signature verified');
+    // Check for duplicate
+    if (isDuplicateWebhook(payment_ref, status)) {
+      logWebhook({ ...logData, event_type: 'webhook', duplicate: true, processed: false, response_code: 200 });
+      return res.json({ received: true, payment_ref, status: 'duplicate_ignored' });
+    }
 
-    // Update order based on payment status (handle both DirectPay and legacy formats)
+    // Update order based on payment status
     const successStatuses = ['success', 'completed', 'paid'];
     const failedStatuses = ['failed', 'cancelled', 'expired'];
-    
+
     if (successStatuses.includes(status)) {
-      // Update order by payment_ref
       const result = db.prepare(`
-        UPDATE orders
-        SET payment_status = ?, status = ?
-        WHERE payment_ref = ?
+        UPDATE orders SET payment_status = ?, status = ? WHERE payment_ref = ?
       `).run('paid', 'processing', payment_ref);
 
       if (result.changes > 0) {
-        console.log(`✅ [Webhook Confirmed] Payment: ${payment_ref}`);
-
-        // Get order ID and send confirmation email
         const order = db.prepare('SELECT id FROM orders WHERE payment_ref = ?').get(payment_ref);
         if (order) {
-          // Send confirmation email asynchronously
           sendOrderConfirmationEmail(order.id).catch(err =>
             console.error('Error sending confirmation email:', err)
           );
         }
+        logWebhook({ ...logData, event_type: 'payment_success', processed: true, response_code: 200 });
       } else {
-        console.warn(`⚠️  No order found for payment_ref: ${payment_ref}`);
+        logWebhook({ ...logData, event_type: 'order_not_found', processed: false, response_code: 200, error_message: 'No order found for payment_ref' });
+        sendTelegramAlert(`⚠️ *Silvera Webhook Alert*\nWebhook for unknown order\nRef: \`${payment_ref}\`\nTxID: \`${transactionId || 'N/A'}\``).catch(() => {});
       }
     } else if (failedStatuses.includes(status)) {
       // Restore stock for failed payment
@@ -2100,25 +2190,26 @@ app.post('/api/payments/webhook', async (req, res) => {
           for (const item of failedItems) {
             restoreStmt.run(item.quantity, item.product_id);
           }
-          console.log(`📦 Stock restored for failed order #${failedOrder.id}`);
         } catch (restoreErr) {
           console.error('Stock restore error:', restoreErr.message);
         }
       }
 
       db.prepare(`
-        UPDATE orders
-        SET payment_status = ?, status = ?
-        WHERE payment_ref = ?
+        UPDATE orders SET payment_status = ?, status = ? WHERE payment_ref = ?
       `).run('failed', 'cancelled', payment_ref);
 
-      console.log(`⚠️  [Webhook Failed] Payment: ${payment_ref}`);
+      logWebhook({ ...logData, event_type: 'payment_failed', processed: true, response_code: 200 });
+      sendTelegramAlert(`❌ *Silvera Payment Failed*\nRef: \`${payment_ref}\`\nTxID: \`${transactionId || 'N/A'}\`\nStatus: ${status}\nAmount: ${amount || 'N/A'}`).catch(() => {});
+    } else {
+      logWebhook({ ...logData, event_type: `status_${status}`, processed: true, response_code: 200 });
     }
 
     // Always respond with 200 to acknowledge receipt
-    res.json({ received: true, payment_ref: payment_ref, status: 'processed' });
+    res.json({ received: true, payment_ref, status: 'processed' });
   } catch (e) {
-    console.error('[Webhook Error]', e.message);
+    logWebhook({ ...logData, event_type: 'error', response_code: 200, error_message: e.message, processed: false });
+    sendTelegramAlert(`🔴 *Silvera Webhook Error*\nWebhook processing failed\nError: ${e.message}`).catch(() => {});
     res.status(200).json({ received: true, error: e.message }); // Return 200 to prevent retries
   }
 });
@@ -3691,6 +3782,86 @@ app.get('/api/admin/performance/metrics', auth, adminOnly, (req, res) => {
   } catch (e) {
     console.error('Performance metrics error:', e.message);
     res.status(500).json({ error: 'Failed to fetch performance metrics' });
+  }
+});
+
+// ==================== WEBHOOK HEALTH CHECK ====================
+
+app.get('/api/admin/webhooks/health', auth, adminOnly, (req, res) => {
+  try {
+    const now = new Date();
+    const last24h = new Date(now - 24 * 60 * 60 * 1000).toISOString();
+    const last7d = new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+    // Summary stats for last 24 hours
+    const stats24h = db.prepare(`
+      SELECT
+        COUNT(*) as total,
+        SUM(CASE WHEN processed = 1 THEN 1 ELSE 0 END) as processed,
+        SUM(CASE WHEN signature_valid = 0 THEN 1 ELSE 0 END) as invalid_signatures,
+        SUM(CASE WHEN duplicate = 1 THEN 1 ELSE 0 END) as duplicates,
+        SUM(CASE WHEN error_message IS NOT NULL AND error_message != '' THEN 1 ELSE 0 END) as errors,
+        SUM(CASE WHEN event_type = 'payment_success' THEN 1 ELSE 0 END) as successful_payments,
+        SUM(CASE WHEN event_type = 'payment_failed' THEN 1 ELSE 0 END) as failed_payments
+      FROM webhook_logs WHERE created_at >= ?
+    `).get(last24h);
+
+    // Summary stats for last 7 days
+    const stats7d = db.prepare(`
+      SELECT
+        COUNT(*) as total,
+        SUM(CASE WHEN processed = 1 THEN 1 ELSE 0 END) as processed,
+        SUM(CASE WHEN error_message IS NOT NULL AND error_message != '' THEN 1 ELSE 0 END) as errors
+      FROM webhook_logs WHERE created_at >= ?
+    `).get(last7d);
+
+    // Recent webhook logs (last 20)
+    const recentLogs = db.prepare(`
+      SELECT id, source, event_type, payment_ref, transaction_id, status, amount,
+             signature_valid, response_code, error_message, processed, duplicate, created_at
+      FROM webhook_logs ORDER BY created_at DESC LIMIT 20
+    `).all();
+
+    // Last successful webhook
+    const lastSuccess = db.prepare(`
+      SELECT created_at FROM webhook_logs
+      WHERE event_type = 'payment_success' AND processed = 1
+      ORDER BY created_at DESC LIMIT 1
+    `).get();
+
+    // Error rate
+    const errorRate = stats24h.total > 0
+      ? ((stats24h.errors / stats24h.total) * 100).toFixed(1)
+      : '0.0';
+
+    // Health status
+    let healthStatus = 'healthy';
+    if (stats24h.errors > 5 || parseFloat(errorRate) > 50) healthStatus = 'degraded';
+    if (stats24h.invalid_signatures > 3) healthStatus = 'warning';
+
+    res.json({
+      status: healthStatus,
+      last_24h: {
+        total_webhooks: stats24h.total,
+        processed: stats24h.processed,
+        successful_payments: stats24h.successful_payments,
+        failed_payments: stats24h.failed_payments,
+        invalid_signatures: stats24h.invalid_signatures,
+        duplicates: stats24h.duplicates,
+        errors: stats24h.errors,
+        error_rate: `${errorRate}%`
+      },
+      last_7d: {
+        total_webhooks: stats7d.total,
+        processed: stats7d.processed,
+        errors: stats7d.errors
+      },
+      last_successful_webhook: lastSuccess ? lastSuccess.created_at : null,
+      recent_logs: recentLogs
+    });
+  } catch (e) {
+    console.error('Webhook health check error:', e.message);
+    res.status(500).json({ error: 'Failed to fetch webhook health data' });
   }
 });
 
