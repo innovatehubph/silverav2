@@ -63,8 +63,9 @@ test.describe('Authentication Flows', () => {
     await page.evaluate(() => localStorage.clear());
 
     await page.goto('/profile');
-    // Wait for Zustand _hasHydrated → RequireAuth detects no auth → redirects to /login
-    await page.waitForURL('**/login', { timeout: 10000 });
+    // With _hasHydrated, RequireAuth delays the redirect until hydration completes.
+    // Wait for the actual URL change instead of a fixed timeout.
+    await page.waitForURL('**/login**', { timeout: 15000 });
     await assertOnLoginPage(page);
   });
 

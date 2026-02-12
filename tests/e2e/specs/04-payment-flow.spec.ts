@@ -9,6 +9,17 @@ import { PAYMENT_METHODS } from '../fixtures/test-data';
 import { CheckoutPage, CartPage } from '../helpers/page-objects';
 import { login, addToCart } from '../helpers/common';
 
+/**
+ * Wait for checkout page content to fully render.
+ * After Zustand auth + cart hydration, the Checkout component renders either
+ * the payment form (if cart has items) or the "Cart is Empty" message.
+ */
+async function waitForCheckoutContent(page: import('@playwright/test').Page) {
+  await page.locator(
+    'input[value="cod"], text=/cart is empty/i, text=/Continue Shopping/i'
+  ).first().waitFor({ state: 'visible', timeout: 15000 });
+}
+
 test.describe('Payment Flows', () => {
   test.beforeEach(async ({ page }) => {
     await login(page, TEST_USERS.validUser.email, TEST_USERS.validUser.password);
@@ -36,8 +47,7 @@ test.describe('Payment Flows', () => {
 
     const checkoutPage = new CheckoutPage(page);
     await checkoutPage.navigate();
-    await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(2000);
+    await waitForCheckoutContent(page);
 
     const paymentLabels = await checkoutPage.paymentMethodLabels.count();
     expect(paymentLabels).toBeGreaterThan(0);
@@ -49,8 +59,7 @@ test.describe('Payment Flows', () => {
 
     const checkoutPage = new CheckoutPage(page);
     await checkoutPage.navigate();
-    await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(2000);
+    await waitForCheckoutContent(page);
 
     await checkoutPage.selectCOD();
     await expect(checkoutPage.codRadio).toBeChecked();
@@ -62,8 +71,7 @@ test.describe('Payment Flows', () => {
 
     const checkoutPage = new CheckoutPage(page);
     await checkoutPage.navigate();
-    await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(3000);
+    await waitForCheckoutContent(page);
 
     await checkoutPage.selectCOD();
 
@@ -92,8 +100,7 @@ test.describe('Payment Flows', () => {
 
     const checkoutPage = new CheckoutPage(page);
     await checkoutPage.navigate();
-    await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(2000);
+    await waitForCheckoutContent(page);
 
     const gcashVisible = await checkoutPage.gcashRadio.isVisible().catch(() => false);
     expect(gcashVisible).toBeTruthy();
@@ -105,8 +112,7 @@ test.describe('Payment Flows', () => {
 
     const checkoutPage = new CheckoutPage(page);
     await checkoutPage.navigate();
-    await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(2000);
+    await waitForCheckoutContent(page);
 
     const cardVisible = await checkoutPage.cardRadio.isVisible().catch(() => false);
     expect(cardVisible).toBeTruthy();
@@ -117,8 +123,7 @@ test.describe('Payment Flows', () => {
 
     const checkoutPage = new CheckoutPage(page);
     await checkoutPage.navigate();
-    await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(2000);
+    await waitForCheckoutContent(page);
 
     const emptyVisible = await checkoutPage.emptyCartMessage.isVisible().catch(() => false);
     const redirectedToCart = page.url().includes('/cart');

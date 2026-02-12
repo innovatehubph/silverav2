@@ -7,15 +7,11 @@ export class BasePage {
     await this.page.goto(path);
     await this.page.waitForLoadState('domcontentloaded');
 
-    // Handle Zustand persist hydration race: the route guard may redirect to
-    // /login before the persisted auth state loads from localStorage.
-    // If redirected, wait for persist to settle, then retry navigation.
-    if (!path.includes('login') && !path.includes('register') && this.page.url().includes('/login')) {
-      await this.page.waitForTimeout(2000);
-      await this.page.goto(path);
-      await this.page.waitForLoadState('domcontentloaded');
-      await this.page.waitForTimeout(2000);
-    }
+    // Wait for React + Zustand persist hydration to complete rendering.
+    // RequireAuth returns null until _hasHydrated becomes true, so the
+    // page is blank briefly. Wait for meaningful content to appear.
+    await this.page.locator('h1, h2, form, nav a, input[type="email"]').first()
+      .waitFor({ state: 'attached', timeout: 15000 }).catch(() => {});
   }
 
   async waitForLoad() {

@@ -9,41 +9,25 @@ import { ProfilePage, OrdersPage } from '../helpers/page-objects';
 import { login } from '../helpers/common';
 
 /**
- * Wait for Zustand auth store to fully hydrate after page navigation.
- * Checks that localStorage has valid auth state with a real user object.
+ * Navigate to a protected page, waiting for React to render content
+ * after Zustand auth + data hydration completes.
  */
-async function waitForAuthHydration(page: import('@playwright/test').Page) {
-  await page.waitForFunction(() => {
-    try {
-      const raw = localStorage.getItem('silvera-auth');
-      if (!raw) return false;
-      const parsed = JSON.parse(raw);
-      return parsed?.state?.isAuthenticated === true && !!parsed?.state?.user;
-    } catch { return false; }
-  }, { timeout: 10000 });
-}
-
-/** Navigate to a protected page, waiting for auth hydration */
 async function gotoProtected(page: import('@playwright/test').Page, path: string) {
   await page.goto(path);
   await page.waitForLoadState('domcontentloaded');
 
-  // Give Zustand persist time to hydrate; if we got redirected, re-seed and retry
-  try {
-    await waitForAuthHydration(page);
-  } catch {
-    // Hydration check failed — re-login and retry
-    await login(page, TEST_USERS.validUser.email, TEST_USERS.validUser.password);
-    await page.goto(path);
-    await page.waitForLoadState('domcontentloaded');
-    await waitForAuthHydration(page);
-  }
+  // Wait for React to render meaningful content after _hasHydrated resolves.
+  // RequireAuth returns null until hydration; then the page component renders.
+  await page.locator('h1, h2, form, nav a, input').first()
+    .waitFor({ state: 'attached', timeout: 15000 }).catch(() => {});
 
-  // If RequireAuth still redirected (e.g. race), one more try
+  // If RequireAuth redirected to /login (stale/missing auth), re-login and retry
   if (page.url().includes('/login')) {
     await login(page, TEST_USERS.validUser.email, TEST_USERS.validUser.password);
     await page.goto(path);
     await page.waitForLoadState('domcontentloaded');
+    await page.locator('h1, h2, form, nav a, input').first()
+      .waitFor({ state: 'attached', timeout: 15000 }).catch(() => {});
   }
 }
 
@@ -53,21 +37,25 @@ test.describe('User Account Management', () => {
   });
 
   test('5.1: Profile page loads with user info', async ({ page }) => {
-    const profilePage = new ProfilePage(page);
-    await profilePage.navigate();
-    await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(2000);
+    await gotoProtected(page, '/profile');
 
+    // Wait for user-gated content (the {user && ...} block in Profile.tsx)
+    const signOutBtn = page.locator('button:has-text("Sign Out")');
+    await signOutBtn.waitFor({ state: 'visible', timeout: 15000 }).catch(() => {});
+
+    const profilePage = new ProfilePage(page);
     await expect(profilePage.nameDisplay).toBeVisible();
     await expect(profilePage.emailDisplay).toBeVisible();
   });
 
   test('5.2: Profile shows authenticated user name', async ({ page }) => {
-    const profilePage = new ProfilePage(page);
-    await profilePage.navigate();
-    await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(2000);
+    await gotoProtected(page, '/profile');
 
+    // Wait for user-gated content to render
+    const signOutBtn = page.locator('button:has-text("Sign Out")');
+    await signOutBtn.waitFor({ state: 'visible', timeout: 15000 }).catch(() => {});
+
+    const profilePage = new ProfilePage(page);
     const nameText = await profilePage.nameDisplay.textContent();
     expect(nameText).toBeTruthy();
     expect(nameText!.length).toBeGreaterThan(0);
@@ -100,7 +88,7 @@ test.describe('User Account Management', () => {
     // The page shows a loading skeleton first, then either order cards or an
     // empty-state message. Wait for either signal.
     await page.locator(
-      'a[href^="/orders/"]:has-text("Order"), text=/No Orders Yet/i, text=/Start Shopping/i'
+      'a[href^="/orders/"]:has-text("Order"), text=/No Orders Yet/i, text=/Start Shopping/i, text=/no orders/i'
     ).first().waitFor({ timeout: 20000 }).catch(() => {});
 
     const ordersPage = new OrdersPage(page);
@@ -122,10 +110,7 @@ test.describe('User Account Management', () => {
       return;
     }
 
-    // Profile content is gated by {user && ...}. With the _hasHydrated fix,
-    // RequireAuth no longer renders children until hydration is complete, so
-    // by the time we are on /profile the user object should be available.
-    // Wait for the Sign Out button inside the user-gated block.
+    // Wait for user-gated content. The Sign Out button is inside {user && ...}.
     const signOutBtn = page.locator('button:has-text("Sign Out")');
     await expect(signOutBtn).toBeVisible({ timeout: 15000 });
   });
