@@ -84,9 +84,12 @@ test.describe('User Account Management', () => {
       return;
     }
 
-    // Profile content renders only after Zustand hydrates the user object.
-    // Wait for user-gated content (h2 with user name) or the logout button.
-    await page.locator('h2, button:has-text("Sign Out")').first().waitFor({ timeout: 15000 }).catch(() => {});
+    // Profile content (including Sign Out) only renders after Zustand hydrates
+    // the user object. Use waitForFunction to poll for the button in the DOM.
+    await page.waitForFunction(
+      () => document.querySelector('button')?.textContent?.includes('Sign Out'),
+      { timeout: 15000 }
+    ).catch(() => {});
 
     const logoutVisible = await profilePage.logoutButton.isVisible().catch(() => false);
     expect(logoutVisible).toBeTruthy();
