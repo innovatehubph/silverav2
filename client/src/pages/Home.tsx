@@ -10,10 +10,12 @@ import HowItWorksSection from '../sections/HowItWorksSection';
 import { SEO, generateOrganizationStructuredData } from '../components/SEO';
 
 const categoryFallbackImages: Record<string, string> = {
-  apparel: '/images/shirt_apparel.jpg',
-  footwear: '/images/shoe_footwear.jpg',
+  apparel: 'https://s3.innoserver.cloud/silvera/categories/category-clothing.jpg',
+  footwear: 'https://s3.innoserver.cloud/silvera/categories/category-sneakers.jpg',
   accessories: '/images/wallet_smallleather.jpg',
   dresses: '/images/dress_apparel.jpg',
+  electronics: 'https://s3.innoserver.cloud/silvera/categories/category-electronics.jpg',
+  homeLiving: 'https://s3.innoserver.cloud/silvera/categories/category-home-living.jpg',
 };
 
 export default function Home() {
@@ -71,7 +73,7 @@ export default function Home() {
           imagePosition="right"
           zIndex={20}
           product={categoryProducts[0] ?? undefined}
-          categorySlug="fashion"
+          categorySlug="apparel"
         />
 
         <CategorySection
@@ -83,7 +85,7 @@ export default function Home() {
           imagePosition="left"
           zIndex={30}
           product={categoryProducts[1] ?? undefined}
-          categorySlug="sports"
+          categorySlug="footwear"
         />
 
         <CategorySection
@@ -95,7 +97,7 @@ export default function Home() {
           imagePosition="right"
           zIndex={40}
           product={categoryProducts[2] ?? undefined}
-          categorySlug="electronics"
+          categorySlug="accessories"
         />
 
         <CategorySection
@@ -108,7 +110,32 @@ export default function Home() {
           isDark={true}
           zIndex={50}
           product={categoryProducts[3] ?? undefined}
-          categorySlug="beauty"
+          categorySlug="dresses"
+        />
+
+        <CategorySection
+          id="electronics"
+          headline="ELECTRONICS"
+          subheadline="Premium gadgets, laptops, headphones and tech accessories — authentic and sourced from the U.S."
+          cta="Shop Electronics"
+          image={categoryFallbackImages.electronics}
+          imagePosition="right"
+          zIndex={60}
+          product={categoryProducts[4] ?? undefined}
+          categorySlug="electronics"
+        />
+
+        <CategorySection
+          id="home-living"
+          headline="HOME & LIVING"
+          subheadline="Elevate your space with premium home essentials, decor, and lifestyle products."
+          cta="Shop Home & Living"
+          image={categoryFallbackImages.homeLiving}
+          imagePosition="left"
+          isDark={true}
+          zIndex={70}
+          product={categoryProducts[5] ?? undefined}
+          categorySlug="home-living"
         />
 
         {/* How It Works */}
