@@ -21,31 +21,31 @@ jobs:
           echo "Scanning for hardcoded secrets..."
           FOUND=0
 
-          # Patterns that indicate hardcoded secrets (skip .env.example, test fixtures, and this workflow)
-          for pattern in \
-            'SMTP_PASSWORD=(?!\$)(?!\{)(?!$)[^\s]+' \
-            'JWT_SECRET=[a-f0-9]{32,}' \
-            'NEXUSPAY_PASSWORD=(?!\\$)(?!\\{)[^\s]+' \
-            'NEXUSPAY_KEY=(?!\\$)(?!\\{)[^\s]+' \
-            'DIRECTPAY_PASSWORD=(?!\\$)(?!\\{)[^\s]+' \
-            'DIRECTPAY_MERCHANT_KEY=(?!\\$)(?!\\{)[^\s]+' \
-            'MINIO_SECRET_KEY=(?!\\$)(?!\\{)[^\s]+' \
-            'ADMIN_PASSWORD=[a-f0-9]{32,}'; do
-            MATCHES=$(grep -rPn "$pattern" --include='*.yml' --include='*.yaml' --include='*.js' --include='*.ts' --include='*.json' --include='*.tsx' . \
-              --exclude-dir=node_modules --exclude-dir=.git \
-              --exclude='.github/workflows/e2e-tests.yml' \
-              --exclude='*.example' \
-              --exclude='tests/e2e/fixtures/*' || true)
-            if [ -n "$MATCHES" ]; then
-              echo "::error::Potential secret found matching pattern: $pattern"
-              echo "$MATCHES"
-              FOUND=1
-            fi
-          done
+          # Search for secret variable names with literal values (not ${VAR} references)
+          # Grep for the key names, then filter OUT safe patterns: ${...}, empty values, example files, test fixtures, and this workflow
+          KEYWORDS="JWT_SECRET|SMTP_PASSWORD|NEXUSPAY_PASSWORD|NEXUSPAY_KEY|DIRECTPAY_PASSWORD|DIRECTPAY_MERCHANT_KEY|MINIO_SECRET_KEY|ADMIN_PASSWORD"
+
+          MATCHES=$(grep -rn --include='*.yml' --include='*.yaml' --include='*.js' --include='*.ts' --include='*.json' --include='*.tsx' \
+            --exclude-dir=node_modules --exclude-dir=.git \
+            -E "($KEYWORDS)=" . \
+            | grep -v 'e2e-tests.yml' \
+            | grep -v '\.example' \
+            | grep -v 'test-users' \
+            | grep -v 'process\.env\.' \
+            | grep -vF '=${' \
+            | grep -v '=$' \
+            | grep -v '=\s*$' \
+            || true)
+
+          if [ -n "$MATCHES" ]; then
+            echo "::error::Hardcoded secrets detected in the following files:"
+            echo "$MATCHES"
+            echo ""
+            echo "::error::Remove hardcoded values and use environment variables (\${VAR}) instead."
+            FOUND=1
+          fi
 
           if [ "$FOUND" -eq 1 ]; then
-            echo ""
-            echo "::error::Hardcoded secrets detected! Remove them and use environment variables instead."
             exit 1
           fi
 
