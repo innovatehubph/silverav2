@@ -51,13 +51,24 @@ function AdminLoader() {
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore();
+  const [waited, setWaited] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!isAuthenticated) {
+      const t = setTimeout(() => setWaited(true), 500);
+      return () => clearTimeout(t);
+    }
+  }, [isAuthenticated]);
+
   if (!isAuthenticated) {
     // Zustand persist hydrates asynchronously — check localStorage to avoid
     // redirecting authenticated users before the store has rehydrated.
-    try {
-      const raw = localStorage.getItem('silvera-auth');
-      if (raw && JSON.parse(raw)?.state?.isAuthenticated) return null;
-    } catch {}
+    if (!waited) {
+      try {
+        const raw = localStorage.getItem('silvera-auth');
+        if (raw && JSON.parse(raw)?.state?.isAuthenticated) return null;
+      } catch {}
+    }
     return <Navigate to="/login" replace />;
   }
   return <>{children}</>;
@@ -65,11 +76,22 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
 
 function RequireAdmin({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, user } = useAuthStore();
+  const [waited, setWaited] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!isAuthenticated) {
+      const t = setTimeout(() => setWaited(true), 500);
+      return () => clearTimeout(t);
+    }
+  }, [isAuthenticated]);
+
   if (!isAuthenticated) {
-    try {
-      const raw = localStorage.getItem('silvera-auth');
-      if (raw && JSON.parse(raw)?.state?.isAuthenticated) return null;
-    } catch {}
+    if (!waited) {
+      try {
+        const raw = localStorage.getItem('silvera-auth');
+        if (raw && JSON.parse(raw)?.state?.isAuthenticated) return null;
+      } catch {}
+    }
     return <Navigate to="/login" replace />;
   }
   if (user?.role !== 'admin') return <Navigate to="/" replace />;
