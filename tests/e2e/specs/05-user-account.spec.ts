@@ -38,7 +38,9 @@ test.describe('User Account Management', () => {
     const ordersPage = new OrdersPage(page);
     await ordersPage.navigate();
     await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(2000);
+
+    // Wait for actual content instead of fixed timeout (Firefox is slower)
+    await page.locator('text=/my orders/i, text=/no orders/i, a[href^="/orders/"]').first().waitFor({ timeout: 10000 }).catch(() => {});
 
     expect(page.url()).toContain('/orders');
 
@@ -51,7 +53,9 @@ test.describe('User Account Management', () => {
     const ordersPage = new OrdersPage(page);
     await ordersPage.navigate();
     await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(2000);
+
+    // Wait for actual content instead of fixed timeout
+    await page.locator('text=/my orders/i, text=/no orders/i, a[href^="/orders/"]').first().waitFor({ timeout: 10000 }).catch(() => {});
 
     const orderCount = await ordersPage.getOrdersCount();
     if (orderCount > 0) {
@@ -66,7 +70,9 @@ test.describe('User Account Management', () => {
     const profilePage = new ProfilePage(page);
     await profilePage.navigate();
     await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(2000);
+
+    // Wait for profile content to render (Firefox needs more time)
+    await profilePage.logoutButton.waitFor({ timeout: 10000 }).catch(() => {});
 
     const logoutVisible = await profilePage.logoutButton.isVisible().catch(() => false);
     expect(logoutVisible).toBeTruthy();

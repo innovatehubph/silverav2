@@ -21,20 +21,22 @@ test.describe('Responsive Design - Mobile (375px)', () => {
   test('7.2: Mobile nav drawer opens and closes', async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(1500);
 
     const menuButton = page.locator('button[aria-label="Open menu"]');
     await menuButton.click();
-    await page.waitForTimeout(500);
 
-    const navLinks = page.locator('a[href="/shop"], a[href="/cart"]');
-    const navVisible = await navLinks.first().isVisible().catch(() => false);
+    // Wait for the drawer nav links to appear (Firefox animation is slower)
+    const navLink = page.locator('nav a[href="/shop"], aside a[href="/shop"], [role="dialog"] a[href="/shop"], a[href="/shop"]').first();
+    await navLink.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
+
+    const navVisible = await navLink.isVisible().catch(() => false);
     expect(navVisible).toBeTruthy();
 
     const closeButton = page.locator('button[aria-label="Close menu"]');
     if (await closeButton.isVisible().catch(() => false)) {
       await closeButton.click();
-      await page.waitForTimeout(300);
+      await page.waitForTimeout(500);
     }
   });
 
