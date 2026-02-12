@@ -3797,12 +3797,12 @@ app.get('/api/admin/webhooks/health', auth, adminOnly, (req, res) => {
     const stats24h = db.prepare(`
       SELECT
         COUNT(*) as total,
-        SUM(CASE WHEN processed = 1 THEN 1 ELSE 0 END) as processed,
-        SUM(CASE WHEN signature_valid = 0 THEN 1 ELSE 0 END) as invalid_signatures,
-        SUM(CASE WHEN duplicate = 1 THEN 1 ELSE 0 END) as duplicates,
-        SUM(CASE WHEN error_message IS NOT NULL AND error_message != '' THEN 1 ELSE 0 END) as errors,
-        SUM(CASE WHEN event_type = 'payment_success' THEN 1 ELSE 0 END) as successful_payments,
-        SUM(CASE WHEN event_type = 'payment_failed' THEN 1 ELSE 0 END) as failed_payments
+        COALESCE(SUM(CASE WHEN processed = 1 THEN 1 ELSE 0 END), 0) as processed,
+        COALESCE(SUM(CASE WHEN signature_valid = 0 THEN 1 ELSE 0 END), 0) as invalid_signatures,
+        COALESCE(SUM(CASE WHEN duplicate = 1 THEN 1 ELSE 0 END), 0) as duplicates,
+        COALESCE(SUM(CASE WHEN error_message IS NOT NULL AND error_message != '' THEN 1 ELSE 0 END), 0) as errors,
+        COALESCE(SUM(CASE WHEN event_type = 'payment_success' THEN 1 ELSE 0 END), 0) as successful_payments,
+        COALESCE(SUM(CASE WHEN event_type = 'payment_failed' THEN 1 ELSE 0 END), 0) as failed_payments
       FROM webhook_logs WHERE created_at >= ?
     `).get(last24h);
 
@@ -3810,8 +3810,8 @@ app.get('/api/admin/webhooks/health', auth, adminOnly, (req, res) => {
     const stats7d = db.prepare(`
       SELECT
         COUNT(*) as total,
-        SUM(CASE WHEN processed = 1 THEN 1 ELSE 0 END) as processed,
-        SUM(CASE WHEN error_message IS NOT NULL AND error_message != '' THEN 1 ELSE 0 END) as errors
+        COALESCE(SUM(CASE WHEN processed = 1 THEN 1 ELSE 0 END), 0) as processed,
+        COALESCE(SUM(CASE WHEN error_message IS NOT NULL AND error_message != '' THEN 1 ELSE 0 END), 0) as errors
       FROM webhook_logs WHERE created_at >= ?
     `).get(last7d);
 
