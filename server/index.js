@@ -457,8 +457,8 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "data:", "https:", "http:"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"], // Allow inline scripts for React
-      connectSrc: ["'self'", "https://silvera.innoserver.cloud", "https://sandbox.directpayph.com"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://www.googletagmanager.com"],
+      connectSrc: ["'self'", "https://silvera.innoserver.cloud", "https://nexuspay.cloud", "https://sandbox.directpayph.com", "https://www.google-analytics.com"],
     },
   },
   crossOriginEmbedderPolicy: false, // Allow external images
