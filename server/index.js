@@ -2065,7 +2065,7 @@ app.post('/api/payments/qrph/create', auth, (req, res) => {
     }
 
     // Create payment via payment gateway
-    const baseUrl = process.env.APP_BASE_URL || 'http://37.44.244.226:3865';
+    const baseUrl = process.env.APP_BASE_URL || 'https://silvera.innoserver.cloud';
     const paymentResult = paymentGateway.createQRPHPayment({
       orderId: order_id,
       amount: order.total,
