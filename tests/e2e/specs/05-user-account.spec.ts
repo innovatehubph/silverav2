@@ -85,9 +85,9 @@ test.describe('User Account Management', () => {
     }
 
     // Profile content (including Sign Out) only renders after Zustand hydrates
-    // the user object. Use waitForFunction to poll for the button in the DOM.
+    // the user object. Poll ALL buttons, not just the first one in the DOM.
     await page.waitForFunction(
-      () => document.querySelector('button')?.textContent?.includes('Sign Out'),
+      () => [...document.querySelectorAll('button')].some(btn => btn.textContent?.includes('Sign Out')),
       { timeout: 15000 }
     ).catch(() => {});
 
