@@ -61,7 +61,7 @@ export default function Checkout() {
 
   const fetchAddresses = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token');
       const res = await fetch('/api/addresses', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -96,7 +96,7 @@ export default function Checkout() {
     }
 
     // Save the address
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('auth_token');
     try {
       const res = await fetch('/api/addresses', {
         method: 'POST',
