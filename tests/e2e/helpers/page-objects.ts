@@ -282,7 +282,7 @@ export class ProfilePage extends BasePage {
   }
 
   get emailDisplay(): Locator {
-    return this.page.locator('text=@').first();
+    return this.page.locator('p:has-text("@")').first();
   }
 
   get editButton(): Locator {
