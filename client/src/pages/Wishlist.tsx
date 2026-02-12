@@ -49,7 +49,7 @@ export default function Wishlist() {
       price: item.price,
       sale_price: item.sale_price,
       images: item.images,
-    } as never);
+    } as unknown as import('../types').Product);
     toast.success('Added to cart');
   };
 

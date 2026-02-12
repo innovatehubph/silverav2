@@ -314,8 +314,6 @@ if (!adminExists) {
     adminEmail, hashedPassword, 'Admin', 'admin'
   );
   console.log(`✅ Admin user created: ${adminEmail}`);
-  console.log(`⚠️  IMPORTANT: Save this password securely: ${adminPassword}`);
-  console.log('💾 Password is also stored in .env as ADMIN_PASSWORD');
 }
 
 // Seed sample categories
@@ -1608,19 +1606,31 @@ app.post('/api/orders', auth, (req, res) => {
     }
 
     const total = cartItems.reduce((sum, item) => sum + (item.sale_price || item.price) * item.quantity, 0);
-    const result = db.prepare('INSERT INTO orders (user_id, total, shipping_address, payment_method, items) VALUES (?, ?, ?, ?, ?)').run(
-      req.user.id, total, JSON.stringify(shipping_address), sanitizeString(payment_method), JSON.stringify(cartItems)
-    );
 
-    // Decrement stock for each item and check low stock
-    const decrementStmt = db.prepare('UPDATE products SET stock = MAX(0, stock - ?) WHERE id = ?');
+    // Wrap order creation, stock decrement, and cart clear in a transaction
+    const createOrder = db.transaction(() => {
+      const result = db.prepare('INSERT INTO orders (user_id, total, shipping_address, payment_method, items) VALUES (?, ?, ?, ?, ?)').run(
+        req.user.id, total, JSON.stringify(shipping_address), sanitizeString(payment_method), JSON.stringify(cartItems)
+      );
+
+      // Decrement stock for each item
+      const decrementStmt = db.prepare('UPDATE products SET stock = MAX(0, stock - ?) WHERE id = ?');
+      for (const item of cartItems) {
+        decrementStmt.run(item.quantity, item.product_id);
+      }
+
+      // Clear cart
+      db.prepare('DELETE FROM cart WHERE user_id = ?').run(req.user.id);
+
+      return result;
+    });
+
+    const result = createOrder();
+
+    // Check low stock notifications outside the transaction
     for (const item of cartItems) {
-      decrementStmt.run(item.quantity, item.product_id);
       checkAndNotifyLowStock(item.product_id);
     }
-
-    // Clear cart
-    db.prepare('DELETE FROM cart WHERE user_id = ?').run(req.user.id);
 
     res.json({ order_id: result.lastInsertRowid, total });
   } catch (e) {
@@ -2877,11 +2887,9 @@ app.post('/api/admin/users/:id/reset-password', auth, adminOnly, async (req, res
       console.error('Failed to send reset email:', emailErr.message);
     }
 
-    res.json({ 
-      success: true, 
-      message: 'Password reset successfully',
-      temp_password: tempPassword,
-      note: 'Please share this temporary password with the user securely'
+    res.json({
+      success: true,
+      message: 'Password has been reset. The new temporary password was sent to the user\'s email.',
     });
   } catch (e) {
     console.error('Reset password error:', e.message);
