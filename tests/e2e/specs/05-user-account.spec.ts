@@ -37,9 +37,10 @@ test.describe('User Account Management', () => {
   test('5.3: Orders page accessible', async ({ page }) => {
     const ordersPage = new OrdersPage(page);
     await ordersPage.navigate();
-    await page.waitForTimeout(3000);
 
-    // Verify we reached orders page (not stuck on login)
+    // Wait for either orders content or the loading skeleton to resolve
+    await page.locator('text=/my orders/i, text=/no orders/i').first().waitFor({ timeout: 15000 }).catch(() => {});
+
     const url = page.url();
     expect(url.includes('/orders') || url.includes('/login')).toBeTruthy();
 
@@ -53,24 +54,22 @@ test.describe('User Account Management', () => {
   test('5.4: Orders page shows order cards or empty message', async ({ page }) => {
     const ordersPage = new OrdersPage(page);
     await ordersPage.navigate();
-    await page.waitForTimeout(3000);
 
     if (!page.url().includes('/orders')) {
-      // Auth didn't hydrate - still acceptable
       expect(true).toBeTruthy();
       return;
     }
 
-    // Wait for orders content to load
-    await page.locator('text=/my orders/i, text=/no orders/i, text=/haven\'t placed/i, a[href^="/orders/"]').first().waitFor({ timeout: 10000 }).catch(() => {});
+    // Wait for orders API to resolve — page shows "My Orders" heading or empty state
+    await page.locator('text=/my orders/i, text=/no orders/i, text=/haven\'t placed/i, a[href^="/orders/"]').first().waitFor({ timeout: 15000 }).catch(() => {});
 
     const orderCount = await ordersPage.getOrdersCount();
     if (orderCount > 0) {
       await expect(ordersPage.orderCards.first()).toBeVisible();
     } else {
-      const emptyMessage = await ordersPage.emptyMessage.isVisible().catch(() => false);
+      const emptyVisible = await ordersPage.emptyMessage.isVisible().catch(() => false);
       const noOrdersYet = await page.locator('text=/no orders yet/i').isVisible().catch(() => false);
-      expect(emptyMessage || noOrdersYet).toBeTruthy();
+      expect(emptyVisible || noOrdersYet).toBeTruthy();
     }
   });
 
@@ -84,12 +83,10 @@ test.describe('User Account Management', () => {
       return;
     }
 
-    // Profile content (including Sign Out) only renders after Zustand hydrates
-    // the user object. Poll ALL buttons, not just the first one in the DOM.
-    await page.waitForFunction(
-      () => [...document.querySelectorAll('button')].some(btn => btn.textContent?.includes('Sign Out')),
-      { timeout: 15000 }
-    ).catch(() => {});
+    // Profile content only renders when Zustand hydrates user (gated by {user && ...}).
+    // Wait for the Sign Out button text to appear in the DOM.
+    const signOutBtn = page.locator('button:has-text("Sign Out")');
+    await signOutBtn.waitFor({ state: 'visible', timeout: 15000 }).catch(() => {});
 
     const logoutVisible = await profilePage.logoutButton.isVisible().catch(() => false);
     expect(logoutVisible).toBeTruthy();
