@@ -5,7 +5,7 @@
 
 import { test, expect } from '@playwright/test';
 import { TEST_USERS } from '../fixtures/test-users';
-import { login } from '../helpers/common';
+import { login, addToCart } from '../helpers/common';
 
 test.describe('Responsive Design - Mobile (375px)', () => {
   test.use({ viewport: { width: 375, height: 667 } });
@@ -135,19 +135,17 @@ test.describe('Responsive Design - Tablet (768px)', () => {
 
   test('7.10: Tablet checkout form usable', async ({ page }) => {
     await login(page, TEST_USERS.validUser.email, TEST_USERS.validUser.password);
+    await page.evaluate(() => localStorage.removeItem('silvera-cart'));
+    await addToCart(page, 1);
 
     await page.goto('/checkout');
     await page.waitForLoadState('domcontentloaded');
 
-    // Wait for React + Zustand hydration to render checkout content
-    // Either shows payment form (cod radio) or empty cart message
+    // Wait for checkout form to render (COD radio appears when cart has items)
     await page.locator('input[value="cod"]')
-      .or(page.getByText(/cart is empty/i))
-      .or(page.getByText(/Continue Shopping/i))
       .first().waitFor({ state: 'visible', timeout: 15000 });
 
-    // Count visible form-related elements on the checkout page
-    const formElements = page.locator('main input:visible, main select:visible, main button[type="submit"]:visible');
+    const formElements = page.locator('input[value="cod"], input[value="gcash"], input[value="card"]');
     const count = await formElements.count();
     expect(count).toBeGreaterThan(0);
   });
