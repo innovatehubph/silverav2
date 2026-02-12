@@ -1,6 +1,6 @@
 import { TEST_USERS } from '../fixtures/test-users';
 
-const BASE_URL = process.env.BASE_URL || 'https://silvera.innoserver.cloud';
+const BASE_URL = process.env.BASE_URL || (process.env.CI ? 'http://localhost:3865' : 'https://silvera.innoserver.cloud');
 
 async function globalSetup() {
   // Register test users before running any tests

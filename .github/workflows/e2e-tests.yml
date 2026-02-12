@@ -44,8 +44,11 @@ jobs:
       - name: Run E2E tests
         run: npx playwright test --project=${{ matrix.browser }}
         env:
+          CI: true
           NODE_ENV: test
           DATABASE_PATH: ./data/silvera-test.db
+          ADMIN_EMAIL: admin-test@example.com
+          ADMIN_PASSWORD: AdminTestPass123!
 
       - name: Upload test results
         if: always()

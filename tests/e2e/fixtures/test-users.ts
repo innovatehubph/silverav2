@@ -14,7 +14,7 @@ export const TEST_USERS = {
   },
 
   adminUser: {
-    email: 'boss@silveraph.shop',
+    email: process.env.CI ? 'admin-test@example.com' : 'boss@silveraph.shop',
     password: 'AdminTestPass123!',
     name: 'Admin',
     phone: '09170000001',

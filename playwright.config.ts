@@ -1,5 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const isCI = !!process.env.CI;
+
 export default defineConfig({
   testDir: './tests/e2e/specs',
   timeout: 60000,
@@ -16,7 +18,7 @@ export default defineConfig({
   ],
   globalSetup: './tests/e2e/config/global-setup.ts',
   use: {
-    baseURL: process.env.BASE_URL || 'https://silvera.innoserver.cloud',
+    baseURL: process.env.BASE_URL || (isCI ? 'http://localhost:3865' : 'https://silvera.innoserver.cloud'),
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
     trace: 'on-first-retry',
@@ -43,5 +45,18 @@ export default defineConfig({
       use: { ...devices['iPhone 12'] },
     },
   ],
-  /* webServer disabled — tests run against the live deployment at BASE_URL */
+  /*
+   * In CI, spin up a local test server. Locally, tests default to the live
+   * deployment unless BASE_URL=http://localhost:3865 is set explicitly.
+   */
+  ...(isCI ? {
+    webServer: {
+      command: 'ADMIN_EMAIL=admin-test@example.com ADMIN_PASSWORD=AdminTestPass123! NODE_ENV=test DATABASE_PATH=./data/silvera-test.db node server/index.js',
+      url: 'http://localhost:3865/api/health',
+      reuseExistingServer: false,
+      stdout: 'pipe',
+      stderr: 'pipe',
+      timeout: 30 * 1000,
+    },
+  } : {}),
 });
