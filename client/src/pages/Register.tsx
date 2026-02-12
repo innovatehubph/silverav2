@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { User, Mail, Lock } from 'lucide-react';
+import { User, Mail, Lock, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthStore } from '../stores';
 import { authApi } from '../utils/api';
@@ -18,7 +18,7 @@ export default function Register() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    
+
     try {
       const response = await authApi.register({
         name: formData.get('name') as string,
@@ -35,6 +35,15 @@ export default function Register() {
 
   return (
     <div className="min-h-screen bg-bg-primary flex items-center justify-center p-4 relative">
+      {/* Back button */}
+      <button
+        onClick={() => navigate('/')}
+        className="absolute top-6 right-6 z-10 flex items-center gap-2 text-txt-secondary hover:text-txt-primary transition-colors"
+      >
+        <ArrowLeft className="w-5 h-5" />
+        <span className="text-sm">Back</span>
+      </button>
+
       {/* Ambient glow */}
       <div
         className="absolute w-[500px] h-[500px] rounded-full pointer-events-none"
