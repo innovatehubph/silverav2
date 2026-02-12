@@ -3,6 +3,7 @@ dist/
 test-results/
 playwright-report/
 tests/e2e/reports/
+tests/e2e/.cache/
 
 # Environment files (NEVER commit secrets)
 .env

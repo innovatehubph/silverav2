@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { useState, useEffect } from 'react';
 import type { Product, CartItem, User } from '../types';
 
 // =============================================================================
@@ -235,3 +236,19 @@ export const useAuthStore = create<AuthStore>()(
     }
   )
 );
+
+/**
+ * Hook that returns true only after Zustand persist has finished rehydrating
+ * the auth store from localStorage. Use this instead of useEffect hacks to
+ * gate auth-dependent decisions (redirects, guard checks).
+ */
+export function useAuthHydrated() {
+  const [hydrated, setHydrated] = useState(useAuthStore.persist.hasHydrated());
+
+  useEffect(() => {
+    const unsub = useAuthStore.persist.onFinishHydration(() => setHydrated(true));
+    return unsub;
+  }, []);
+
+  return hydrated;
+}

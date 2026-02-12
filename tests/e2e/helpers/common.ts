@@ -1,6 +1,28 @@
 import { Page, expect } from '@playwright/test';
+import * as fs from 'fs';
+import * as path from 'path';
 
 const BASE_URL = process.env.BASE_URL || (process.env.CI ? 'http://localhost:3865' : 'https://silvera.innoserver.cloud');
+
+// File-backed login cache — survives across workers and test runs so we don't
+// exhaust the auth rate limiter (max 10 per 15 min in production).
+const CACHE_DIR = path.join(__dirname, '..', '.cache');
+const CACHE_FILE = path.join(CACHE_DIR, 'login-tokens.json');
+const CACHE_MAX_AGE_MS = 14 * 60 * 1000; // 14 minutes (under the 15-min rate-limit window)
+
+type CacheEntry = { user: unknown; token: string; ts: number };
+
+function readCache(): Record<string, CacheEntry> {
+  try {
+    if (!fs.existsSync(CACHE_FILE)) return {};
+    return JSON.parse(fs.readFileSync(CACHE_FILE, 'utf-8'));
+  } catch { return {}; }
+}
+
+function writeCache(cache: Record<string, CacheEntry>) {
+  if (!fs.existsSync(CACHE_DIR)) fs.mkdirSync(CACHE_DIR, { recursive: true });
+  fs.writeFileSync(CACHE_FILE, JSON.stringify(cache));
+}
 
 export async function waitForPageLoad(page: Page) {
   await page.waitForLoadState('domcontentloaded');
@@ -9,28 +31,47 @@ export async function waitForPageLoad(page: Page) {
 export async function login(page: Page, email: string, password: string) {
   // Use API-based login to avoid UI race conditions in CI.
   // UI login is tested separately in 01-authentication.spec.ts.
-  let response;
-  for (let attempt = 0; attempt < 3; attempt++) {
-    response = await page.request.post(`${BASE_URL}/api/auth/login`, {
-      data: { email, password },
-    });
-    if (response.status() === 429) {
-      // Rate limited — wait and retry
-      await new Promise(r => setTimeout(r, 2000 * (attempt + 1)));
-      continue;
+  const cacheKey = `${email}:${password}`;
+  let user: unknown;
+  let token: string;
+
+  // Check file-backed cache first
+  const cache = readCache();
+  const cached = cache[cacheKey];
+  if (cached && (Date.now() - cached.ts) < CACHE_MAX_AGE_MS) {
+    user = cached.user;
+    token = cached.token;
+  } else {
+    let response;
+    for (let attempt = 0; attempt < 5; attempt++) {
+      response = await page.request.post(`${BASE_URL}/api/auth/login`, {
+        data: { email, password },
+      });
+      if (response.status() === 429) {
+        // Rate limited — wait with exponential backoff
+        await new Promise(r => setTimeout(r, 3000 * (attempt + 1)));
+        continue;
+      }
+      break;
     }
-    break;
-  }
 
-  if (!response!.ok()) {
-    throw new Error(`Login API failed (${response!.status()}): ${response!.statusText()}`);
-  }
+    if (!response!.ok()) {
+      throw new Error(`Login API failed (${response!.status()}): ${response!.statusText()}`);
+    }
 
-  const body = await response!.json();
-  const { user, token } = body.data ?? body;
+    const body = await response!.json();
+    const data = body.data ?? body;
+    user = data.user;
+    token = data.token;
 
-  if (!user || !token) {
-    throw new Error('Login API returned empty user or token');
+    if (!user || !token) {
+      throw new Error('Login API returned empty user or token');
+    }
+
+    // Persist to file so other workers and future runs reuse it
+    const freshCache = readCache();
+    freshCache[cacheKey] = { user, token, ts: Date.now() };
+    writeCache(freshCache);
   }
 
   // Seed localStorage so the Zustand persist store and axios interceptor pick up the session

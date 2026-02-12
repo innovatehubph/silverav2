@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { type ReactNode, useEffect, useState, lazy, Suspense } from 'react';
+import { type ReactNode, useEffect, lazy, Suspense } from 'react';
 import { Toaster } from 'sonner';
-import { useAuthStore, useThemeStore } from './stores';
+import { useAuthStore, useAuthHydrated, useThemeStore } from './stores';
 import RouteChangeTracker from './components/RouteChangeTracker';
 import ErrorBoundary from './components/ErrorBoundary';
 
@@ -65,35 +65,25 @@ function LazyPage({ children }: { children: ReactNode }) {
 }
 
 /**
- * Hydration-safe auth guard. Returns null on first render to let Zustand
- * persist finish reading localStorage (async via microtasks). After the
- * first useEffect fires, hydration is guaranteed complete and we can
- * safely check isAuthenticated.
+ * Hydration-safe auth guard. Waits for Zustand persist to finish
+ * rehydrating the auth store from localStorage before checking
+ * isAuthenticated. This prevents false redirects to /login when
+ * the store hasn't loaded persisted state yet.
  */
 function RequireAuth({ children }: { children: ReactNode }) {
   const { isAuthenticated } = useAuthStore();
-  const [ready, setReady] = useState(false);
+  const hydrated = useAuthHydrated();
 
-  useEffect(() => {
-    // Zustand persist hydration runs via microtasks which complete before
-    // this effect fires. The store now has the real persisted values.
-    setReady(true);
-  }, []);
-
-  if (!ready) return null;
+  if (!hydrated) return null;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   return <>{children}</>;
 }
 
 function RequireAdmin({ children }: { children: ReactNode }) {
   const { isAuthenticated, user } = useAuthStore();
-  const [ready, setReady] = useState(false);
+  const hydrated = useAuthHydrated();
 
-  useEffect(() => {
-    setReady(true);
-  }, []);
-
-  if (!ready) return null;
+  if (!hydrated) return null;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (user?.role !== 'admin') return <Navigate to="/" replace />;
   return <>{children}</>;
