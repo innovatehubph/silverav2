@@ -5,7 +5,11 @@
  */
 
 // Load environment variables
+// Preserve NODE_ENV from command line — dotenv v17 auto-injects .env values
+// which can override NODE_ENV=test set by the Playwright webServer command.
+const _savedNodeEnv = process.env.NODE_ENV;
 require('dotenv').config();
+if (_savedNodeEnv) process.env.NODE_ENV = _savedNodeEnv;
 
 const express = require('express');
 const cors = require('cors');
