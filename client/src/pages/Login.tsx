@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Mail, Lock } from 'lucide-react';
+import { Mail, Lock, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthStore } from '../stores';
 import { authApi } from '../utils/api';
@@ -10,7 +10,7 @@ export default function Login() {
   const { login, isAuthenticated } = useAuthStore();
 
   const { user } = useAuthStore();
-  
+
   useEffect(() => {
     if (isAuthenticated && user) {
       // Redirect based on role
@@ -32,7 +32,7 @@ export default function Login() {
         formData.get('password') as string
       );
       login(response.data.user, response.data.token);
-      
+
       // Redirect based on role
       if (response.data.user.role === 'admin') {
         navigate('/admin');
@@ -47,6 +47,15 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-bg-primary flex items-center justify-center p-4 relative">
+      {/* Back button */}
+      <button
+        onClick={() => navigate('/')}
+        className="absolute top-6 right-6 z-10 flex items-center gap-2 text-txt-secondary hover:text-txt-primary transition-colors"
+      >
+        <ArrowLeft className="w-5 h-5" />
+        <span className="text-sm">Back</span>
+      </button>
+
       {/* Ambient glow */}
       <div
         className="absolute w-[500px] h-[500px] rounded-full pointer-events-none"
