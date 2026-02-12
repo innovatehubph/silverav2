@@ -49,42 +49,36 @@ function AdminLoader() {
   );
 }
 
+/**
+ * Hydration-safe auth guard. Returns null on first render to let Zustand
+ * persist finish reading localStorage (async via microtasks). After the
+ * first useEffect fires, hydration is guaranteed complete and we can
+ * safely check isAuthenticated.
+ */
 function RequireAuth({ children }: { children: ReactNode }) {
   const { isAuthenticated } = useAuthStore();
-  const [hydrated, setHydrated] = useState(() => useAuthStore.persist?.hasHydrated?.() ?? false);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    // Use Zustand v5 persist API to detect when hydration is complete
-    const unsub = useAuthStore.persist?.onFinishHydration?.(() => {
-      setHydrated(true);
-    });
-    // Check again in case hydration completed between useState init and useEffect
-    if (useAuthStore.persist?.hasHydrated?.()) {
-      setHydrated(true);
-    }
-    return () => { unsub?.(); };
+    // Zustand persist hydration runs via microtasks which complete before
+    // this effect fires. The store now has the real persisted values.
+    setReady(true);
   }, []);
 
-  if (!hydrated) return null;
+  if (!ready) return null;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   return <>{children}</>;
 }
 
 function RequireAdmin({ children }: { children: ReactNode }) {
   const { isAuthenticated, user } = useAuthStore();
-  const [hydrated, setHydrated] = useState(() => useAuthStore.persist?.hasHydrated?.() ?? false);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const unsub = useAuthStore.persist?.onFinishHydration?.(() => {
-      setHydrated(true);
-    });
-    if (useAuthStore.persist?.hasHydrated?.()) {
-      setHydrated(true);
-    }
-    return () => { unsub?.(); };
+    setReady(true);
   }, []);
 
-  if (!hydrated) return null;
+  if (!ready) return null;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (user?.role !== 'admin') return <Navigate to="/" replace />;
   return <>{children}</>;
