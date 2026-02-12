@@ -13,6 +13,13 @@ export const TEST_USERS = {
     phone: '09171234568',
   },
 
+  adminUser: {
+    email: 'boss@silveraph.shop',
+    password: 'AdminTestPass123!',
+    name: 'Admin',
+    phone: '09170000001',
+  },
+
   invalidUser: {
     email: 'nonexistent@example.com',
     password: 'WrongPassword123',
