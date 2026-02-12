@@ -20,7 +20,6 @@ export default function Home() {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [trendingProducts, setTrendingProducts] = useState<Product[]>([]);
   const [categoryProducts, setCategoryProducts] = useState<(Product | null)[]>([null, null, null, null]);
-  const [heroProduct, setHeroProduct] = useState<Product | undefined>();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -37,7 +36,6 @@ export default function Home() {
       setFeaturedProducts(featured.slice(0, 4));
       setTrendingProducts(products.slice(0, 8));
 
-      if (featured.length > 0) setHeroProduct(featured[0]);
 
       const categories = ['Apparel', 'Footwear', 'Accessories', 'Dresses'];
       const picked = categories.map(cat =>
@@ -61,7 +59,7 @@ export default function Home() {
       />
       <div className="animate-fade-in">
         {/* Hero Section */}
-        <HeroSection product={heroProduct} />
+        <HeroSection />
 
         {/* Category Sections */}
         <CategorySection
