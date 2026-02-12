@@ -77,16 +77,16 @@ test.describe('User Account Management', () => {
   test('5.5: Profile has logout option', async ({ page }) => {
     const profilePage = new ProfilePage(page);
     await profilePage.navigate();
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('domcontentloaded');
 
     if (!page.url().includes('/profile')) {
-      // Auth didn't hydrate for profile page - acceptable in CI
       expect(true).toBeTruthy();
       return;
     }
 
-    // Wait for profile content to render
-    await profilePage.logoutButton.waitFor({ timeout: 10000 }).catch(() => {});
+    // Profile content renders only after Zustand hydrates the user object.
+    // Wait for user-gated content (h2 with user name) or the logout button.
+    await page.locator('h2, button:has-text("Sign Out")').first().waitFor({ timeout: 15000 }).catch(() => {});
 
     const logoutVisible = await profilePage.logoutButton.isVisible().catch(() => false);
     expect(logoutVisible).toBeTruthy();
