@@ -3,6 +3,7 @@ import { type ReactNode, useEffect, useState, lazy, Suspense } from 'react';
 import { Toaster } from 'sonner';
 import { useAuthStore, useThemeStore } from './stores';
 import RouteChangeTracker from './components/RouteChangeTracker';
+import ErrorBoundary from './components/ErrorBoundary';
 
 // Layouts
 import MainLayout from './components/layout/MainLayout';
@@ -111,6 +112,7 @@ function App() {
   }, [login]);
 
   return (
+    <ErrorBoundary>
     <Router>
       <RouteChangeTracker />
       <Toaster position="top-right" richColors />
@@ -150,6 +152,7 @@ function App() {
         <Route path="*" element={<MainLayout><NotFound /></MainLayout>} />
       </Routes>
     </Router>
+    </ErrorBoundary>
   );
 }
 

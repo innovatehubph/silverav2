@@ -1,4 +1,22 @@
 node_modules/
+dist/
 test-results/
 playwright-report/
 tests/e2e/reports/
+
+# Environment files (NEVER commit secrets)
+.env
+.env.*
+!.env.example
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Data
+*.db
+data/
