@@ -16,7 +16,7 @@ export default defineConfig({
   ],
   globalSetup: './tests/e2e/config/global-setup.ts',
   use: {
-    baseURL: 'http://localhost:3865',
+    baseURL: process.env.BASE_URL || 'https://silvera.innoserver.cloud',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
     trace: 'on-first-retry',
@@ -43,12 +43,5 @@ export default defineConfig({
       use: { ...devices['iPhone 12'] },
     },
   ],
-  webServer: {
-    command: 'NODE_ENV=test DATABASE_PATH=./data/silvera-test.db node server/index.js',
-    url: 'http://localhost:3865/api/products',
-    reuseExistingServer: !process.env.CI,
-    stdout: 'pipe',
-    stderr: 'pipe',
-    timeout: 60 * 1000,
-  },
+  /* webServer disabled — tests run against the live deployment at BASE_URL */
 });
