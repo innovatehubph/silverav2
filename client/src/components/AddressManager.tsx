@@ -37,7 +37,7 @@ export default function AddressManager({
 
   const fetchAddresses = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token');
       const res = await fetch('/api/addresses', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -57,7 +57,7 @@ export default function AddressManager({
   }, []);
 
   const handleSubmit = async (data: any) => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('auth_token');
     const url = editingAddress 
       ? `/api/addresses/${editingAddress.id}` 
       : '/api/addresses';
@@ -88,7 +88,7 @@ export default function AddressManager({
   };
 
   const handleDelete = async (id: number) => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('auth_token');
     try {
       const res = await fetch(`/api/addresses/${id}`, {
         method: 'DELETE',
@@ -108,7 +108,7 @@ export default function AddressManager({
   };
 
   const handleSetDefault = async (id: number) => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('auth_token');
     try {
       const res = await fetch(`/api/addresses/${id}/default`, {
         method: 'PUT',
