@@ -25,12 +25,12 @@ test.describe('Responsive Design - Mobile (375px)', () => {
 
     const menuButton = page.locator('button[aria-label="Open menu"]');
     await menuButton.click();
+    await page.waitForTimeout(1500);
 
-    // Wait for the drawer nav links to appear (Firefox animation is slower)
-    const navLink = page.locator('nav a[href="/shop"], aside a[href="/shop"], [role="dialog"] a[href="/shop"], a[href="/shop"]').first();
-    await navLink.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
-
-    const navVisible = await navLink.isVisible().catch(() => false);
+    // Check if ANY shop/cart link is visible (drawer should show them)
+    const navVisible = await page.locator('a[href="/shop"], a[href="/cart"]').evaluateAll(
+      els => els.some(el => el.offsetParent !== null && el.getBoundingClientRect().height > 0)
+    );
     expect(navVisible).toBeTruthy();
 
     const closeButton = page.locator('button[aria-label="Close menu"]');

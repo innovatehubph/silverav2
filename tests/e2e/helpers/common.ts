@@ -29,8 +29,8 @@ export async function login(page: Page, email: string, password: string) {
   await page.reload();
   await page.waitForLoadState('domcontentloaded');
 
-  // Wait for React + Zustand to hydrate auth state (Firefox is slower)
-  await page.locator('a[href="/cart"], a[href="/profile"]').first().waitFor({ timeout: 8000 }).catch(() => {});
+  // Brief pause for Zustand persist to hydrate auth from localStorage
+  await page.waitForTimeout(800);
 }
 
 export async function logout(page: Page) {
