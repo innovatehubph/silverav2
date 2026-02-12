@@ -1,6 +1,6 @@
 import { Page, expect } from '@playwright/test';
 
-const BASE_URL = 'http://localhost:3865';
+const BASE_URL = process.env.BASE_URL || 'https://silvera.innoserver.cloud';
 
 export async function waitForPageLoad(page: Page) {
   await page.waitForLoadState('domcontentloaded');
