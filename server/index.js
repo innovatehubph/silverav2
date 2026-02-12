@@ -514,10 +514,12 @@ app.use((err, req, res, next) => {
   next(err);
 });
 
-// Rate limiters
+// Rate limiters — relaxed in test environment so E2E suites don't get throttled
+const isTestEnv = process.env.NODE_ENV === 'test';
+
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // 10 attempts per window
+  max: isTestEnv ? 500 : 10, // 10 in prod, 500 in test
   message: { error: 'Too many login attempts, please try again later' },
   standardHeaders: true,
   legacyHeaders: false
@@ -525,7 +527,7 @@ const authLimiter = rateLimit({
 
 const apiLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
-  max: 100, // 100 requests per minute
+  max: isTestEnv ? 1000 : 100, // 100 in prod, 1000 in test
   message: { error: 'Too many requests, please slow down' },
   standardHeaders: true,
   legacyHeaders: false
