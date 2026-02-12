@@ -93,7 +93,7 @@ test.describe('Responsive Design - Mobile (375px)', () => {
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
 
-    const cartLink = page.locator('a[href="/cart"]');
+    const cartLink = page.locator('a[href="/cart"]').first();
     await expect(cartLink).toBeVisible();
   });
 

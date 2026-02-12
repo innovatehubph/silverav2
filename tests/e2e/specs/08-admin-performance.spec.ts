@@ -158,8 +158,11 @@ test.describe.serial('Admin Performance Monitoring', () => {
   });
 
   test('8.7: Performance nav link exists in admin sidebar', async ({ page }) => {
-    await page.goto('/admin');
+    await page.goto('/admin/performance');
     await page.waitForLoadState('domcontentloaded');
+
+    // Wait for admin layout to hydrate (RequireAdmin guard + Suspense)
+    await expect(page.locator('h1:has-text("Performance")')).toBeVisible({ timeout: 15000 });
 
     const perfLink = page.locator('a[href="/admin/performance"]');
     await expect(perfLink).toBeVisible({ timeout: 10000 });
