@@ -50,16 +50,28 @@ function AdminLoader() {
 }
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, hasHydrated } = useAuthStore();
-  if (!hasHydrated) return null; // wait for Zustand persist to rehydrate
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  const { isAuthenticated } = useAuthStore();
+  if (!isAuthenticated) {
+    // Zustand persist hydrates asynchronously — check localStorage to avoid
+    // redirecting authenticated users before the store has rehydrated.
+    try {
+      const raw = localStorage.getItem('silvera-auth');
+      if (raw && JSON.parse(raw)?.state?.isAuthenticated) return null;
+    } catch {}
+    return <Navigate to="/login" replace />;
+  }
   return <>{children}</>;
 }
 
 function RequireAdmin({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, user, hasHydrated } = useAuthStore();
-  if (!hasHydrated) return null;
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  const { isAuthenticated, user } = useAuthStore();
+  if (!isAuthenticated) {
+    try {
+      const raw = localStorage.getItem('silvera-auth');
+      if (raw && JSON.parse(raw)?.state?.isAuthenticated) return null;
+    } catch {}
+    return <Navigate to="/login" replace />;
+  }
   if (user?.role !== 'admin') return <Navigate to="/" replace />;
   return <>{children}</>;
 }
