@@ -201,7 +201,7 @@ export class CartPage extends BasePage {
   }
 
   get continueShoppingLink(): Locator {
-    return this.page.locator('a[href="/shop"]');
+    return this.page.locator('a[href="/shop"]').filter({ hasText: /continue shopping|start shopping/i });
   }
 
   get sizeBadges(): Locator {
@@ -247,7 +247,7 @@ export class CheckoutPage extends BasePage {
   }
 
   get placeOrderButton(): Locator {
-    return this.page.locator('button[type="submit"], button:has-text("Place Order")');
+    return this.page.locator('button[type="submit"]').filter({ hasText: /place order|pay\s*₱|processing/i });
   }
 
   get emptyCartMessage(): Locator {
