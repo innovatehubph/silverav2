@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { type ReactNode, useEffect, lazy, Suspense } from 'react';
+import { type ReactNode, useEffect, useState, lazy, Suspense } from 'react';
 import { Toaster } from 'sonner';
 import { useAuthStore, useThemeStore } from './stores';
 
@@ -50,22 +50,41 @@ function AdminLoader() {
 }
 
 function RequireAuth({ children }: { children: ReactNode }) {
-  const { isAuthenticated, _hasHydrated } = useAuthStore();
+  const { isAuthenticated } = useAuthStore();
+  const [hydrated, setHydrated] = useState(() => useAuthStore.persist?.hasHydrated?.() ?? false);
 
-  // Wait for Zustand persist to finish reading localStorage before deciding.
-  // Without this, the store defaults (isAuthenticated:false) cause a flash
-  // redirect to /login even when the user is actually logged in.
-  if (!_hasHydrated) return null;
+  useEffect(() => {
+    // Use Zustand v5 persist API to detect when hydration is complete
+    const unsub = useAuthStore.persist?.onFinishHydration?.(() => {
+      setHydrated(true);
+    });
+    // Check again in case hydration completed between useState init and useEffect
+    if (useAuthStore.persist?.hasHydrated?.()) {
+      setHydrated(true);
+    }
+    return () => { unsub?.(); };
+  }, []);
 
+  if (!hydrated) return null;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   return <>{children}</>;
 }
 
 function RequireAdmin({ children }: { children: ReactNode }) {
-  const { isAuthenticated, user, _hasHydrated } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
+  const [hydrated, setHydrated] = useState(() => useAuthStore.persist?.hasHydrated?.() ?? false);
 
-  if (!_hasHydrated) return null;
+  useEffect(() => {
+    const unsub = useAuthStore.persist?.onFinishHydration?.(() => {
+      setHydrated(true);
+    });
+    if (useAuthStore.persist?.hasHydrated?.()) {
+      setHydrated(true);
+    }
+    return () => { unsub?.(); };
+  }, []);
 
+  if (!hydrated) return null;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (user?.role !== 'admin') return <Navigate to="/" replace />;
   return <>{children}</>;
