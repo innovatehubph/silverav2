@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { type ReactNode, useEffect, useState, lazy, Suspense } from 'react';
+import { type ReactNode, useEffect, lazy, Suspense } from 'react';
 import { Toaster } from 'sonner';
 import { useAuthStore, useThemeStore } from './stores';
 
@@ -50,50 +50,23 @@ function AdminLoader() {
 }
 
 function RequireAuth({ children }: { children: ReactNode }) {
-  const { isAuthenticated } = useAuthStore();
-  const [waited, setWaited] = useState(false);
+  const { isAuthenticated, _hasHydrated } = useAuthStore();
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      const t = setTimeout(() => setWaited(true), 500);
-      return () => clearTimeout(t);
-    }
-  }, [isAuthenticated]);
+  // Wait for Zustand persist to finish reading localStorage before deciding.
+  // Without this, the store defaults (isAuthenticated:false) cause a flash
+  // redirect to /login even when the user is actually logged in.
+  if (!_hasHydrated) return null;
 
-  if (!isAuthenticated) {
-    // Zustand persist hydrates asynchronously — check localStorage to avoid
-    // redirecting authenticated users before the store has rehydrated.
-    if (!waited) {
-      try {
-        const raw = localStorage.getItem('silvera-auth');
-        if (raw && JSON.parse(raw)?.state?.isAuthenticated) return null;
-      } catch {}
-    }
-    return <Navigate to="/login" replace />;
-  }
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
   return <>{children}</>;
 }
 
 function RequireAdmin({ children }: { children: ReactNode }) {
-  const { isAuthenticated, user } = useAuthStore();
-  const [waited, setWaited] = useState(false);
+  const { isAuthenticated, user, _hasHydrated } = useAuthStore();
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      const t = setTimeout(() => setWaited(true), 500);
-      return () => clearTimeout(t);
-    }
-  }, [isAuthenticated]);
+  if (!_hasHydrated) return null;
 
-  if (!isAuthenticated) {
-    if (!waited) {
-      try {
-        const raw = localStorage.getItem('silvera-auth');
-        if (raw && JSON.parse(raw)?.state?.isAuthenticated) return null;
-      } catch {}
-    }
-    return <Navigate to="/login" replace />;
-  }
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (user?.role !== 'admin') return <Navigate to="/" replace />;
   return <>{children}</>;
 }

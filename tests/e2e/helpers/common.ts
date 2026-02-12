@@ -12,8 +12,17 @@ export async function login(page: Page, email: string, password: string) {
   const response = await page.request.post(`${BASE_URL}/api/auth/login`, {
     data: { email, password },
   });
+
+  if (!response.ok()) {
+    throw new Error(`Login API failed (${response.status()}): ${response.statusText()}`);
+  }
+
   const body = await response.json();
   const { user, token } = body.data ?? body;
+
+  if (!user || !token) {
+    throw new Error('Login API returned empty user or token');
+  }
 
   // Seed localStorage so the Zustand persist store and axios interceptor pick up the session
   await page.goto('/');
@@ -29,8 +38,13 @@ export async function login(page: Page, email: string, password: string) {
   await page.reload();
   await page.waitForLoadState('domcontentloaded');
 
-  // Brief pause for Zustand persist to hydrate auth from localStorage
-  await page.waitForTimeout(800);
+  // Wait for Zustand persist to hydrate auth from localStorage
+  await page.waitForFunction(() => {
+    try {
+      const raw = localStorage.getItem('silvera-auth');
+      return raw ? JSON.parse(raw)?.state?.isAuthenticated === true : false;
+    } catch { return false; }
+  }, { timeout: 5000 });
 }
 
 export async function logout(page: Page) {
