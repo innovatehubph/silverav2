@@ -16,7 +16,7 @@ import { login, addToCart } from '../helpers/common';
  */
 async function waitForCheckoutContent(page: import('@playwright/test').Page) {
   await page.locator(
-    'input[value="cod"], text=/cart is empty/i, text=/Continue Shopping/i'
+    "input[value='cod'], text=/cart is empty/i, text=/Continue Shopping/i"
   ).first().waitFor({ state: 'visible', timeout: 15000 });
 }
 
