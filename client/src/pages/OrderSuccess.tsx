@@ -1,12 +1,15 @@
 import { Link, useSearchParams } from 'react-router-dom';
 import { CheckCircle, ShoppingBag, ArrowRight } from 'lucide-react';
+import { SEO } from '../components/SEO';
 
 export default function OrderSuccess() {
   const [searchParams] = useSearchParams();
   const fromPayment = searchParams.get('from') === 'payment';
 
   return (
-    <div className="container-custom py-16 text-center animate-fade-in">
+    <>
+      <SEO title="Order Confirmed" description="Your order has been placed successfully! Thank you for shopping with Silvera PH." url="https://silvera.innoserver.cloud/order-success" />
+      <div className="container-custom py-16 text-center animate-fade-in">
       <div className="max-w-md mx-auto">
         <div className="mb-6">
           <CheckCircle className="w-20 h-20 mx-auto text-green-500" />
@@ -43,5 +46,6 @@ export default function OrderSuccess() {
         </div>
       </div>
     </div>
+    </>
   );
 }

@@ -1,14 +1,18 @@
 /**
  * Sitemap Generator for Silvera V2
- * Generates sitemap.xml for better SEO indexing
+ * Generates sitemap.xml and robots.txt for SEO indexing
+ * Fetches product pages dynamically from the API
  *
- * Usage: node scripts/generate-sitemap.js
+ * Usage: node scripts/generate-sitemap.cjs
+ * Runs automatically during build: npm run build
  */
 
 const fs = require('fs');
 const path = require('path');
+const https = require('https');
 
 const BASE_URL = 'https://silvera.innoserver.cloud';
+const API_URL = process.env.CI ? 'http://127.0.0.1:3865' : BASE_URL;
 
 // Static pages with priority and change frequency
 const staticPages = [
@@ -17,18 +21,42 @@ const staticPages = [
   { url: '/contact', changefreq: 'monthly', priority: 0.5 },
   { url: '/faq', changefreq: 'monthly', priority: 0.5 },
   { url: '/shipping', changefreq: 'monthly', priority: 0.5 },
-  { url: '/login', changefreq: 'monthly', priority: 0.3 },
-  { url: '/register', changefreq: 'monthly', priority: 0.3 },
 ];
 
+// Fetch products from API
+function fetchProducts() {
+  const url = `${API_URL}/api/products`;
+  const mod = url.startsWith('https') ? https : require('http');
+
+  return new Promise((resolve) => {
+    mod.get(url, (res) => {
+      let data = '';
+      res.on('data', (chunk) => { data += chunk; });
+      res.on('end', () => {
+        try {
+          const parsed = JSON.parse(data);
+          const products = Array.isArray(parsed) ? parsed : parsed.products || [];
+          resolve(products);
+        } catch {
+          console.warn('⚠️  Could not parse products API response, using static pages only');
+          resolve([]);
+        }
+      });
+    }).on('error', () => {
+      console.warn('⚠️  Could not reach products API, using static pages only');
+      resolve([]);
+    });
+  });
+}
+
 // Generate XML sitemap
-function generateSitemap() {
+function generateSitemap(products) {
   const today = new Date().toISOString().split('T')[0];
 
   let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
   xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
 
-  // Add static pages
+  // Static pages
   staticPages.forEach(page => {
     xml += '  <url>\n';
     xml += `    <loc>${BASE_URL}${page.url}</loc>\n`;
@@ -38,19 +66,20 @@ function generateSitemap() {
     xml += '  </url>\n';
   });
 
-  // Note: In production, you would fetch products from the API
-  // For now, we'll add a placeholder for product pages
-  xml += '  <!-- Product pages: fetch from API in production -->\n';
-  xml += '  <!-- Example: -->\n';
-  xml += '  <!-- <url> -->\n';
-  xml += `  <!--   <loc>${BASE_URL}/products/1</loc> -->\n`;
-  xml += `  <!--   <lastmod>${today}</lastmod> -->\n`;
-  xml += '  <!--   <changefreq>weekly</changefreq> -->\n';
-  xml += '  <!--   <priority>0.8</priority> -->\n';
-  xml += '  <!-- </url> -->\n';
+  // Dynamic product pages
+  products.forEach(product => {
+    const lastmod = product.updated_at
+      ? new Date(product.updated_at).toISOString().split('T')[0]
+      : today;
+    xml += '  <url>\n';
+    xml += `    <loc>${BASE_URL}/product/${product.id}</loc>\n`;
+    xml += `    <lastmod>${lastmod}</lastmod>\n`;
+    xml += '    <changefreq>weekly</changefreq>\n';
+    xml += '    <priority>0.8</priority>\n';
+    xml += '  </url>\n';
+  });
 
   xml += '</urlset>';
-
   return xml;
 }
 
@@ -63,25 +92,28 @@ function generateRobotsTxt() {
   robots += 'Disallow: /cart\n';
   robots += 'Disallow: /profile\n';
   robots += 'Disallow: /orders\n';
-  robots += 'Disallow: /login\n';
-  robots += 'Disallow: /register\n';
+  robots += 'Disallow: /payment/\n';
+  robots += 'Disallow: /admin\n';
+  robots += 'Disallow: /admin/\n';
   robots += '\n';
   robots += `Sitemap: ${BASE_URL}/sitemap.xml\n`;
-
   return robots;
 }
 
 // Main execution
-try {
+async function main() {
   const publicDir = path.join(__dirname, '../public');
 
-  // Ensure public directory exists
   if (!fs.existsSync(publicDir)) {
     fs.mkdirSync(publicDir, { recursive: true });
   }
 
+  // Fetch products for dynamic URLs
+  const products = await fetchProducts();
+  console.log(`📦 Found ${products.length} products for sitemap`);
+
   // Generate and write sitemap.xml
-  const sitemap = generateSitemap();
+  const sitemap = generateSitemap(products);
   fs.writeFileSync(path.join(publicDir, 'sitemap.xml'), sitemap);
   console.log('✅ sitemap.xml generated successfully');
 
@@ -90,13 +122,11 @@ try {
   fs.writeFileSync(path.join(publicDir, 'robots.txt'), robotsTxt);
   console.log('✅ robots.txt generated successfully');
 
-  console.log('\n📄 Files created:');
-  console.log(`   - ${path.join(publicDir, 'sitemap.xml')}`);
-  console.log(`   - ${path.join(publicDir, 'robots.txt')}`);
-  console.log('\n🌐 Your sitemap URL: https://silvera.innoserver.cloud/sitemap.xml');
-  console.log('🤖 Your robots.txt URL: https://silvera.innoserver.cloud/robots.txt');
-
-} catch (error) {
-  console.error('❌ Error generating sitemap:', error.message);
-  process.exit(1);
+  const totalUrls = staticPages.length + products.length;
+  console.log(`\n📄 Sitemap: ${totalUrls} URLs (${staticPages.length} static + ${products.length} products)`);
 }
+
+main().catch(err => {
+  console.error('❌ Error generating sitemap:', err.message);
+  process.exit(1);
+});

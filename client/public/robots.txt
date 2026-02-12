@@ -6,7 +6,8 @@ Disallow: /checkout
 Disallow: /cart
 Disallow: /profile
 Disallow: /orders
-Disallow: /login
-Disallow: /register
+Disallow: /payment/
+Disallow: /admin
+Disallow: /admin/
 
 Sitemap: https://silvera.innoserver.cloud/sitemap.xml

@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { useCartStore, useAuthStore } from '../stores';
 import { ordersApi, paymentsApi, couponsApi } from '../utils/api';
 import AddressForm from '../components/AddressForm';
+import { SEO } from '../components/SEO';
 
 interface Address {
   id: number;
@@ -264,6 +265,8 @@ export default function Checkout() {
   const isOnlinePayment = formData.paymentMethod !== 'cod';
 
   return (
+    <>
+    <SEO title="Checkout" description="Complete your purchase securely. Multiple payment options including QRPH and Cash on Delivery." url="https://silvera.innoserver.cloud/checkout" />
     <div className="container-custom py-8 animate-fade-in">
       <h1 className="section-title mb-8">Checkout</h1>
 
@@ -599,5 +602,6 @@ export default function Checkout() {
         </div>
       </div>
     </div>
+    </>
   );
 }

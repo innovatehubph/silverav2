@@ -1,22 +1,30 @@
 import { useCartStore } from '../stores';
 import { Link } from 'react-router-dom';
 import { ShoppingBag, Trash2, Plus, Minus } from 'lucide-react';
+import { SEO } from '../components/SEO';
 
 export default function Cart() {
   const { items, removeItem, updateQuantity, getTotalPrice, getTotalItems } = useCartStore();
 
+  const seo = <SEO title="Cart" description="Review your shopping cart and proceed to checkout. Secure payment, fast delivery across the Philippines." url="https://silvera.innoserver.cloud/cart" />;
+
   if (items.length === 0) {
     return (
+      <>
+      {seo}
       <div className="container-custom py-16 text-center">
         <ShoppingBag className="w-16 h-16 mx-auto text-txt-tertiary mb-4" />
         <h1 className="section-title">Your Cart is Empty</h1>
         <p className="text-txt-secondary mb-8">Add some items to get started</p>
         <Link to="/shop" className="btn-primary">Continue Shopping</Link>
       </div>
+      </>
     );
   }
 
   return (
+    <>
+    {seo}
     <div className="container-custom py-8">
       <h1 className="section-title mb-8">Shopping Cart ({getTotalItems()})</h1>
       
@@ -105,5 +113,6 @@ export default function Cart() {
         </div>
       </div>
     </div>
+    </>
   );
 }

@@ -1,8 +1,11 @@
 import { Truck, Clock, Shield, MapPin } from 'lucide-react';
+import { SEO } from '../components/SEO';
 
 export default function Shipping() {
   return (
-    <div className="container-custom py-12 animate-fade-in max-w-4xl mx-auto">
+    <>
+      <SEO title="Shipping Information" description="Silvera PH shipping rates, delivery times, and policies. Free shipping on orders over PHP 3,000." url="https://silvera.innoserver.cloud/shipping" keywords="shipping philippines, delivery times, shipping rates, free shipping" />
+      <div className="container-custom py-12 animate-fade-in max-w-4xl mx-auto">
       <h1 className="section-title mb-4 text-center">Shipping Information</h1>
       <p className="section-subtitle mb-12 text-center">Everything you need to know about delivery</p>
 
@@ -73,5 +76,6 @@ export default function Shipping() {
         <p className="text-sm text-txt-tertiary mt-4">Free standard shipping on all orders over &#8369;1,000.</p>
       </div>
     </div>
+    </>
   );
 }

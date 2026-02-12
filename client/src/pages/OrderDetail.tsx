@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Package, Truck, CheckCircle, MapPin, RotateCcw, X } from 'lucide-react';
 import { ordersApi } from '../utils/api';
 import { toast } from 'sonner';
+import { SEO } from '../components/SEO';
 
 interface OrderItem {
   product_id: number;
@@ -112,7 +113,9 @@ export default function OrderDetail() {
   };
 
   return (
-    <div className="container-custom py-8 animate-fade-in">
+    <>
+      <SEO title="Order Details" description="View your order details, tracking information, and delivery status on Silvera PH." />
+      <div className="container-custom py-8 animate-fade-in">
       <Link to="/orders" className="inline-flex items-center gap-2 text-gold hover:text-gold-300 transition-colors mb-6">
         <ArrowLeft className="w-4 h-4" /> Back to Orders
       </Link>
@@ -331,6 +334,7 @@ export default function OrderDetail() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }
