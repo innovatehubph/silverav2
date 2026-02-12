@@ -2135,9 +2135,18 @@ app.get('/api/admin/products', auth, adminOnly, (req, res) => {
   }
 });
 
-app.post('/api/admin/products', auth, adminOnly, (req, res) => {
+app.post('/api/admin/products', auth, adminOnly, upload.array('images', 10), async (req, res) => {
   try {
-    const { name, description, price, sale_price, category_id, images, stock, featured, variants, low_stock_threshold } = req.body;
+    const { name, description, price, sale_price, category_id, stock, featured, variants, low_stock_threshold } = req.body;
+    let { images } = req.body;
+
+    // Handle image uploads if files provided
+    if (req.files && req.files.length > 0) {
+      const uploadResults = await minioService.uploadImages(req.files, 'products');
+      images = uploadResults.filter(r => r.success).map(r => r.url);
+    } else if (typeof images === 'string') {
+      try { images = JSON.parse(images); } catch { images = images ? [images] : []; }
+    }
 
     if (!validateString(name)) {
       return res.status(400).json({ error: 'Product name required' });
@@ -2165,20 +2174,37 @@ app.post('/api/admin/products', auth, adminOnly, (req, res) => {
   }
 });
 
-app.put('/api/admin/products/:id', auth, adminOnly, (req, res) => {
+app.put('/api/admin/products/:id', auth, adminOnly, upload.array('images', 10), async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     if (!Number.isInteger(id) || id < 1) {
       return res.status(400).json({ error: 'Invalid product ID' });
     }
 
-    const { name, description, price, sale_price, category_id, images, stock, featured, status, variants, low_stock_threshold } = req.body;
+    const { name, description, price, sale_price, category_id, stock, featured, status, variants, low_stock_threshold } = req.body;
+    let { images } = req.body;
 
     if (!validateString(name)) {
       return res.status(400).json({ error: 'Product name required' });
     }
     if (!validatePositiveNumber(price)) {
       return res.status(400).json({ error: 'Valid price required' });
+    }
+
+    // Handle image uploads if new files provided
+    if (req.files && req.files.length > 0) {
+      const uploadResults = await minioService.uploadImages(req.files, 'products');
+      const newImageUrls = uploadResults.filter(r => r.success).map(r => r.url);
+      
+      // Get existing images and merge
+      const existingProduct = db.prepare('SELECT images FROM products WHERE id = ?').get(id);
+      let existingImages = [];
+      if (existingProduct && existingProduct.images) {
+        try { existingImages = JSON.parse(existingProduct.images); } catch {}
+      }
+      images = [...existingImages, ...newImageUrls];
+    } else if (typeof images === 'string') {
+      try { images = JSON.parse(images); } catch { images = images ? [images] : []; }
     }
 
     const safeStock = Math.max(0, parseInt(stock) || 0);
@@ -2193,10 +2219,10 @@ app.put('/api/admin/products/:id', auth, adminOnly, (req, res) => {
     );
     res.json({ success: true });
   } catch (e) {
+    console.error('Product update error:', e);
     res.status(500).json({ error: 'Failed to update product' });
   }
 });
-
 app.delete('/api/admin/products/:id', auth, adminOnly, (req, res) => {
   try {
     const id = parseInt(req.params.id);
