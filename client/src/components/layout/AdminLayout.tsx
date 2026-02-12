@@ -17,6 +17,7 @@ import {
   Store,
   ChevronLeft,
   ChevronDown,
+  Activity,
 } from 'lucide-react';
 
 interface NavItem {
@@ -68,6 +69,7 @@ const navSections: NavSection[] = [
   {
     title: 'System',
     items: [
+      { to: '/admin/performance', icon: Activity, label: 'Performance' },
       { to: '/admin/settings', icon: Settings, label: 'Settings' },
     ],
   },
