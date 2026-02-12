@@ -63,7 +63,8 @@ test.describe('Authentication Flows', () => {
     await page.evaluate(() => localStorage.clear());
 
     await page.goto('/profile');
-    await page.waitForTimeout(1000);
+    // Wait for Zustand _hasHydrated → RequireAuth detects no auth → redirects to /login
+    await page.waitForURL('**/login', { timeout: 10000 });
     await assertOnLoginPage(page);
   });
 

@@ -9,15 +9,24 @@ export async function waitForPageLoad(page: Page) {
 export async function login(page: Page, email: string, password: string) {
   // Use API-based login to avoid UI race conditions in CI.
   // UI login is tested separately in 01-authentication.spec.ts.
-  const response = await page.request.post(`${BASE_URL}/api/auth/login`, {
-    data: { email, password },
-  });
-
-  if (!response.ok()) {
-    throw new Error(`Login API failed (${response.status()}): ${response.statusText()}`);
+  let response;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    response = await page.request.post(`${BASE_URL}/api/auth/login`, {
+      data: { email, password },
+    });
+    if (response.status() === 429) {
+      // Rate limited — wait and retry
+      await new Promise(r => setTimeout(r, 2000 * (attempt + 1)));
+      continue;
+    }
+    break;
   }
 
-  const body = await response.json();
+  if (!response!.ok()) {
+    throw new Error(`Login API failed (${response!.status()}): ${response!.statusText()}`);
+  }
+
+  const body = await response!.json();
   const { user, token } = body.data ?? body;
 
   if (!user || !token) {
