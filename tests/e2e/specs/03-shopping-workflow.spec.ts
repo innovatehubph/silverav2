@@ -90,10 +90,16 @@ test.describe('Shopping Workflows', () => {
     await page.evaluate(() => localStorage.removeItem('silvera-cart'));
     await addToCart(page, 1);
 
+    // Give Zustand persist time to write to localStorage
+    await page.waitForTimeout(1000);
+
     const cartPage = new CartPage(page);
     await cartPage.navigate();
     await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(2000);
+
+    // Wait for cart items to render (Zustand may need to rehydrate)
+    await page.locator('.card h3').first().waitFor({ timeout: 10000 }).catch(() => {});
 
     const itemCount = await cartPage.getCartItemsCount();
     expect(itemCount).toBeGreaterThan(0);

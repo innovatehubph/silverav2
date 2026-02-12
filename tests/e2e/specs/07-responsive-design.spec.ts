@@ -25,13 +25,23 @@ test.describe('Responsive Design - Mobile (375px)', () => {
 
     const menuButton = page.locator('button[aria-label="Open menu"]');
     await menuButton.click();
-    await page.waitForTimeout(1500);
 
-    // Check if ANY shop/cart link is visible (drawer should show them)
-    const navVisible = await page.locator('a[href="/shop"], a[href="/cart"]').evaluateAll(
-      els => els.some(el => el.offsetParent !== null && el.getBoundingClientRect().height > 0)
-    );
-    expect(navVisible).toBeTruthy();
+    // Wait for drawer animation (300ms) + extra buffer
+    await page.waitForTimeout(800);
+
+    // The drawer has role="dialog" - wait for it to be visible
+    const drawer = page.locator('[role="dialog"][aria-label="Navigation menu"]');
+    const drawerVisible = await drawer.isVisible().catch(() => false);
+
+    if (drawerVisible) {
+      // Drawer nav links include /shop - check inside the drawer
+      const shopLink = drawer.locator('a[href="/shop"]');
+      await expect(shopLink).toBeVisible({ timeout: 3000 });
+    } else {
+      // Fallback: check if any shop link became visible after menu click
+      const shopLink = page.locator('a[href="/shop"]').first();
+      await expect(shopLink).toBeVisible({ timeout: 3000 });
+    }
 
     const closeButton = page.locator('button[aria-label="Close menu"]');
     if (await closeButton.isVisible().catch(() => false)) {

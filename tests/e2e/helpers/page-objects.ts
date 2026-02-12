@@ -258,8 +258,9 @@ export class CheckoutPage extends BasePage {
   }
 
   get placeOrderButton(): Locator {
-    // Target the checkout form's submit button - it's the only w-full submit in the form
-    return this.page.locator('form button[type="submit"].w-full').first();
+    // Target the checkout form's main submit button by its unique w-full + py-4 classes
+    // (the nested AddressForm submit has "flex-1" instead, never "w-full py-4")
+    return this.page.locator('button[type="submit"].w-full.py-4').first();
   }
 
   get emptyCartMessage(): Locator {
