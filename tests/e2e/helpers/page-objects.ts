@@ -5,15 +5,6 @@ export class BasePage {
 
   async goto(path: string) {
     await this.page.goto(path);
-    await this.page.waitForLoadState('domcontentloaded');
-
-    // Handle Zustand persist hydration race: the route guard may redirect to
-    // /login before the persisted auth state finishes loading. Retry once.
-    if (!path.includes('login') && !path.includes('register') && this.page.url().includes('/login')) {
-      await this.page.waitForTimeout(600);
-      await this.page.goto(path);
-      await this.page.waitForLoadState('domcontentloaded');
-    }
   }
 
   async waitForLoad() {
