@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Package, Clock, CheckCircle, Truck, ChevronRight } from 'lucide-react';
 import { ordersApi } from '../utils/api';
+import { SEO } from '../components/SEO';
 
 interface Order {
   id: number;
@@ -88,48 +89,51 @@ export default function Orders() {
   }
 
   return (
-    <div className="container-custom py-8 animate-fade-in">
-      <h1 className="section-title mb-6">My Orders</h1>
+    <>
+      <SEO title="My Orders" description="Track your Silvera PH orders. View order history, delivery status, and manage returns." url="https://silvera.innoserver.cloud/orders" />
+      <div className="container-custom py-8 animate-fade-in">
+        <h1 className="section-title mb-6">My Orders</h1>
 
-      <div className="space-y-4">
-        {orders.map((order) => (
-          <Link
-            key={order.id}
-            to={`/orders/${order.id}`}
-            className="card p-6 flex items-center gap-4 hover:shadow-lg transition-shadow"
-          >
-            <div className="w-12 h-12 bg-bg-tertiary rounded-full flex items-center justify-center">
-              {getStatusIcon(order.status)}
-            </div>
-
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-1">
-                <span className="font-semibold">Order #{order.id}</span>
-                <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${getStatusColor(order.status)}`}>
-                  {order.status}
-                </span>
+        <div className="space-y-4">
+          {orders.map((order) => (
+            <Link
+              key={order.id}
+              to={`/orders/${order.id}`}
+              className="card p-6 flex items-center gap-4 hover:shadow-lg transition-shadow"
+            >
+              <div className="w-12 h-12 bg-bg-tertiary rounded-full flex items-center justify-center">
+                {getStatusIcon(order.status)}
               </div>
-              
-              <p className="text-sm text-txt-tertiary">
-                {new Date(order.created_at).toLocaleDateString('en-PH', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })}
-              </p>
-              
-              <p className="text-sm text-txt-secondary mt-1">
-                {order.items?.length || 0} item(s)
-              </p>
-            </div>
 
-            <div className="text-right">
-              <p className="font-bold text-lg">₱{order.total.toFixed(2)}</p>
-              <ChevronRight className="w-5 h-5 text-txt-tertiary ml-auto" />
-            </div>
-          </Link>
-        ))}
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-1">
+                  <span className="font-semibold">Order #{order.id}</span>
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${getStatusColor(order.status)}`}>
+                    {order.status}
+                  </span>
+                </div>
+
+                <p className="text-sm text-txt-tertiary">
+                  {new Date(order.created_at).toLocaleDateString('en-PH', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })}
+                </p>
+
+                <p className="text-sm text-txt-secondary mt-1">
+                  {order.items?.length || 0} item(s)
+                </p>
+              </div>
+
+              <div className="text-right">
+                <p className="font-bold text-lg">₱{order.total.toFixed(2)}</p>
+                <ChevronRight className="w-5 h-5 text-txt-tertiary ml-auto" />
+              </div>
+            </Link>
+          ))}
+        </div>
       </div>
-    </div>
+    </>
   );
 }

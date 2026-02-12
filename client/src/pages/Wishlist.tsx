@@ -4,6 +4,7 @@ import { Heart, ShoppingBag, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { wishlistApi } from '../utils/api';
 import { useCartStore, useWishlistStore } from '../stores';
+import { SEO } from '../components/SEO';
 
 interface WishlistItem {
   id: number;
@@ -76,7 +77,9 @@ export default function Wishlist() {
   }
 
   return (
-    <div className="container-custom py-8 animate-fade-in">
+    <>
+      <SEO title="My Wishlist" description="Your saved products on Silvera PH. Add items to your wishlist and buy when you're ready." url="https://silvera.innoserver.cloud/wishlist" />
+      <div className="container-custom py-8 animate-fade-in">
       <h1 className="section-title mb-8">My Wishlist ({items.length})</h1>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -128,5 +131,6 @@ export default function Wishlist() {
         })}
       </div>
     </div>
+    </>
   );
 }

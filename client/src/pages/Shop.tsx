@@ -4,6 +4,7 @@ import { Search, X, Grid3X3, List, SlidersHorizontal, ChevronDown } from 'lucide
 import { productsApi } from '../utils/api';
 import type { Product } from '../types';
 import ProductCard from '../components/product/ProductCard';
+import { SEO } from '../components/SEO';
 
 interface Category {
   id: number;
@@ -124,6 +125,13 @@ export default function Shop() {
   const activeCategoryName = activeCategory?.name || (categoryParam === 'all' ? 'All Products' : categoryParam);
 
   return (
+    <>
+    <SEO
+      title="Shop"
+      description="Browse our curated collection of premium branded products. Luxury fashion, electronics, accessories and more with fast Philippine delivery."
+      keywords="shop online philippines, luxury brands, premium products, designer fashion, electronics, accessories"
+      url="https://silvera.innoserver.cloud/shop"
+    />
     <div className="container-custom py-8 animate-fade-in">
       {/* Header */}
       <div className="flex flex-col gap-6 mb-8">
@@ -324,5 +332,6 @@ export default function Shop() {
         </div>
       )}
     </div>
+    </>
   );
 }

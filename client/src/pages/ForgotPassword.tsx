@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, ArrowLeft, KeyRound, Lock, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { SEO } from '../components/SEO';
 
 type Step = 'email' | 'otp' | 'password' | 'success';
 
@@ -110,7 +111,9 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="min-h-screen bg-bg-primary flex items-center justify-center p-4 relative">
+    <>
+      <SEO title="Reset Password" description="Reset your Silvera PH account password. Secure OTP verification for your protection." url="https://silvera.innoserver.cloud/forgot-password" />
+      <div className="min-h-screen bg-bg-primary flex items-center justify-center p-4 relative">
       {/* Ambient glow */}
       <div
         className="absolute w-[500px] h-[500px] rounded-full pointer-events-none"
@@ -269,5 +272,6 @@ export default function ForgotPassword() {
         </p>
       </div>
     </div>
+    </>
   );
 }

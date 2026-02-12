@@ -3,6 +3,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { CheckCircle, XCircle, Clock, ExternalLink, Copy, Loader2, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { paymentsApi } from '../utils/api';
+import { SEO } from '../components/SEO';
 
 type PaymentState = 'loading' | 'pending' | 'paid' | 'failed' | 'expired' | 'error';
 
@@ -110,7 +111,9 @@ export default function PaymentStatus() {
   };
 
   return (
-    <div className="container-custom py-12 animate-fade-in">
+    <>
+      <SEO title="Payment Status" description="Check the status of your payment on Silvera PH." />
+      <div className="container-custom py-12 animate-fade-in">
       <div className="max-w-lg mx-auto">
         {/* Status Card */}
         <div className="card p-8 text-center">
@@ -290,5 +293,6 @@ export default function PaymentStatus() {
         </div>
       </div>
     </div>
+    </>
   );
 }

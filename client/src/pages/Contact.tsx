@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Mail, Phone, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
+import { SEO } from '../components/SEO';
 
 export default function Contact() {
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
@@ -17,7 +18,9 @@ export default function Contact() {
   };
 
   return (
-    <div className="container-custom py-12 animate-fade-in">
+    <>
+      <SEO title="Contact Us" description="Get in touch with Silvera PH. We're here to help with orders, returns, and any questions about our premium products." url="https://silvera.innoserver.cloud/contact" keywords="contact silvera ph, customer service, help, support" />
+      <div className="container-custom py-12 animate-fade-in">
       <h1 className="section-title mb-4">Contact Us</h1>
       <p className="section-subtitle mb-12">We'd love to hear from you</p>
 
@@ -83,5 +86,6 @@ export default function Contact() {
         </div>
       </div>
     </div>
+    </>
   );
 }

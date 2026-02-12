@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { useAuthStore } from '../stores';
 import api from '../utils/api';
 import AddressManager from '../components/AddressManager';
+import { SEO } from '../components/SEO';
 
 type Tab = 'profile' | 'addresses';
 
@@ -45,7 +46,9 @@ export default function Profile() {
   ];
 
   return (
-    <div className="container-custom py-8 animate-fade-in">
+    <>
+      <SEO title="My Profile" description="Manage your Silvera PH account settings, addresses, and preferences." url="https://silvera.innoserver.cloud/profile" />
+      <div className="container-custom py-8 animate-fade-in">
       <h1 className="section-title mb-8">My Account</h1>
 
       {user && (
@@ -204,6 +207,7 @@ export default function Profile() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }

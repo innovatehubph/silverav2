@@ -4,6 +4,7 @@ import { User, Mail, Lock, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthStore } from '../stores';
 import { authApi } from '../utils/api';
+import { SEO } from '../components/SEO';
 
 export default function Register() {
   const navigate = useNavigate();
@@ -34,7 +35,9 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen bg-bg-primary flex items-center justify-center p-4 relative">
+    <>
+      <SEO title="Create Account" description="Join Silvera PH for exclusive access to premium branded products. Create your account for fast checkout and order tracking." url="https://silvera.innoserver.cloud/register" />
+      <div className="min-h-screen bg-bg-primary flex items-center justify-center p-4 relative">
       {/* Back button */}
       <button
         onClick={() => navigate('/')}
@@ -118,5 +121,6 @@ export default function Register() {
         </p>
       </div>
     </div>
+    </>
   );
 }

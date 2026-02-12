@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
+import { SEO } from '../components/SEO';
 
 const faqs = [
   {
@@ -32,7 +33,9 @@ export default function FAQ() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   return (
-    <div className="container-custom py-12 animate-fade-in max-w-3xl mx-auto">
+    <>
+      <SEO title="FAQ" description="Frequently asked questions about Silvera PH. Shipping, returns, payments, and more." url="https://silvera.innoserver.cloud/faq" keywords="faq, frequently asked questions, shipping, returns, payments, silvera ph" />
+      <div className="container-custom py-12 animate-fade-in max-w-3xl mx-auto">
       <h1 className="section-title mb-4 text-center">Frequently Asked Questions</h1>
       <p className="section-subtitle mb-12 text-center">Find answers to common questions</p>
 
@@ -59,5 +62,6 @@ export default function FAQ() {
         ))}
       </div>
     </div>
+    </>
   );
 }

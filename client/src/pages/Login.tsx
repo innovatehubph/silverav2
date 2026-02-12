@@ -4,6 +4,7 @@ import { Mail, Lock, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthStore } from '../stores';
 import { authApi } from '../utils/api';
+import { SEO } from '../components/SEO';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -46,6 +47,8 @@ export default function Login() {
   };
 
   return (
+    <>
+    <SEO title="Login" description="Sign in to your Silvera PH account. Access your orders, wishlist, and exclusive member benefits." url="https://silvera.innoserver.cloud/login" />
     <div className="min-h-screen bg-bg-primary flex items-center justify-center p-4 relative">
       {/* Back button */}
       <button
@@ -119,5 +122,6 @@ export default function Login() {
         </p>
       </div>
     </div>
+    </>
   );
 }
