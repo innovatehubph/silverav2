@@ -9,25 +9,27 @@ import ErrorBoundary from './components/ErrorBoundary';
 import MainLayout from './components/layout/MainLayout';
 import AdminLayout from './components/layout/AdminLayout';
 
-// Pages
+// Pages - eagerly loaded (critical path)
 import Home from './pages/Home';
-import Shop from './pages/Shop';
-import ProductDetail from './pages/ProductDetail';
-import Cart from './pages/Cart';
-import Checkout from './pages/Checkout';
 import Login from './pages/Login';
-import Register from './pages/Register';
-import ForgotPassword from './pages/ForgotPassword';
-import Profile from './pages/Profile';
-import Orders from './pages/Orders';
-import OrderDetail from './pages/OrderDetail';
-import OrderSuccess from './pages/OrderSuccess';
-import PaymentStatus from './pages/PaymentStatus';
-import Wishlist from './pages/Wishlist';
-import Contact from './pages/Contact';
-import FAQ from './pages/FAQ';
-import Shipping from './pages/Shipping';
 import NotFound from './pages/NotFound';
+
+// Pages - lazy loaded for bundle splitting
+const Shop = lazy(() => import('./pages/Shop'));
+const ProductDetail = lazy(() => import('./pages/ProductDetail'));
+const Cart = lazy(() => import('./pages/Cart'));
+const Checkout = lazy(() => import('./pages/Checkout'));
+const Register = lazy(() => import('./pages/Register'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const Profile = lazy(() => import('./pages/Profile'));
+const Orders = lazy(() => import('./pages/Orders'));
+const OrderDetail = lazy(() => import('./pages/OrderDetail'));
+const OrderSuccess = lazy(() => import('./pages/OrderSuccess'));
+const PaymentStatus = lazy(() => import('./pages/PaymentStatus'));
+const Wishlist = lazy(() => import('./pages/Wishlist'));
+const Contact = lazy(() => import('./pages/Contact'));
+const FAQ = lazy(() => import('./pages/FAQ'));
+const Shipping = lazy(() => import('./pages/Shipping'));
 
 // Admin Pages - lazy loaded for bundle splitting
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
@@ -41,7 +43,7 @@ const AdminReports = lazy(() => import('./pages/admin/AdminReports'));
 const AdminCoupons = lazy(() => import('./pages/admin/AdminCoupons'));
 const AdminPerformance = lazy(() => import('./pages/admin/AdminPerformance'));
 
-function AdminLoader() {
+function PageLoader() {
   return (
     <div className="flex items-center justify-center h-64">
       <div className="flex flex-col items-center gap-3">
@@ -50,6 +52,14 @@ function AdminLoader() {
       </div>
     </div>
   );
+}
+
+function AdminLoader() {
+  return <PageLoader />;
+}
+
+function LazyPage({ children }: { children: ReactNode }) {
+  return <Suspense fallback={<PageLoader />}>{children}</Suspense>;
 }
 
 /**
@@ -118,22 +128,22 @@ function App() {
       <Toaster position="top-right" richColors />
       <Routes>
         <Route path="/" element={<MainLayout><Home /></MainLayout>} />
-        <Route path="/shop" element={<MainLayout><Shop /></MainLayout>} />
-        <Route path="/product/:id" element={<MainLayout><ProductDetail /></MainLayout>} />
-        <Route path="/cart" element={<MainLayout><Cart /></MainLayout>} />
-        <Route path="/checkout" element={<RequireAuth><MainLayout><Checkout /></MainLayout></RequireAuth>} />
+        <Route path="/shop" element={<MainLayout><LazyPage><Shop /></LazyPage></MainLayout>} />
+        <Route path="/product/:id" element={<MainLayout><LazyPage><ProductDetail /></LazyPage></MainLayout>} />
+        <Route path="/cart" element={<MainLayout><LazyPage><Cart /></LazyPage></MainLayout>} />
+        <Route path="/checkout" element={<RequireAuth><MainLayout><LazyPage><Checkout /></LazyPage></MainLayout></RequireAuth>} />
         <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/profile" element={<RequireAuth><MainLayout><Profile /></MainLayout></RequireAuth>} />
-        <Route path="/orders" element={<RequireAuth><MainLayout><Orders /></MainLayout></RequireAuth>} />
-        <Route path="/orders/:id" element={<RequireAuth><MainLayout><OrderDetail /></MainLayout></RequireAuth>} />
-        <Route path="/order-success" element={<MainLayout><OrderSuccess /></MainLayout>} />
-        <Route path="/payment/:ref" element={<RequireAuth><MainLayout><PaymentStatus /></MainLayout></RequireAuth>} />
-        <Route path="/wishlist" element={<RequireAuth><MainLayout><Wishlist /></MainLayout></RequireAuth>} />
-        <Route path="/contact" element={<MainLayout><Contact /></MainLayout>} />
-        <Route path="/faq" element={<MainLayout><FAQ /></MainLayout>} />
-        <Route path="/shipping" element={<MainLayout><Shipping /></MainLayout>} />
+        <Route path="/register" element={<LazyPage><Register /></LazyPage>} />
+        <Route path="/forgot-password" element={<LazyPage><ForgotPassword /></LazyPage>} />
+        <Route path="/profile" element={<RequireAuth><MainLayout><LazyPage><Profile /></LazyPage></MainLayout></RequireAuth>} />
+        <Route path="/orders" element={<RequireAuth><MainLayout><LazyPage><Orders /></LazyPage></MainLayout></RequireAuth>} />
+        <Route path="/orders/:id" element={<RequireAuth><MainLayout><LazyPage><OrderDetail /></LazyPage></MainLayout></RequireAuth>} />
+        <Route path="/order-success" element={<MainLayout><LazyPage><OrderSuccess /></LazyPage></MainLayout>} />
+        <Route path="/payment/:ref" element={<RequireAuth><MainLayout><LazyPage><PaymentStatus /></LazyPage></MainLayout></RequireAuth>} />
+        <Route path="/wishlist" element={<RequireAuth><MainLayout><LazyPage><Wishlist /></LazyPage></MainLayout></RequireAuth>} />
+        <Route path="/contact" element={<MainLayout><LazyPage><Contact /></LazyPage></MainLayout>} />
+        <Route path="/faq" element={<MainLayout><LazyPage><FAQ /></LazyPage></MainLayout>} />
+        <Route path="/shipping" element={<MainLayout><LazyPage><Shipping /></LazyPage></MainLayout>} />
 
         {/* Admin Routes - lazy loaded */}
         <Route path="/admin" element={<RequireAdmin><AdminLayout /></RequireAdmin>}>
