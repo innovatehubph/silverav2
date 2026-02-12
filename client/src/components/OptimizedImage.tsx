@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, type ImgHTMLAttributes } from 'react';
+import { useState, useRef, useEffect, useCallback, type ImgHTMLAttributes } from 'react';
 
 const PLACEHOLDER_BLUR =
   'data:image/svg+xml;base64,' +
@@ -115,6 +115,14 @@ export default function OptimizedImage({
     }
   };
 
+  // Handle cached images: if the browser loaded from cache before React
+  // attached onLoad, the event never fires and the image stays opacity-0.
+  const imgRef = useCallback((img: HTMLImageElement | null) => {
+    if (img?.complete && img.naturalWidth > 0 && !isLoaded) {
+      setIsLoaded(true);
+    }
+  }, [isLoaded]);
+
   const webpSrc = toWebP(currentSrc);
   const hasWebPAlternative = webpSrc !== currentSrc;
   const srcSet = buildSrcSet(currentSrc);
@@ -145,13 +153,14 @@ export default function OptimizedImage({
 
       {/* Actual image - only rendered when in viewport */}
       {isInView && (
-        <picture>
+        <picture className="absolute inset-0 w-full h-full">
           {/* WebP source for browsers that support it */}
           {hasWebPAlternative && (
             <source srcSet={webpSrc} type="image/webp" />
           )}
 
           <img
+            ref={imgRef}
             src={currentSrc}
             srcSet={srcSet}
             sizes={sizes}
