@@ -161,7 +161,7 @@ export default function AdminAnalytics() {
                 <Tooltip
                   contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid rgba(212,175,55,0.2)', borderRadius: 8 }}
                   labelStyle={{ color: '#9ca3af' }}
-                  formatter={(value: number) => [formatCurrency(value), 'Revenue']}
+                  formatter={(value) => [formatCurrency(Number(value ?? 0)), 'Revenue']}
                 />
                 <Area type="monotone" dataKey="revenue" stroke="#D4AF37" strokeWidth={2} fill="url(#goldGrad)" />
               </AreaChart>
@@ -183,7 +183,7 @@ export default function AdminAnalytics() {
                 <Tooltip
                   contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid rgba(212,175,55,0.2)', borderRadius: 8 }}
                   labelStyle={{ color: '#9ca3af' }}
-                  formatter={(value: number) => [formatCurrency(value), 'Revenue']}
+                  formatter={(value) => [formatCurrency(Number(value ?? 0)), 'Revenue']}
                 />
                 <Bar dataKey="revenue" radius={[0, 4, 4, 0]}>
                   {barData.map((_, i) => (
@@ -223,7 +223,7 @@ export default function AdminAnalytics() {
                   </Pie>
                   <Tooltip
                     contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid rgba(212,175,55,0.2)', borderRadius: 8 }}
-                    formatter={(value: number, name: string) => [formatCurrency(value), name]}
+                    formatter={(value, name) => [formatCurrency(Number(value ?? 0)), String(name)]}
                   />
                   <Legend
                     formatter={(value) => <span style={{ color: '#d1d5db', fontSize: 13 }}>{value}</span>}

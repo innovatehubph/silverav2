@@ -40,7 +40,7 @@ export default function Checkout() {
 
   // Stripe state
   const [stripeClientSecret, setStripeClientSecret] = useState<string | null>(null);
-  const [stripeOrderId, setStripeOrderId] = useState<number | null>(null);
+  const [_stripeOrderId, setStripeOrderId] = useState<number | null>(null);
 
   // Coupon state
   const [couponCode, setCouponCode] = useState('');
