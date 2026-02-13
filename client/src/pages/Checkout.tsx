@@ -6,6 +6,8 @@ import { useCartStore, useAuthStore } from '../stores';
 import { ordersApi, paymentsApi, couponsApi } from '../utils/api';
 import AddressForm from '../components/AddressForm';
 import { SEO } from '../components/SEO';
+import StripeProvider from '../components/StripeProvider';
+import StripeCardForm from '../components/StripeCardForm';
 
 interface Address {
   id: number;
@@ -35,6 +37,10 @@ export default function Checkout() {
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [addressMode, setAddressMode] = useState<'saved' | 'new'>('saved');
   const [loadingAddresses, setLoadingAddresses] = useState(true);
+
+  // Stripe state
+  const [stripeClientSecret, setStripeClientSecret] = useState<string | null>(null);
+  const [stripeOrderId, setStripeOrderId] = useState<number | null>(null);
 
   // Coupon state
   const [couponCode, setCouponCode] = useState('');
@@ -212,7 +218,18 @@ export default function Checkout() {
         return;
       }
 
-      // Step 3: For non-COD, create a payment session
+      // Step 2b: Stripe inline card payment
+      if (formData.paymentMethod === 'stripe') {
+        setProcessingStep('Setting up secure payment...');
+        const stripeResponse = await paymentsApi.createStripeIntent({ order_id: orderId });
+        setStripeClientSecret(stripeResponse.data.client_secret);
+        setStripeOrderId(orderId);
+        setIsProcessing(false);
+        setProcessingStep('');
+        return; // StripeCardForm handles the rest
+      }
+
+      // Step 3: For non-COD, create a payment session (QRPH/DirectPay)
       setProcessingStep('Connecting to payment gateway...');
 
       const paymentTypeMap: Record<string, string> = {
@@ -473,9 +490,31 @@ export default function Checkout() {
                     <p className="text-sm text-txt-tertiary">Visa, Mastercard, JCB</p>
                   </div>
                 </label>
+
+                <label className={`flex items-center gap-4 p-4 border-2 rounded-xl cursor-pointer transition-all ${
+                  formData.paymentMethod === 'stripe' ? 'border-accent-gold bg-accent-gold/10' : 'border-bdr hover:border-bdr-strong'
+                }`}>
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value="stripe"
+                    checked={formData.paymentMethod === 'stripe'}
+                    onChange={(e) => {
+                      setFormData(prev => ({ ...prev, paymentMethod: e.target.value }));
+                      setStripeClientSecret(null);
+                      setStripeOrderId(null);
+                    }}
+                    className="w-5 h-5 text-accent-gold accent-accent-gold"
+                  />
+                  <CreditCard className="w-6 h-6 text-purple-400 flex-shrink-0" />
+                  <div className="flex-1">
+                    <p className="font-medium text-txt-primary">Pay with Stripe</p>
+                    <p className="text-sm text-txt-tertiary">Visa, Mastercard &amp; more — international cards</p>
+                  </div>
+                </label>
               </div>
 
-              {isOnlinePayment && (
+              {isOnlinePayment && formData.paymentMethod !== 'stripe' && (
                 <div className="mt-4 flex items-start gap-3 p-3 bg-bg-tertiary rounded-xl">
                   <Shield className="w-5 h-5 text-accent-gold mt-0.5 flex-shrink-0" />
                   <p className="text-sm text-txt-secondary">
@@ -484,24 +523,57 @@ export default function Checkout() {
                   </p>
                 </div>
               )}
+
+              {formData.paymentMethod === 'stripe' && !stripeClientSecret && (
+                <div className="mt-4 flex items-start gap-3 p-3 bg-bg-tertiary rounded-xl">
+                  <Shield className="w-5 h-5 text-purple-400 mt-0.5 flex-shrink-0" />
+                  <p className="text-sm text-txt-secondary">
+                    Payment handled by Stripe — we never see your card number.
+                  </p>
+                </div>
+              )}
             </div>
 
-            <button
-              type="submit"
-              disabled={isProcessing || (addressMode === 'saved' && !selectedAddress)}
-              className="w-full btn-primary py-4 text-lg flex items-center justify-center gap-2 disabled:opacity-50"
-            >
-              {isProcessing ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  {processingStep || 'Processing...'}
-                </>
-              ) : isOnlinePayment ? (
-                <>Pay ₱{total.toFixed(2)}</>
-              ) : (
-                <>Place Order — ₱{total.toFixed(2)}</>
-              )}
-            </button>
+            {/* Stripe inline card form */}
+            {stripeClientSecret && formData.paymentMethod === 'stripe' && (
+              <div className="glass rounded-xl p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-purple-700 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                    <CreditCard className="w-4 h-4" />
+                  </div>
+                  <h2 className="text-xl font-semibold text-txt-primary">Enter Card Details</h2>
+                </div>
+                <StripeProvider clientSecret={stripeClientSecret}>
+                  <StripeCardForm
+                    amount={total}
+                    onSuccess={() => {
+                      clearCart();
+                      navigate('/order-success');
+                    }}
+                    onError={(msg) => toast.error(msg)}
+                  />
+                </StripeProvider>
+              </div>
+            )}
+
+            {!stripeClientSecret && (
+              <button
+                type="submit"
+                disabled={isProcessing || (addressMode === 'saved' && !selectedAddress)}
+                className="w-full btn-primary py-4 text-lg flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {isProcessing ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    {processingStep || 'Processing...'}
+                  </>
+                ) : isOnlinePayment ? (
+                  <>Pay ₱{total.toFixed(2)}</>
+                ) : (
+                  <>Place Order — ₱{total.toFixed(2)}</>
+                )}
+              </button>
+            )}
           </form>
         </div>
 

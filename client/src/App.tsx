@@ -44,6 +44,7 @@ const AdminReturns = lazy(() => import('./pages/admin/AdminReturns'));
 const AdminReports = lazy(() => import('./pages/admin/AdminReports'));
 const AdminCoupons = lazy(() => import('./pages/admin/AdminCoupons'));
 const AdminPerformance = lazy(() => import('./pages/admin/AdminPerformance'));
+const AdminAnalytics = lazy(() => import('./pages/admin/AdminAnalytics'));
 
 function PageLoader() {
   return (
@@ -148,6 +149,7 @@ function App() {
           <Route path="reports" element={<Suspense fallback={<AdminLoader />}><AdminReports /></Suspense>} />
           <Route path="settings" element={<Suspense fallback={<AdminLoader />}><AdminSettings /></Suspense>} />
           <Route path="coupons" element={<Suspense fallback={<AdminLoader />}><AdminCoupons /></Suspense>} />
+          <Route path="analytics" element={<Suspense fallback={<AdminLoader />}><AdminAnalytics /></Suspense>} />
           <Route path="performance" element={<Suspense fallback={<AdminLoader />}><AdminPerformance /></Suspense>} />
         </Route>
 

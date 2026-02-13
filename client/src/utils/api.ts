@@ -101,6 +101,8 @@ export const paymentsApi = {
     timestamp?: number;
     signature?: string;
   }) => api.post('/payments/callback', data),
+  createStripeIntent: (data: { order_id: number }) =>
+    api.post('/payments/stripe/create-intent', data),
 };
 
 // Wishlist API
@@ -171,6 +173,8 @@ export const adminApi = {
     api.get('/admin/reports/orders-by-status'),
   getReportsCustomers: (period?: string) =>
     api.get('/admin/reports/customers', { params: { period } }),
+  getRevenueByCategory: () =>
+    api.get('/admin/reports/revenue-by-category'),
   
   // Performance Monitoring
   getPerformanceMetrics: () => api.get('/admin/performance/metrics'),
