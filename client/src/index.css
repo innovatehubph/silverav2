@@ -73,45 +73,45 @@
    ============================================================================= */
 
 [data-theme="light"] {
-  /* Background Layers */
-  --bg-primary: #FFFFFF;
-  --bg-secondary: #F8F9FA;
-  --bg-tertiary: #F1F3F5;
-  --bg-hover: #E9ECEF;
+  /* Background Layers - Template Lavender Theme */
+  --bg-primary: #F4F6FA;
+  --bg-secondary: #FFFFFF;
+  --bg-tertiary: #ECEEF4;
+  --bg-hover: #E4E6EC;
 
   /* Glassmorphism */
-  --glass-bg: rgba(255, 255, 255, 0.8);
-  --glass-border: rgba(0, 0, 0, 0.08);
-  --glass-highlight: rgba(0, 0, 0, 0.05);
+  --glass-bg: rgba(255, 255, 255, 0.9);
+  --glass-border: rgba(0, 0, 0, 0.06);
+  --glass-highlight: rgba(184, 185, 255, 0.15);
 
   /* Text Hierarchy */
-  --text-primary: #1A1A1B;
-  --text-secondary: #4A4A4C;
-  --text-tertiary: #71717A;
+  --text-primary: #0B0D10;
+  --text-secondary: #6B7280;
+  --text-tertiary: #9CA3AF;
   --text-inverse: #FAFAFA;
 
-  /* Accent Colors - Premium Gold (same) */
-  --accent-primary: #B8942E;
-  --accent-primary-hover: #D4AF37;
-  --accent-primary-active: #9A7B26;
-  --accent-secondary: #7C3AED;
-  --accent-secondary-hover: #8B5CF6;
+  /* Accent Colors - Lavender/Violet for Light Mode */
+  --accent-primary: #7C3AED;
+  --accent-primary-hover: #8B5CF6;
+  --accent-primary-active: #6D28D9;
+  --accent-secondary: #B8B9FF;
+  --accent-secondary-hover: #C4C5FF;
 
-  /* Gold Gradient */
-  --accent-gradient: linear-gradient(135deg, #B8942E 0%, #D4AF37 50%, #B8942E 100%);
+  /* Lavender Gradient */
+  --accent-gradient: linear-gradient(135deg, #7C3AED 0%, #B8B9FF 50%, #7C3AED 100%);
 
   /* Borders */
-  --border-subtle: rgba(0, 0, 0, 0.06);
-  --border-default: rgba(0, 0, 0, 0.1);
-  --border-strong: rgba(0, 0, 0, 0.15);
-  --border-accent: rgba(184, 148, 46, 0.5);
+  --border-subtle: rgba(0, 0, 0, 0.04);
+  --border-default: rgba(0, 0, 0, 0.08);
+  --border-strong: rgba(0, 0, 0, 0.12);
+  --border-accent: rgba(124, 58, 237, 0.4);
 
   /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.12);
-  --shadow-xl: 0 20px 50px rgba(0, 0, 0, 0.15);
-  --shadow-glow: 0 0 30px -5px rgba(184, 148, 46, 0.3);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 50px rgba(0, 0, 0, 0.12);
+  --shadow-glow: 0 0 30px -5px rgba(184, 185, 255, 0.5);
 }
 
 /* =============================================================================
