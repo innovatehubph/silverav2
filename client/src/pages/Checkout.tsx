@@ -223,7 +223,7 @@ export default function Checkout() {
         payment_method: formData.paymentMethod,
       });
 
-      const orderId: number = orderResponse.data.id || orderResponse.data.orderId;
+      const orderId: number = orderResponse.data.order_id || orderResponse.data.id || orderResponse.data.orderId;
 
       // Step 2: Handle payment based on method
       if (formData.paymentMethod === 'cod') {
@@ -510,7 +510,7 @@ export default function Checkout() {
 
             <button
                 type="submit"
-                disabled={isProcessing || (addressMode === 'saved' && !selectedAddress)}
+                disabled={isProcessing || (addressMode === 'saved' && !selectedAddress) || (addressMode === 'new' && !newAddressData)}
                 className="w-full btn-primary py-4 text-lg flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {isProcessing ? (
@@ -613,6 +613,15 @@ export default function Checkout() {
                 <p className="text-xs text-txt-tertiary mb-1">Delivering to:</p>
                 <p className="text-sm font-medium text-txt-primary">{selectedAddress.name}</p>
                 <p className="text-xs text-txt-secondary line-clamp-2">{formatAddress(selectedAddress)}</p>
+              </div>
+            )}
+            {!selectedAddress && newAddressData && (
+              <div className="mt-4 p-3 bg-bg-tertiary rounded-lg">
+                <p className="text-xs text-txt-tertiary mb-1">Delivering to:</p>
+                <p className="text-sm font-medium text-txt-primary">{newAddressData.name}</p>
+                <p className="text-xs text-txt-secondary line-clamp-2">
+                  {[newAddressData.street_address, newAddressData.barangay, newAddressData.municipality, newAddressData.province, newAddressData.region, newAddressData.zip_code].filter(Boolean).join(', ')}
+                </p>
               </div>
             )}
 
