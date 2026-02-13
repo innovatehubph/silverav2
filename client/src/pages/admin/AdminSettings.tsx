@@ -34,7 +34,6 @@ interface StoreSettings {
   payment_gcash_enabled: string;
   payment_card_enabled: string;
   payment_nexuspay_enabled: string;
-  payment_stripe_enabled: string;
   // Email
   email_sender_name: string;
   email_sender_email: string;
@@ -62,7 +61,6 @@ const defaultSettings: StoreSettings = {
   payment_gcash_enabled: 'true',
   payment_card_enabled: 'true',
   payment_nexuspay_enabled: 'false',
-  payment_stripe_enabled: 'false',
   email_sender_name: 'Silvera',
   email_sender_email: '',
   email_order_confirmation: 'true',
@@ -532,31 +530,6 @@ export default function AdminSettings() {
                 <span
                   className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
                     settings.payment_nexuspay_enabled === 'true' ? 'translate-x-6' : 'translate-x-1'
-                  }`}
-                />
-              </button>
-            </div>
-
-            {/* Stripe */}
-            <div className="flex items-center justify-between p-4 rounded-lg bg-bg-tertiary/50 border border-bdr-subtle">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-indigo-900/30 flex items-center justify-center">
-                  <span className="text-indigo-400 font-bold text-xs">S</span>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-txt-primary">Stripe</h3>
-                  <p className="text-xs text-txt-tertiary">International card payments via Stripe</p>
-                </div>
-              </div>
-              <button
-                onClick={() => handleToggle('payment_stripe_enabled')}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  settings.payment_stripe_enabled === 'true' ? 'bg-accent-gold' : 'bg-bg-secondary'
-                }`}
-              >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    settings.payment_stripe_enabled === 'true' ? 'translate-x-6' : 'translate-x-1'
                   }`}
                 />
               </button>

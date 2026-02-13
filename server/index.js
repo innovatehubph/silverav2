@@ -25,7 +25,6 @@ const crypto = require('crypto');
 // Import services
 const emailService = require('./services/email-service');
 const paymentGateway = require('./services/payment-gateway');
-const stripeGateway = require('./services/stripe-gateway');
 const minioService = require('./services/minio');
 const psgcService = require('./services/psgc');
 const multer = require('multer');
@@ -2121,130 +2120,6 @@ app.post('/api/payments/qrph/create', auth, (req, res) => {
   }
 });
 
-// Create Stripe PaymentIntent
-app.post('/api/payments/stripe/create-intent', auth, async (req, res) => {
-  try {
-    const order_id = parseInt(req.body.order_id);
-    if (!Number.isInteger(order_id) || order_id < 1) {
-      return res.status(400).json({ error: 'Invalid order ID' });
-    }
-
-    const order = db.prepare('SELECT * FROM orders WHERE id = ? AND user_id = ?').get(order_id, req.user.id);
-    if (!order) {
-      return res.status(404).json({ error: 'Order not found' });
-    }
-
-    const result = await stripeGateway.createPaymentIntent({
-      orderId: order_id,
-      amount: order.total,
-      customerEmail: req.user.email,
-    });
-
-    if (!result.success) {
-      return res.status(400).json({ error: result.error });
-    }
-
-    // Update order with Stripe payment details
-    db.prepare(`
-      UPDATE orders SET payment_ref = ?, payment_method = ?, payment_status = ?
-      WHERE id = ?
-    `).run(result.paymentIntentId, 'stripe', 'pending', order_id);
-
-    console.log(`✅ Stripe intent created for order #${order_id} - PI: ${result.paymentIntentId}`);
-
-    res.json({
-      client_secret: result.clientSecret,
-      payment_intent_id: result.paymentIntentId,
-      amount: order.total,
-    });
-  } catch (e) {
-    console.error('Stripe create-intent error:', e.message);
-    res.status(500).json({ error: 'Failed to create payment intent' });
-  }
-});
-
-// Stripe Webhook Handler
-app.post('/api/payments/stripe/webhook', async (req, res) => {
-  const logData = { source: 'stripe_webhook', raw_payload: null };
-  try {
-    const signature = req.headers['stripe-signature'];
-    if (!signature) {
-      logWebhook({ ...logData, event_type: 'invalid', response_code: 400, error_message: 'Missing Stripe-Signature header' });
-      return res.status(400).json({ error: 'Missing Stripe-Signature header' });
-    }
-
-    const result = stripeGateway.constructWebhookEvent(req.rawBody, signature);
-    if (!result.success) {
-      logWebhook({ ...logData, event_type: 'signature_fail', response_code: 400, error_message: result.error });
-      return res.status(400).json({ error: result.error });
-    }
-
-    const event = result.event;
-    logData.raw_payload = event.data.object;
-    const paymentIntent = event.data.object;
-    const paymentRef = paymentIntent.id; // pi_xxx
-    logData.payment_ref = paymentRef;
-
-    if (event.type === 'payment_intent.succeeded') {
-      logData.status = 'succeeded';
-
-      if (isDuplicateWebhook(paymentRef, 'succeeded')) {
-        logWebhook({ ...logData, event_type: 'stripe_webhook', duplicate: true, processed: false, response_code: 200 });
-        return res.json({ received: true });
-      }
-
-      const updateResult = db.prepare(`
-        UPDATE orders SET payment_status = ?, status = ? WHERE payment_ref = ?
-      `).run('paid', 'processing', paymentRef);
-
-      if (updateResult.changes > 0) {
-        const order = db.prepare('SELECT id FROM orders WHERE payment_ref = ?').get(paymentRef);
-        if (order) {
-          sendOrderConfirmationEmail(order.id).catch(err =>
-            console.error('Error sending confirmation email:', err)
-          );
-        }
-        logWebhook({ ...logData, event_type: 'payment_success', processed: true, response_code: 200 });
-      } else {
-        logWebhook({ ...logData, event_type: 'order_not_found', processed: false, response_code: 200, error_message: 'No order found for payment_ref' });
-      }
-    } else if (event.type === 'payment_intent.payment_failed') {
-      logData.status = 'failed';
-
-      if (isDuplicateWebhook(paymentRef, 'failed')) {
-        logWebhook({ ...logData, event_type: 'stripe_webhook', duplicate: true, processed: false, response_code: 200 });
-        return res.json({ received: true });
-      }
-
-      // Restore stock for failed payment
-      const failedOrder = db.prepare('SELECT id, items FROM orders WHERE payment_ref = ?').get(paymentRef);
-      if (failedOrder) {
-        try {
-          const failedItems = JSON.parse(failedOrder.items || '[]');
-          const restoreStmt = db.prepare('UPDATE products SET stock = stock + ? WHERE id = ?');
-          for (const item of failedItems) {
-            restoreStmt.run(item.quantity, item.product_id);
-          }
-        } catch (restoreErr) {
-          console.error('Stock restore error:', restoreErr.message);
-        }
-      }
-
-      db.prepare(`
-        UPDATE orders SET payment_status = ?, status = ? WHERE payment_ref = ?
-      `).run('failed', 'cancelled', paymentRef);
-
-      logWebhook({ ...logData, event_type: 'payment_failed', processed: true, response_code: 200 });
-    }
-
-    // Always return 200 to prevent Stripe retries
-    res.json({ received: true });
-  } catch (e) {
-    logWebhook({ ...logData, event_type: 'error', response_code: 200, error_message: e.message, processed: false });
-    res.status(200).json({ received: true, error: e.message });
-  }
-});
-
 // Check payment status
 app.get('/api/payments/:paymentRef/status', auth, (req, res) => {
   try {
@@ -3438,7 +3313,7 @@ app.put('/api/admin/settings', auth, adminOnly, (req, res) => {
       'social_facebook', 'social_instagram', 'social_twitter',
       'free_shipping_threshold', 'default_shipping_fee',
       'payment_cod_enabled', 'payment_gcash_enabled', 'payment_card_enabled',
-      'payment_nexuspay_enabled', 'payment_stripe_enabled',
+      'payment_nexuspay_enabled',
       'email_sender_name', 'email_sender_email',
       'email_order_confirmation', 'email_shipping_updates', 'email_order_delivered',
       'email_order_cancelled', 'email_password_reset', 'email_promotional'
@@ -3474,7 +3349,7 @@ app.get('/api/settings/:key', (req, res) => {
     const publicKeys = ['store_name', 'store_logo', 'currency', 'social_facebook', 'social_instagram', 'social_twitter',
                         'free_shipping_threshold', 'default_shipping_fee',
                         'payment_cod_enabled', 'payment_gcash_enabled', 'payment_card_enabled',
-                        'payment_nexuspay_enabled', 'payment_stripe_enabled'];
+                        'payment_nexuspay_enabled'];
 
     if (!publicKeys.includes(key)) {
       return res.status(403).json({ error: 'Setting not accessible' });
@@ -3493,7 +3368,7 @@ app.get('/api/settings', (req, res) => {
     const publicKeys = ['store_name', 'store_logo', 'currency', 'social_facebook', 'social_instagram', 'social_twitter',
                         'free_shipping_threshold', 'default_shipping_fee',
                         'payment_cod_enabled', 'payment_gcash_enabled', 'payment_card_enabled',
-                        'payment_nexuspay_enabled', 'payment_stripe_enabled'];
+                        'payment_nexuspay_enabled'];
 
     const settings = db.prepare(`SELECT key, value FROM settings WHERE key IN (${publicKeys.map(() => '?').join(',')})`).all(...publicKeys);
     

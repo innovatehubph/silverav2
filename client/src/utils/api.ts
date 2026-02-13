@@ -101,8 +101,6 @@ export const paymentsApi = {
     timestamp?: number;
     signature?: string;
   }) => api.post('/payments/callback', data),
-  createStripeIntent: (data: { order_id: number }) =>
-    api.post('/payments/stripe/create-intent', data),
 };
 
 // Wishlist API
