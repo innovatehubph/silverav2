@@ -12,7 +12,7 @@ const CategorySection = React.lazy(() => import('../sections/CategorySection'));
 const HowItWorksSection = React.lazy(() => import('../sections/HowItWorksSection'));
 
 const categoryFallbackImages: Record<string, string> = {
-  apparel: 'https://s3.innoserver.cloud/silvera/categories/apparel-hero.jpg',
+  apparel: 'https://s3.innoserver.cloud/silvera/categories/apparel-hero.jpg?v=2',
   footwear: 'https://s3.innoserver.cloud/silvera/categories/category-sneakers.jpg',
   accessories: '/images/wallet_smallleather.jpg',
   dresses: '/images/dress_apparel.jpg',

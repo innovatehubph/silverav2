@@ -301,17 +301,17 @@ test.describe('Sandbox Payment Flow (DirectPay)', () => {
     }
     await gcashRadio.click({ force: true });
 
-    // Intercept order creation to capture the order ID
-    const orderResponsePromise = page.waitForResponse(
-      (response) => response.url().includes('/api/orders') && response.request().method() === 'POST',
-      { timeout: 30000 }
-    );
-
     const submitBtn = page.locator('button[type="submit"].w-full.py-4').first();
     if (await submitBtn.isDisabled().catch(() => true)) {
       console.log('⚠️  Submit button disabled (no address). Skipping.');
       return;
     }
+
+    // Intercept order creation to capture the order ID
+    const orderResponsePromise = page.waitForResponse(
+      (response) => response.url().includes('/api/orders') && response.request().method() === 'POST',
+      { timeout: 30000 }
+    );
 
     await submitBtn.click();
 
