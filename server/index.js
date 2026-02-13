@@ -2589,6 +2589,39 @@ app.put('/api/admin/products/:id', auth, adminOnly, upload.array('images', 10), 
     res.status(500).json({ error: 'Failed to update product' });
   }
 });
+// Bulk delete products
+app.post('/api/admin/products/bulk-delete', auth, adminOnly, (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ error: 'Product IDs required' });
+    }
+    const placeholders = ids.map(() => '?').join(',');
+    const result = db.prepare(`DELETE FROM products WHERE id IN (${placeholders})`).run(...ids);
+    res.json({ deleted: result.changes });
+  } catch (e) {
+    console.error('Bulk delete error:', e.message);
+    res.status(500).json({ error: 'Failed to bulk delete products' });
+  }
+});
+
+// Bulk update stock
+app.post('/api/admin/products/bulk-stock', auth, adminOnly, (req, res) => {
+  try {
+    const { ids, stock } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ error: 'Product IDs required' });
+    }
+    const safeStock = Math.max(0, parseInt(stock) || 0);
+    const placeholders = ids.map(() => '?').join(',');
+    const result = db.prepare(`UPDATE products SET stock = ? WHERE id IN (${placeholders})`).run(safeStock, ...ids);
+    res.json({ updated: result.changes });
+  } catch (e) {
+    console.error('Bulk stock update error:', e.message);
+    res.status(500).json({ error: 'Failed to bulk update stock' });
+  }
+});
+
 app.delete('/api/admin/products/:id', auth, adminOnly, (req, res) => {
   try {
     const id = parseInt(req.params.id);
