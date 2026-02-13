@@ -327,7 +327,7 @@ test.describe('Sandbox Payment Flow (DirectPay)', () => {
 
     if (orderResponse && orderResponse.ok()) {
       const orderBody = await orderResponse.json();
-      const orderId = orderBody.id || orderBody.orderId;
+      const orderId = orderBody.order_id || orderBody.id || orderBody.orderId;
       console.log(`✅ Order created: #${orderId}`);
       expect(orderId).toBeTruthy();
 
@@ -378,7 +378,7 @@ test.describe('Sandbox Payment Flow (DirectPay)', () => {
     }
 
     const orderBody = await orderResponse.json();
-    const orderId = orderBody.id || orderBody.orderId;
+    const orderId = orderBody.order_id || orderBody.id || orderBody.orderId;
     console.log(`✅ API Order created: #${orderId}`);
     expect(orderId).toBeTruthy();
 
@@ -485,7 +485,7 @@ test.describe('Sandbox Payment Flow (DirectPay)', () => {
       return;
     }
 
-    const orderId = (await orderResponse.json()).id;
+    const orderId = ((o) => o.order_id || o.id)(await orderResponse.json());
 
     const paymentResponse = await page.request.post(`${BASE_URL}/api/payments/qrph/create`, {
       data: { order_id: orderId, payment_method: 'gcash', payment_type: 'ewallet' },
@@ -580,7 +580,7 @@ test.describe('Sandbox Payment Flow (DirectPay)', () => {
       return;
     }
 
-    const orderId = (await orderResponse.json()).id;
+    const orderId = ((o) => o.order_id || o.id)(await orderResponse.json());
 
     const paymentResponse = await page.request.post(`${BASE_URL}/api/payments/qrph/create`, {
       data: { order_id: orderId, payment_method: 'gcash', payment_type: 'ewallet' },
