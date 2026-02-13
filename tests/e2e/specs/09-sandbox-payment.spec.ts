@@ -87,6 +87,27 @@ async function getAuthToken(page: Page): Promise<string> {
   return page.evaluate(() => localStorage.getItem('auth_token') || '');
 }
 
+/** Shipping address object matching the server's expected format */
+const TEST_SHIPPING_ADDRESS = {
+  name: 'Test User',
+  phone: '09171234567',
+  street_address: '123 Test Street',
+  barangay: 'Poblacion',
+  municipality: 'Makati City',
+  province: 'Metro Manila',
+  region: 'NCR',
+  region_code: '13',
+  zip_code: '1200',
+};
+
+/** Helper: ensure cart has an item via API (server-side cart required for order creation) */
+async function ensureCartHasItem(page: Page, token: string) {
+  await page.request.post(`${BASE_URL}/api/cart`, {
+    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+    data: { productId: 1, quantity: 1 },
+  });
+}
+
 test.describe('Sandbox Payment Flow (DirectPay)', () => {
   test.beforeEach(async ({ page }) => {
     await login(page, TEST_USERS.validUser.email, TEST_USERS.validUser.password);
