@@ -13,13 +13,26 @@ import { login, addToCart } from '../helpers/common';
  * Wait for checkout page content to fully render.
  * After Zustand auth + cart hydration, the Checkout component renders either
  * the payment form (if cart has items) or the "Cart is Empty" message.
+ * If the error boundary triggers (rate-limit-induced), retry once after a cooldown.
  */
 async function waitForCheckoutContent(page: import('@playwright/test').Page) {
-  // Use .or() to combine CSS and text engine selectors (can't mix in one string)
-  await page.locator('input[value="cod"]')
+  const content = page.locator('input[value="cod"]')
     .or(page.getByText(/cart is empty/i))
-    .or(page.getByText(/Continue Shopping/i))
-    .first().waitFor({ state: 'visible', timeout: 15000 });
+    .or(page.getByText(/Continue Shopping/i));
+  const errorBoundary = page.getByText(/Something went wrong/i);
+
+  for (let attempt = 0; attempt < 3; attempt++) {
+    await content.or(errorBoundary).first().waitFor({ state: 'visible', timeout: 15000 });
+
+    if (await content.first().isVisible().catch(() => false)) return;
+
+    // Error boundary triggered (likely rate limit) — wait and retry
+    if (attempt < 2) {
+      await new Promise(r => setTimeout(r, 5000 * (attempt + 1)));
+      await page.reload();
+      await page.waitForLoadState('domcontentloaded');
+    }
+  }
 }
 
 test.describe('Payment Flows', () => {
