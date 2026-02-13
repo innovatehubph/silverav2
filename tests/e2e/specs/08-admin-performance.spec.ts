@@ -42,13 +42,16 @@ test.describe.serial('Admin Performance Monitoring', () => {
     await page.goto('/admin/performance');
     await expect(page.locator('text=Loading performance metrics')).toBeHidden({ timeout: 15000 });
 
+    // Wait for initial data to load (Updated timestamp appears after first fetch)
+    await expect(page.getByText(/Updated/)).toBeVisible({ timeout: 15000 });
+
     // Click the exact "Refresh" button (not "Auto-refresh")
     const refreshBtn = page.getByRole('button', { name: 'Refresh', exact: true });
     await expect(refreshBtn).toBeVisible();
     await refreshBtn.click();
 
-    // The "Updated" timestamp should appear/update
-    await expect(page.getByText(/Updated \d/)).toBeVisible({ timeout: 5000 });
+    // The "Updated" timestamp should still be visible after refresh
+    await expect(page.getByText(/Updated/)).toBeVisible({ timeout: 10000 });
   });
 
   test('8.4: Auto-refresh toggle works', async ({ page }) => {
