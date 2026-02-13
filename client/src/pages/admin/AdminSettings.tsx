@@ -33,9 +33,17 @@ interface StoreSettings {
   payment_cod_enabled: string;
   payment_gcash_enabled: string;
   payment_card_enabled: string;
+  payment_nexuspay_enabled: string;
+  payment_stripe_enabled: string;
   // Email
   email_sender_name: string;
   email_sender_email: string;
+  email_order_confirmation: string;
+  email_shipping_updates: string;
+  email_order_delivered: string;
+  email_order_cancelled: string;
+  email_password_reset: string;
+  email_promotional: string;
 }
 
 const defaultSettings: StoreSettings = {
@@ -53,8 +61,16 @@ const defaultSettings: StoreSettings = {
   payment_cod_enabled: 'true',
   payment_gcash_enabled: 'true',
   payment_card_enabled: 'true',
+  payment_nexuspay_enabled: 'false',
+  payment_stripe_enabled: 'false',
   email_sender_name: 'Silvera',
   email_sender_email: '',
+  email_order_confirmation: 'true',
+  email_shipping_updates: 'true',
+  email_order_delivered: 'true',
+  email_order_cancelled: 'true',
+  email_password_reset: 'true',
+  email_promotional: 'false',
 };
 
 const tabs = [
@@ -496,6 +512,56 @@ export default function AdminSettings() {
               </button>
             </div>
 
+            {/* NexusPay */}
+            <div className="flex items-center justify-between p-4 rounded-lg bg-bg-tertiary/50 border border-bdr-subtle">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-orange-900/30 flex items-center justify-center">
+                  <span className="text-orange-400 font-bold text-xs">NP</span>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-txt-primary">NexusPay</h3>
+                  <p className="text-xs text-txt-tertiary">Philippine digital payment gateway</p>
+                </div>
+              </div>
+              <button
+                onClick={() => handleToggle('payment_nexuspay_enabled')}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  settings.payment_nexuspay_enabled === 'true' ? 'bg-accent-gold' : 'bg-bg-secondary'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    settings.payment_nexuspay_enabled === 'true' ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* Stripe */}
+            <div className="flex items-center justify-between p-4 rounded-lg bg-bg-tertiary/50 border border-bdr-subtle">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-indigo-900/30 flex items-center justify-center">
+                  <span className="text-indigo-400 font-bold text-xs">S</span>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-txt-primary">Stripe</h3>
+                  <p className="text-xs text-txt-tertiary">International card payments via Stripe</p>
+                </div>
+              </div>
+              <button
+                onClick={() => handleToggle('payment_stripe_enabled')}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  settings.payment_stripe_enabled === 'true' ? 'bg-accent-gold' : 'bg-bg-secondary'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    settings.payment_stripe_enabled === 'true' ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+
             {/* Note */}
             <div className="p-4 rounded-lg bg-yellow-900/20 border border-yellow-700/30">
               <p className="text-sm text-yellow-400">
@@ -544,15 +610,42 @@ export default function AdminSettings() {
               </p>
             </div>
 
-            {/* Coming Soon */}
-            <div className="p-4 rounded-lg bg-bg-tertiary/50 border border-bdr-subtle">
-              <h3 className="text-sm font-medium text-txt-secondary mb-2">Coming Soon</h3>
-              <ul className="text-sm text-txt-tertiary space-y-1">
-                <li>• Email template customization</li>
-                <li>• Order confirmation template</li>
-                <li>• Shipping notification template</li>
-                <li>• Marketing email settings</li>
-              </ul>
+            {/* Notification Toggles */}
+            <div className="pt-4 border-t border-bdr-subtle">
+              <h3 className="text-md font-semibold text-txt-primary mb-4">Email Notifications</h3>
+              <p className="text-sm text-txt-tertiary mb-4">
+                Choose which email notifications are sent to customers.
+              </p>
+
+              <div className="space-y-3">
+                {([
+                  { key: 'email_order_confirmation' as const, label: 'Order Confirmation', desc: 'Send confirmation when an order is placed' },
+                  { key: 'email_shipping_updates' as const, label: 'Shipping Updates', desc: 'Notify when order is shipped with tracking info' },
+                  { key: 'email_order_delivered' as const, label: 'Delivery Confirmation', desc: 'Notify when order is marked as delivered' },
+                  { key: 'email_order_cancelled' as const, label: 'Order Cancellation', desc: 'Notify when an order is cancelled' },
+                  { key: 'email_password_reset' as const, label: 'Password Reset', desc: 'Send password reset emails to users' },
+                  { key: 'email_promotional' as const, label: 'Promotional Emails', desc: 'Send marketing and promotional content' },
+                ]).map(({ key, label, desc }) => (
+                  <div key={key} className="flex items-center justify-between p-3 rounded-lg bg-bg-tertiary/50 border border-bdr-subtle">
+                    <div>
+                      <h4 className="text-sm font-medium text-txt-primary">{label}</h4>
+                      <p className="text-xs text-txt-tertiary">{desc}</p>
+                    </div>
+                    <button
+                      onClick={() => handleToggle(key)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0 ml-4 ${
+                        settings[key] === 'true' ? 'bg-accent-gold' : 'bg-bg-secondary'
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          settings[key] === 'true' ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Note */}
