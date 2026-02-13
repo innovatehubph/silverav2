@@ -348,11 +348,13 @@ test.describe('Sandbox Payment Flow (DirectPay)', () => {
 
     const token = await getAuthToken(page);
 
-    // Step 1: Create order via API
+    // Step 1: Ensure server-side cart has an item (order API reads from cart table)
+    await ensureCartHasItem(page, token);
+
+    // Step 2: Create order via API
     const orderResponse = await page.request.post(`${BASE_URL}/api/orders`, {
       data: {
-        items: [{ product_id: 1, quantity: 1 }],
-        shipping_address: '123 Test Street, Makati City, Metro Manila',
+        shipping_address: TEST_SHIPPING_ADDRESS,
         payment_method: 'gcash',
       },
       headers: {
@@ -364,7 +366,6 @@ test.describe('Sandbox Payment Flow (DirectPay)', () => {
     if (!orderResponse.ok()) {
       const err = await orderResponse.text();
       console.log(`⚠️  Order creation failed: ${orderResponse.status()} - ${err}`);
-      // May fail due to rate limiting or empty cart
       return;
     }
 
@@ -460,12 +461,12 @@ test.describe('Sandbox Payment Flow (DirectPay)', () => {
     test.slow();
 
     const token = await getAuthToken(page);
+    await ensureCartHasItem(page, token);
 
     // Create order + payment via API
     const orderResponse = await page.request.post(`${BASE_URL}/api/orders`, {
       data: {
-        items: [{ product_id: 1, quantity: 1 }],
-        shipping_address: 'Test Address, Makati City',
+        shipping_address: TEST_SHIPPING_ADDRESS,
         payment_method: 'gcash',
       },
       headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -555,12 +556,12 @@ test.describe('Sandbox Payment Flow (DirectPay)', () => {
     test.slow();
 
     const token = await getAuthToken(page);
+    await ensureCartHasItem(page, token);
 
     // Create order + payment
     const orderResponse = await page.request.post(`${BASE_URL}/api/orders`, {
       data: {
-        items: [{ product_id: 1, quantity: 1 }],
-        shipping_address: 'Test Address',
+        shipping_address: TEST_SHIPPING_ADDRESS,
         payment_method: 'gcash',
       },
       headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
