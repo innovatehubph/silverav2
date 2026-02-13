@@ -1575,7 +1575,7 @@ app.get('/api/cart', auth, (req, res) => {
 
 app.post('/api/cart', auth, (req, res) => {
   try {
-    const product_id = parseInt(req.body.product_id);
+    const product_id = parseInt(req.body.product_id || req.body.productId);
     let quantity = parseInt(req.body.quantity) || 1;
 
     if (!Number.isInteger(product_id) || product_id < 1) {
