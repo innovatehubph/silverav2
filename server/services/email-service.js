@@ -596,6 +596,252 @@ class EmailService {
   }
 
   /**
+   * Send shipping update email
+   */
+  async sendShippingUpdate(emailAddress, orderData) {
+    try {
+      if (!this.initialized) {
+        console.warn('⚠️  Email service not initialized, skipping shipping update email');
+        return { success: true, message: 'Shipping update email skipped (email service not ready)' };
+      }
+
+      const {
+        customerName,
+        orderNumber,
+        trackingNumber,
+        carrier,
+        estimatedDelivery
+      } = orderData;
+
+      // Philippine carrier tracking URLs
+      const carrierLinks = {
+        'lbc': `https://www.lbcexpress.com/track/?tracking_no=${trackingNumber}`,
+        'j&t': `https://www.jtexpress.ph/trajectoryQuery?waybillNo=${trackingNumber}`,
+        'jnt': `https://www.jtexpress.ph/trajectoryQuery?waybillNo=${trackingNumber}`,
+        'j&t express': `https://www.jtexpress.ph/trajectoryQuery?waybillNo=${trackingNumber}`,
+        'flash express': `https://www.flashexpress.ph/fle/tracking?se=${trackingNumber}`,
+        'ninja van': `https://www.ninjavan.co/en-ph/tracking?id=${trackingNumber}`,
+        'ninjavan': `https://www.ninjavan.co/en-ph/tracking?id=${trackingNumber}`,
+        'grab express': `https://www.grab.com/ph/express/`,
+      };
+
+      const carrierKey = (carrier || '').toLowerCase();
+      const trackingUrl = carrierLinks[carrierKey] || null;
+
+      const trackingSection = trackingNumber ? `
+            <div style="background: #f0f4ff; border: 2px dashed #667eea; padding: 20px; border-radius: 8px; text-align: center; margin: 25px 0;">
+                <p style="color: #666; font-size: 14px; margin-bottom: 8px;">Tracking Number</p>
+                <p style="font-size: 22px; font-weight: bold; color: #333; letter-spacing: 2px; font-family: 'Courier New', monospace;">${trackingNumber}</p>
+                ${carrier ? `<p style="color: #666; font-size: 14px; margin-top: 8px;">Carrier: <strong>${carrier}</strong></p>` : ''}
+                ${trackingUrl ? `
+                <a href="${trackingUrl}" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; margin-top: 15px;">Track Your Order</a>
+                ` : ''}
+            </div>` : '';
+
+      const estimatedSection = estimatedDelivery ? `
+            <p style="color: #666; font-size: 14px; margin-top: 15px;">
+                Estimated delivery: <strong>${estimatedDelivery}</strong>
+            </p>` : '';
+
+      const htmlContent = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Order Has Been Shipped</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; }
+        .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px 20px; text-align: center; }
+        .header h1 { font-size: 24px; margin-bottom: 10px; }
+        .header .icon { font-size: 48px; margin-bottom: 10px; }
+        .content { padding: 30px 20px; }
+        .footer { background: #f9f9f9; padding: 20px; text-align: center; font-size: 12px; color: #999; border-top: 1px solid #eee; }
+        .footer-text { margin: 5px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="icon">📦</div>
+            <h1>Your Order Has Been Shipped!</h1>
+            <p>Order #${orderNumber}</p>
+        </div>
+
+        <div class="content">
+            <div style="font-size: 16px; color: #333; margin-bottom: 20px;">Hello ${customerName || 'Valued Customer'},</div>
+
+            <p style="color: #666; margin-bottom: 20px; line-height: 1.6;">
+                Great news! Your order <strong>#${orderNumber}</strong> has been shipped and is on its way to you.
+            </p>
+
+            ${trackingSection}
+            ${estimatedSection}
+
+            <div style="background: #f9f9f9; padding: 15px; border-radius: 6px; margin: 25px 0;">
+                <p style="color: #666; font-size: 14px; line-height: 1.6;">
+                    <strong>What's next?</strong><br>
+                    You'll receive another email when your order has been delivered. You can also check your order status anytime in your Silvera account.
+                </p>
+            </div>
+
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="https://silvera.innoserver.cloud/orders/${orderNumber}" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600;">View Order Details</a>
+            </div>
+
+            <p style="color: #666; font-size: 14px; line-height: 1.6;">
+                Questions about your delivery? Contact us at <a href="mailto:support@silvera.ph" style="color: #667eea;">support@silvera.ph</a>
+            </p>
+        </div>
+
+        <div class="footer">
+            <div class="footer-text">&copy; ${new Date().getFullYear()} Silvera E-Commerce Platform. All rights reserved.</div>
+            <div class="footer-text">This is an automated email. Please do not reply to this address.</div>
+            <div class="footer-text">Need help? Contact us at support@silvera.ph</div>
+        </div>
+    </div>
+</body>
+</html>
+      `;
+
+      const mailOptions = {
+        from: process.env.SMTP_FROM || 'noreply@silvera.ph',
+        to: emailAddress,
+        subject: `Your Order #${orderNumber} Has Been Shipped - Silvera`,
+        html: htmlContent,
+        text: `Your order #${orderNumber} has been shipped!${trackingNumber ? ` Tracking: ${carrier ? carrier + ' ' : ''}${trackingNumber}` : ''}`
+      };
+
+      const result = await this.transporter.sendMail(mailOptions);
+
+      console.log(`✅ Shipping update email sent to ${emailAddress} (Order: ${orderNumber})`);
+      return {
+        success: true,
+        message: 'Shipping update email sent successfully',
+        messageId: result.messageId
+      };
+    } catch (error) {
+      console.error(`❌ Failed to send shipping update email to ${emailAddress}:`, error.message);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * Send delivery confirmation email
+   */
+  async sendDeliveryConfirmation(emailAddress, orderData) {
+    try {
+      if (!this.initialized) {
+        console.warn('⚠️  Email service not initialized, skipping delivery confirmation email');
+        return { success: true, message: 'Delivery confirmation email skipped (email service not ready)' };
+      }
+
+      const {
+        customerName,
+        orderNumber,
+        deliveryDate
+      } = orderData;
+
+      const formattedDate = deliveryDate || new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+
+      const htmlContent = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Order Has Been Delivered</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; }
+        .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px 20px; text-align: center; }
+        .header h1 { font-size: 24px; margin-bottom: 10px; }
+        .header .icon { font-size: 48px; margin-bottom: 10px; }
+        .content { padding: 30px 20px; }
+        .footer { background: #f9f9f9; padding: 20px; text-align: center; font-size: 12px; color: #999; border-top: 1px solid #eee; }
+        .footer-text { margin: 5px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="icon">✅</div>
+            <h1>Order Delivered!</h1>
+            <p>Order #${orderNumber}</p>
+        </div>
+
+        <div class="content">
+            <div style="font-size: 16px; color: #333; margin-bottom: 20px;">Hello ${customerName || 'Valued Customer'},</div>
+
+            <p style="color: #666; margin-bottom: 20px; line-height: 1.6;">
+                Your order <strong>#${orderNumber}</strong> has been delivered on <strong>${formattedDate}</strong>.
+                We hope you love your purchase!
+            </p>
+
+            <div style="background: #f0fff0; border: 1px solid #c3e6cb; padding: 20px; border-radius: 8px; text-align: center; margin: 25px 0;">
+                <p style="font-size: 16px; color: #155724; font-weight: 600; margin-bottom: 10px;">How was your experience?</p>
+                <p style="color: #666; font-size: 14px; margin-bottom: 15px;">Your feedback helps us improve and helps other shoppers make great choices.</p>
+                <a href="https://silvera.innoserver.cloud/orders/${orderNumber}" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600;">Leave a Review</a>
+            </div>
+
+            <div style="background: #f9f9f9; padding: 15px; border-radius: 6px; margin: 25px 0;">
+                <p style="color: #666; font-size: 14px; line-height: 1.6;">
+                    <strong>Not what you expected?</strong><br>
+                    If there's any issue with your order, you can request a return or exchange from your order details page within our return policy period.
+                </p>
+            </div>
+
+            <p style="color: #666; font-size: 14px; line-height: 1.6; margin-top: 20px;">
+                Thank you for shopping with Silvera! We look forward to serving you again.
+            </p>
+        </div>
+
+        <div class="footer">
+            <div class="footer-text">&copy; ${new Date().getFullYear()} Silvera E-Commerce Platform. All rights reserved.</div>
+            <div class="footer-text">This is an automated email. Please do not reply to this address.</div>
+            <div class="footer-text">Need help? Contact us at support@silvera.ph</div>
+        </div>
+    </div>
+</body>
+</html>
+      `;
+
+      const mailOptions = {
+        from: process.env.SMTP_FROM || 'noreply@silvera.ph',
+        to: emailAddress,
+        subject: `Your Order #${orderNumber} Has Been Delivered - Silvera`,
+        html: htmlContent,
+        text: `Your order #${orderNumber} has been delivered on ${formattedDate}. Thank you for shopping with Silvera!`
+      };
+
+      const result = await this.transporter.sendMail(mailOptions);
+
+      console.log(`✅ Delivery confirmation email sent to ${emailAddress} (Order: ${orderNumber})`);
+      return {
+        success: true,
+        message: 'Delivery confirmation email sent successfully',
+        messageId: result.messageId
+      };
+    } catch (error) {
+      console.error(`❌ Failed to send delivery confirmation email to ${emailAddress}:`, error.message);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  /**
    * Check if email service is ready
    */
   isReady() {
