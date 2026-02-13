@@ -15,7 +15,7 @@ const categoryFallbackImages: Record<string, string> = {
   apparel: 'https://s3.innoserver.cloud/silvera/categories/category-apparel-hero.jpg',
   footwear: 'https://s3.innoserver.cloud/silvera/categories/category-footwear-hero.jpg',
   accessories: 'https://s3.innoserver.cloud/silvera/categories/category-accessories-hero.jpg',
-  dresses: 'https://s3.innoserver.cloud/silvera/categories/category-apparel-hero.jpg',
+  dresses: 'https://s3.innoserver.cloud/silvera/categories/dress_apparel.jpg',
   electronics: 'https://s3.innoserver.cloud/silvera/categories/category-electronics-hero.jpg',
   homeLiving: 'https://s3.innoserver.cloud/silvera/categories/category-homeliving-hero.jpg',
 };
