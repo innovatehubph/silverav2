@@ -23,7 +23,7 @@ const categoryFallbackImages: Record<string, string> = {
 export default function Home() {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [trendingProducts, setTrendingProducts] = useState<Product[]>([]);
-  const [categoryProducts, setCategoryProducts] = useState<(Product | null)[]>([null, null, null, null]);
+  const [categoryProducts, setCategoryProducts] = useState<(Product | null)[]>([null, null, null, null, null, null]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -40,8 +40,8 @@ export default function Home() {
       setFeaturedProducts(featured.slice(0, 4));
       setTrendingProducts(products.slice(0, 8));
 
-
-      const categories = ['Apparel', 'Footwear', 'Accessories', 'Dresses'];
+      // Map products to all 6 category sections
+      const categories = ['Apparel', 'Footwear', 'Accessories', 'Dresses', 'Electronics', 'Home & Living'];
       const picked = categories.map(cat =>
         products.find(p => p.category_name?.toLowerCase() === cat.toLowerCase()) || null
       );
