@@ -26,6 +26,19 @@ export default function Checkout() {
   const navigate = useNavigate();
   const { items, getTotalPrice, clearCart } = useCartStore();
   const { user, isAuthenticated } = useAuthStore();
+  const [cartHydrated, setCartHydrated] = useState(useCartStore.persist.hasHydrated());
+  
+  // Wait for cart to hydrate from localStorage
+  useEffect(() => {
+    const unsubscribe = useCartStore.persist.onFinishHydration(() => {
+      setCartHydrated(true);
+    });
+    // Check if already hydrated
+    if (useCartStore.persist.hasHydrated()) {
+      setCartHydrated(true);
+    }
+    return unsubscribe;
+  }, []);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStep, setProcessingStep] = useState('');
 
@@ -150,6 +163,16 @@ export default function Checkout() {
     setAppliedCoupon(null);
     setCouponError('');
   };
+
+  // Wait for cart hydration before showing empty state
+  if (!cartHydrated) {
+    return (
+      <div className="container-custom py-16 text-center">
+        <div className="w-12 h-12 border-2 border-accent-gold border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+        <p className="text-txt-secondary">Loading cart...</p>
+      </div>
+    );
+  }
 
   if (items.length === 0) {
     return (
