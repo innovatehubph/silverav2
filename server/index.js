@@ -796,6 +796,10 @@ app.post('/api/auth/register', authLimiter, (req, res) => {
     );
     const token = jwt.sign({ id: result.lastInsertRowid, email: email.toLowerCase(), role: 'customer' }, JWT_SECRET, { expiresIn: '7d' });
     res.json({ token, user: { id: result.lastInsertRowid, email: email.toLowerCase(), name: safeName, role: 'customer' } });
+
+    // Fire-and-forget welcome email
+    emailService.sendWelcome(email.toLowerCase().trim(), safeName).catch(err =>
+      console.error('Welcome email failed:', err.message));
   } catch (e) {
     if (e.code === 'SQLITE_CONSTRAINT_UNIQUE') {
       return res.status(400).json({ error: 'Email already registered' });
@@ -1742,6 +1746,13 @@ app.post('/api/orders', auth, (req, res) => {
     }
 
     res.json({ order_id: result.lastInsertRowid, total });
+
+    // Fire-and-forget order confirmation email for COD orders
+    // (Online payment orders get their confirmation email via the payment webhook)
+    if (payment_method.toLowerCase() === 'cod') {
+      sendOrderConfirmationEmail(result.lastInsertRowid).catch(err =>
+        console.error('COD order confirmation email failed:', err.message));
+    }
   } catch (e) {
     console.error('Order error:', e.message);
     res.status(500).json({ error: 'Failed to create order' });
@@ -1969,7 +1980,7 @@ async function sendOrderConfirmationEmail(orderId) {
         price: item.price
       })),
       shippingAddress: shippingAddress,
-      paymentMethod: 'NexusPay'
+      paymentMethod: order.payment_method === 'cod' ? 'Cash on Delivery' : (order.payment_method || 'NexusPay')
     });
 
     console.log(`✅ Order confirmation email sent for order #${orderId}`);
@@ -2712,11 +2723,29 @@ app.put('/api/admin/orders/:id', auth, adminOnly, (req, res) => {
         const trackingMsg = safeTracking ? ` Tracking: ${safeCarrier ? safeCarrier + ' ' : ''}${safeTracking}` : '';
         db.prepare('INSERT INTO notifications (user_id, type, title, message) VALUES (?, ?, ?, ?)')
           .run(currentOrder.user_id, 'order_update', 'Order Shipped', `Your order #${id} has been shipped!${trackingMsg}`);
+        // Fire-and-forget shipping email
+        const shippedUser = db.prepare('SELECT email, name FROM users WHERE id = ?').get(currentOrder.user_id);
+        if (shippedUser) {
+          emailService.sendShippingUpdate(shippedUser.email, {
+            customerName: shippedUser.name,
+            orderNumber: id,
+            trackingNumber: safeTracking,
+            carrier: safeCarrier
+          }).catch(err => console.error('Shipping email failed:', err.message));
+        }
       } else if (safeStatus === 'delivered') {
         db.prepare('UPDATE orders SET delivered_at = CURRENT_TIMESTAMP WHERE id = ?').run(id);
         // Notify customer
         db.prepare('INSERT INTO notifications (user_id, type, title, message) VALUES (?, ?, ?, ?)')
           .run(currentOrder.user_id, 'order_update', 'Order Delivered', `Your order #${id} has been delivered. Thank you for shopping with Silvera!`);
+        // Fire-and-forget delivery email
+        const deliveredUser = db.prepare('SELECT email, name FROM users WHERE id = ?').get(currentOrder.user_id);
+        if (deliveredUser) {
+          emailService.sendDeliveryConfirmation(deliveredUser.email, {
+            customerName: deliveredUser.name,
+            orderNumber: id
+          }).catch(err => console.error('Delivery email failed:', err.message));
+        }
       }
     }
     // Save tracking/carrier even without status change
