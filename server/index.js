@@ -3438,7 +3438,10 @@ app.put('/api/admin/settings', auth, adminOnly, (req, res) => {
       'social_facebook', 'social_instagram', 'social_twitter',
       'free_shipping_threshold', 'default_shipping_fee',
       'payment_cod_enabled', 'payment_gcash_enabled', 'payment_card_enabled',
-      'email_sender_name', 'email_sender_email'
+      'payment_nexuspay_enabled', 'payment_stripe_enabled',
+      'email_sender_name', 'email_sender_email',
+      'email_order_confirmation', 'email_shipping_updates', 'email_order_delivered',
+      'email_order_cancelled', 'email_password_reset', 'email_promotional'
     ];
 
     const upsertStmt = db.prepare(`
@@ -3470,8 +3473,9 @@ app.get('/api/settings/:key', (req, res) => {
     const { key } = req.params;
     const publicKeys = ['store_name', 'store_logo', 'currency', 'social_facebook', 'social_instagram', 'social_twitter',
                         'free_shipping_threshold', 'default_shipping_fee',
-                        'payment_cod_enabled', 'payment_gcash_enabled', 'payment_card_enabled'];
-    
+                        'payment_cod_enabled', 'payment_gcash_enabled', 'payment_card_enabled',
+                        'payment_nexuspay_enabled', 'payment_stripe_enabled'];
+
     if (!publicKeys.includes(key)) {
       return res.status(403).json({ error: 'Setting not accessible' });
     }
@@ -3488,8 +3492,9 @@ app.get('/api/settings', (req, res) => {
   try {
     const publicKeys = ['store_name', 'store_logo', 'currency', 'social_facebook', 'social_instagram', 'social_twitter',
                         'free_shipping_threshold', 'default_shipping_fee',
-                        'payment_cod_enabled', 'payment_gcash_enabled', 'payment_card_enabled'];
-    
+                        'payment_cod_enabled', 'payment_gcash_enabled', 'payment_card_enabled',
+                        'payment_nexuspay_enabled', 'payment_stripe_enabled'];
+
     const settings = db.prepare(`SELECT key, value FROM settings WHERE key IN (${publicKeys.map(() => '?').join(',')})`).all(...publicKeys);
     
     // Convert to object for easier frontend use
