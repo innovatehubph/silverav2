@@ -1,8 +1,8 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { adminApi } from '../../utils/api';
 import { toast } from 'sonner';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+// jsPDF + autotable are dynamically imported in exportToPDF() to avoid
+// loading ~360 KB (jspdf 159 KB + html2canvas 201 KB) on page mount.
 import {
   ShoppingCart,
   Eye,
@@ -502,11 +502,18 @@ export default function AdminOrders() {
     toast.success(`Exported ${filtered.length} orders to CSV`);
   };
 
-  const exportToPDF = () => {
+  const exportToPDF = async () => {
     if (filtered.length === 0) {
       toast.error('No orders to export');
       return;
     }
+
+    toast.loading('Generating PDF...', { id: 'pdf-gen' });
+
+    const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+      import('jspdf'),
+      import('jspdf-autotable'),
+    ]);
 
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -581,6 +588,7 @@ export default function AdminOrders() {
     }
 
     doc.save(`silvera-orders-report-${new Date().toISOString().split('T')[0]}.pdf`);
+    toast.dismiss('pdf-gen');
     toast.success(`PDF report generated with ${filtered.length} orders`);
   };
 

@@ -11,6 +11,7 @@ export default defineConfig({
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
           'vendor-ui': ['sonner'],
           'vendor-recharts': ['recharts'],
+          'vendor-gsap': ['gsap', 'gsap/ScrollTrigger'],
         },
       },
     },
