@@ -174,6 +174,7 @@ export default function AdminUsers() {
   };
 
   const handleRoleChange = async (userId: number, newRole: string) => {
+    if (!confirm(`Change this user's role to "${newRole}"?`)) return;
     try {
       const res = await adminApi.changeUserRole(userId, newRole as 'customer' | 'admin');
       setUsers(users.map((u) => (u.id === userId ? { ...u, role: res.data.role } : u)));

@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { adminApi } from '../../utils/api';
+import { toast } from 'sonner';
 import {
   Activity,
   Clock,
@@ -208,6 +209,7 @@ export default function AdminPerformance() {
       setLastUpdated(new Date());
     } catch (error) {
       console.error('Failed to load performance metrics:', error);
+      toast.error('Failed to load performance metrics');
     } finally {
       setLoading(false);
     }
