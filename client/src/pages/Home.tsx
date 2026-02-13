@@ -12,12 +12,12 @@ const CategorySection = React.lazy(() => import('../sections/CategorySection'));
 const HowItWorksSection = React.lazy(() => import('../sections/HowItWorksSection'));
 
 const categoryFallbackImages: Record<string, string> = {
-  apparel: 'https://s3.innoserver.cloud/silvera/categories/apparel-hero.jpg?v=2',
-  footwear: 'https://s3.innoserver.cloud/silvera/categories/category-sneakers.jpg',
-  accessories: '/images/wallet_smallleather.jpg',
-  dresses: '/images/dress_apparel.jpg',
-  electronics: 'https://s3.innoserver.cloud/silvera/categories/category-electronics.jpg',
-  homeLiving: 'https://s3.innoserver.cloud/silvera/categories/category-home-living.jpg',
+  apparel: 'https://s3.innoserver.cloud/silvera/categories/category-apparel-hero.jpg',
+  footwear: 'https://s3.innoserver.cloud/silvera/categories/category-footwear-hero.jpg',
+  accessories: 'https://s3.innoserver.cloud/silvera/categories/category-accessories-hero.jpg',
+  dresses: 'https://s3.innoserver.cloud/silvera/categories/category-apparel-hero.jpg',
+  electronics: 'https://s3.innoserver.cloud/silvera/categories/category-electronics-hero.jpg',
+  homeLiving: 'https://s3.innoserver.cloud/silvera/categories/category-electronics-hero.jpg',
 };
 
 export default function Home() {
