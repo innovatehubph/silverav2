@@ -45,6 +45,7 @@ const AdminReports = lazy(() => import('./pages/admin/AdminReports'));
 const AdminCoupons = lazy(() => import('./pages/admin/AdminCoupons'));
 const AdminPerformance = lazy(() => import('./pages/admin/AdminPerformance'));
 const AdminAnalytics = lazy(() => import('./pages/admin/AdminAnalytics'));
+const AdminInventory = lazy(() => import('./pages/admin/AdminInventory'));
 
 function PageLoader() {
   return (
@@ -151,6 +152,7 @@ function App() {
           <Route path="coupons" element={<Suspense fallback={<AdminLoader />}><AdminCoupons /></Suspense>} />
           <Route path="analytics" element={<Suspense fallback={<AdminLoader />}><AdminAnalytics /></Suspense>} />
           <Route path="performance" element={<Suspense fallback={<AdminLoader />}><AdminPerformance /></Suspense>} />
+          <Route path="inventory" element={<Suspense fallback={<AdminLoader />}><AdminInventory /></Suspense>} />
         </Route>
 
         <Route path="*" element={<MainLayout><NotFound /></MainLayout>} />

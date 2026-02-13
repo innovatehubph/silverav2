@@ -19,6 +19,7 @@ import {
   ChevronDown,
   Activity,
   PieChart,
+  Warehouse,
 } from 'lucide-react';
 
 interface NavItem {
@@ -47,6 +48,7 @@ const navSections: NavSection[] = [
     items: [
       { to: '/admin/products', icon: Package, label: 'Products' },
       { to: '/admin/categories', icon: FolderTree, label: 'Categories' },
+      { to: '/admin/inventory', icon: Warehouse, label: 'Inventory' },
     ],
   },
   {

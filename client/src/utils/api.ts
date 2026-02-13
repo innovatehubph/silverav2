@@ -128,6 +128,15 @@ export const adminApi = {
   bulkDeleteProducts: (ids: number[]) => api.post('/admin/products/bulk-delete', { ids }),
   bulkUpdateStock: (ids: number[], stock: number) => api.post('/admin/products/bulk-stock', { ids, stock }),
 
+  // Inventory
+  getInventory: () => api.get('/admin/inventory'),
+  updateStock: (id: number, stock: number, note?: string) =>
+    api.put(`/admin/inventory/${id}/stock`, { stock, note }),
+  bulkUpdateInventory: (ids: number[], stock: number, note?: string) =>
+    api.post('/admin/inventory/bulk-stock', { ids, stock, note }),
+  getInventoryLog: (params?: { limit?: number; offset?: number; product_id?: number }) =>
+    api.get('/admin/inventory/log', { params }),
+
   // Orders CRUD
   getOrders: (params?: { status?: string; payment_status?: string; search?: string; start_date?: string; end_date?: string }) =>
     api.get('/admin/orders', { params }),
