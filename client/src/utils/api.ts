@@ -76,7 +76,7 @@ export const ordersApi = {
   getById: (id: number) => api.get(`/orders/${id}`),
   create: (data: {
     items: { product_id: number; quantity: number }[];
-    shipping_address: string;
+    shipping_address: Record<string, string>;
     payment_method: string;
   }) => api.post('/orders', data),
   requestReturn: (orderId: number, reason: string) =>

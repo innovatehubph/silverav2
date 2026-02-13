@@ -88,9 +88,13 @@ export default function Checkout() {
     }
   };
 
+  // Store new/guest address data so handleSubmit can use it
+  const [newAddressData, setNewAddressData] = useState<Record<string, string> | null>(null);
+
   const handleAddressSubmit = async (data: any) => {
     if (!isAuthenticated) {
-      // Guest checkout - just use the address data directly
+      // Guest checkout - store the address data and use it directly
+      setNewAddressData(data);
       setSelectedAddressId(-1); // Special ID for guest address
       setShowAddressForm(false);
       return;
@@ -184,15 +188,31 @@ export default function Checkout() {
       toast.error('Please select a delivery address');
       return;
     }
+    if (addressMode === 'new' && !newAddressData && !selectedAddress) {
+      toast.error('Please fill in your delivery address');
+      return;
+    }
 
     setIsProcessing(true);
 
     try {
-      // Build shipping address string
-      let shippingAddress = '';
+      // Build shipping address object (server expects an object, not a string)
+      let shippingAddress: Record<string, string> = {};
 
       if (selectedAddress) {
-        shippingAddress = formatAddress(selectedAddress);
+        shippingAddress = {
+          name: selectedAddress.name,
+          phone: selectedAddress.phone,
+          street_address: selectedAddress.street_address,
+          barangay: selectedAddress.barangay,
+          municipality: selectedAddress.municipality,
+          province: selectedAddress.province,
+          region: selectedAddress.region,
+          region_code: selectedAddress.region_code,
+          zip_code: selectedAddress.zip_code,
+        };
+      } else if (newAddressData) {
+        shippingAddress = newAddressData;
       }
 
       // Step 1: Create the order
