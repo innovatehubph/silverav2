@@ -209,6 +209,20 @@ db.exec(`
     FOREIGN KEY (order_id) REFERENCES orders(id),
     FOREIGN KEY (changed_by) REFERENCES users(id)
   );
+
+  CREATE TABLE IF NOT EXISTS inventory_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    product_id INTEGER NOT NULL,
+    previous_stock INTEGER NOT NULL,
+    new_stock INTEGER NOT NULL,
+    change_amount INTEGER NOT NULL,
+    change_type TEXT DEFAULT 'manual',
+    changed_by INTEGER,
+    note TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (product_id) REFERENCES products(id),
+    FOREIGN KEY (changed_by) REFERENCES users(id)
+  );
 `);
 
 // ==================== DATABASE INDEXES FOR PERFORMANCE ====================
@@ -2507,6 +2521,129 @@ app.delete('/api/admin/products/:id', auth, adminOnly, (req, res) => {
     res.json({ success: true });
   } catch (e) {
     res.status(500).json({ error: 'Failed to delete product' });
+  }
+});
+
+// ==================== INVENTORY MANAGEMENT ROUTES ====================
+
+// Get all products with category names for inventory view
+app.get('/api/admin/inventory', auth, adminOnly, (req, res) => {
+  try {
+    const products = db.prepare(`
+      SELECT p.id, p.name, p.slug, p.price, p.sale_price, p.stock, p.low_stock_threshold,
+             p.status, p.images, p.category_id, c.name as category_name
+      FROM products p
+      LEFT JOIN categories c ON p.category_id = c.id
+      ORDER BY p.stock ASC, p.name ASC
+    `).all();
+    res.json(products);
+  } catch (e) {
+    console.error('Get inventory error:', e.message);
+    res.status(500).json({ error: 'Failed to load inventory' });
+  }
+});
+
+// Update single product stock with logging
+app.put('/api/admin/inventory/:id/stock', auth, adminOnly, (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (!Number.isInteger(id) || id < 1) {
+      return res.status(400).json({ error: 'Invalid product ID' });
+    }
+    const { stock, note } = req.body;
+    const newStock = Math.max(0, parseInt(stock) || 0);
+
+    const product = db.prepare('SELECT id, stock FROM products WHERE id = ?').get(id);
+    if (!product) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+
+    const previousStock = product.stock;
+    db.prepare('UPDATE products SET stock = ? WHERE id = ?').run(newStock, id);
+
+    // Log the change
+    db.prepare(`
+      INSERT INTO inventory_log (product_id, previous_stock, new_stock, change_amount, change_type, changed_by, note)
+      VALUES (?, ?, ?, ?, 'manual', ?, ?)
+    `).run(id, previousStock, newStock, newStock - previousStock, req.user.id, note || null);
+
+    res.json({ previous_stock: previousStock, new_stock: newStock });
+  } catch (e) {
+    console.error('Update stock error:', e.message);
+    res.status(500).json({ error: 'Failed to update stock' });
+  }
+});
+
+// Bulk update stock with logging
+app.post('/api/admin/inventory/bulk-stock', auth, adminOnly, (req, res) => {
+  try {
+    const { ids, stock, note } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ error: 'Product IDs required' });
+    }
+    const newStock = Math.max(0, parseInt(stock) || 0);
+
+    const updateStmt = db.prepare('UPDATE products SET stock = ? WHERE id = ?');
+    const logStmt = db.prepare(`
+      INSERT INTO inventory_log (product_id, previous_stock, new_stock, change_amount, change_type, changed_by, note)
+      VALUES (?, ?, ?, ?, 'bulk', ?, ?)
+    `);
+    const getStmt = db.prepare('SELECT id, stock FROM products WHERE id = ?');
+
+    const transaction = db.transaction(() => {
+      let updated = 0;
+      for (const id of ids) {
+        const product = getStmt.get(id);
+        if (product) {
+          const previousStock = product.stock;
+          updateStmt.run(newStock, id);
+          logStmt.run(id, previousStock, newStock, newStock - previousStock, req.user.id, note || null);
+          updated++;
+        }
+      }
+      return updated;
+    });
+
+    const updated = transaction();
+    res.json({ updated });
+  } catch (e) {
+    console.error('Bulk stock update error:', e.message);
+    res.status(500).json({ error: 'Failed to bulk update stock' });
+  }
+});
+
+// Get inventory audit log
+app.get('/api/admin/inventory/log', auth, adminOnly, (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit) || 100, 500);
+    const offset = parseInt(req.query.offset) || 0;
+    const productId = req.query.product_id ? parseInt(req.query.product_id) : null;
+
+    let whereClause = '';
+    const params = [];
+    if (productId) {
+      whereClause = 'WHERE il.product_id = ?';
+      params.push(productId);
+    }
+
+    const total = db.prepare(`
+      SELECT COUNT(*) as count FROM inventory_log il ${whereClause}
+    `).get(...params).count;
+
+    const logs = db.prepare(`
+      SELECT il.*, p.name as product_name, u.name as changed_by_name
+      FROM inventory_log il
+      LEFT JOIN products p ON il.product_id = p.id
+      LEFT JOIN users u ON il.changed_by = u.id
+      ${whereClause}
+      ORDER BY il.created_at DESC
+      LIMIT ? OFFSET ?
+    `).all(...params, limit, offset);
+
+    res.json({ logs, total });
+  } catch (e) {
+    console.error('Get inventory log error:', e.message);
+    res.status(500).json({ error: 'Failed to load inventory log' });
   }
 });
 

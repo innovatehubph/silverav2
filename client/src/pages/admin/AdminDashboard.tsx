@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { adminApi } from '../../utils/api';
+import { toast } from 'sonner';
 import {
   ShoppingCart,
   DollarSign,
@@ -116,6 +117,7 @@ export default function AdminDashboard() {
       if (analyticsRes?.data) setAnalytics(analyticsRes.data);
     } catch (error) {
       console.error('Failed to load dashboard:', error);
+      toast.error('Failed to load dashboard data');
     } finally {
       setLoading(false);
     }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { adminApi } from '../../utils/api';
+import { toast } from 'sonner';
 import { BarChart3 } from 'lucide-react';
 import {
   AreaChart,
@@ -106,6 +107,7 @@ export default function AdminAnalytics() {
       setCustomerGrowth(customersRes.data.growth || []);
     } catch (error) {
       console.error('Failed to load analytics:', error);
+      toast.error('Failed to load analytics data');
     } finally {
       setLoading(false);
     }

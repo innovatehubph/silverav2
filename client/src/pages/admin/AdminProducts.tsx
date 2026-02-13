@@ -319,6 +319,7 @@ export default function AdminProducts() {
       toast.error('Enter a valid stock value');
       return;
     }
+    if (!confirm(`Set stock to ${stock} for ${ids.length} product(s)?`)) return;
     try {
       await adminApi.bulkUpdateStock(ids, stock);
       toast.success(`Stock updated for ${ids.length} product(s)`);
