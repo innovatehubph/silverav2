@@ -3,6 +3,20 @@ import { TEST_USERS } from '../fixtures/test-users';
 const BASE_URL = process.env.BASE_URL || (process.env.CI ? 'http://localhost:3865' : 'https://silvera.innoserver.cloud');
 
 async function globalSetup() {
+  // Warm up the server — first request after a deploy can be slow (cold start)
+  for (let i = 0; i < 5; i++) {
+    try {
+      const res = await fetch(`${BASE_URL}/api/health`);
+      if (res.ok) {
+        console.log('Server warm-up: OK');
+        break;
+      }
+    } catch {
+      console.log(`Server warm-up attempt ${i + 1}/5 — retrying in 3s...`);
+      await new Promise(r => setTimeout(r, 3000));
+    }
+  }
+
   // Register test users before running any tests
   for (const user of [TEST_USERS.validUser, TEST_USERS.secondUser]) {
     try {

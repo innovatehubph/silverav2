@@ -9,6 +9,7 @@ export default defineConfig({
     timeout: 5000,
   },
   fullyParallel: false,
+  workers: 1, // Sequential execution — prevents rate-limit exhaustion against production API (100 req/min)
   retries: 1,
   reporter: [
     ['html', { outputFolder: 'tests/e2e/reports/html' }],
