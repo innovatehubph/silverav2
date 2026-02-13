@@ -288,6 +288,40 @@ class PaymentGateway {
   }
 
   /**
+   * Validate payment amount against method limits
+   */
+  validatePaymentAmount(amount, paymentMethod) {
+    const num = parseFloat(amount);
+    if (!num || num <= 0) return { valid: false, error: 'Invalid amount' };
+
+    const methods = this.getSupportedPaymentMethods();
+    const allMethods = [...methods.qrph, ...methods.banks];
+    const method = allMethods.find(m => m.id === paymentMethod);
+
+    if (!method) {
+      // Unknown method — allow it (COD etc.)
+      return { valid: true };
+    }
+    if (num < method.min) return { valid: false, error: `Minimum amount for ${method.name} is ₱${method.min}` };
+    if (num > method.max) return { valid: false, error: `Maximum amount for ${method.name} is ₱${method.max.toLocaleString()}` };
+    return { valid: true };
+  }
+
+  /**
+   * Format amount as PHP currency string
+   */
+  formatAmount(amount) {
+    return `₱${parseFloat(amount).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
+  }
+
+  /**
+   * Create QRPH payment (delegates to createPayment)
+   */
+  async createQRPHPayment(data) {
+    return this.createPayment(data);
+  }
+
+  /**
    * Get Supported Payment Methods
    */
   getSupportedPaymentMethods() {

@@ -2070,7 +2070,7 @@ app.post('/api/payments/validate', (req, res) => {
 });
 
 // Create QRPH payment via DirectPay
-app.post('/api/payments/qrph/create', auth, (req, res) => {
+app.post('/api/payments/qrph/create', auth, async (req, res) => {
   try {
     const { order_id, payment_method, payment_type } = req.body;
 
@@ -2091,7 +2091,7 @@ app.post('/api/payments/qrph/create', auth, (req, res) => {
 
     // Create payment via payment gateway
     const baseUrl = process.env.APP_BASE_URL || 'https://silvera.innoserver.cloud';
-    const paymentResult = paymentGateway.createQRPHPayment({
+    const paymentResult = await paymentGateway.createQRPHPayment({
       orderId: order_id,
       amount: order.total,
       currency: 'PHP',
@@ -2123,7 +2123,7 @@ app.post('/api/payments/qrph/create', auth, (req, res) => {
       payment_method: payment_method,
       payment_type: payment_type,
       checkout_url: paymentResult.paymentUrl,
-      qr_code: `${paymentGateway.directPayBaseUrl}/qr/${paymentResult.paymentRef}`,
+      qr_code: `${paymentGateway.baseUrl}/qr/${paymentResult.paymentRef}`,
       redirect_url: `${baseUrl}/payment-completed.html?ref=${paymentResult.paymentRef}`,
       status: 'pending',
       expires_at: paymentResult.expiresAt.toISOString()

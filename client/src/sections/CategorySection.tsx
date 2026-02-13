@@ -1,10 +1,12 @@
 import { useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronUp, ChevronDown } from 'lucide-react';
+import { ChevronUp, ChevronDown, Plus } from 'lucide-react';
+import { toast } from 'sonner';
 import OptimizedImage from '../components/OptimizedImage';
+import { useCartStore, useAuthStore } from '../stores';
 import type { Product } from '../types';
 
-const SECTION_ORDER = ['hero', 'apparel', 'footwear', 'accessories', 'dresses', 'how-it-works'];
+const SECTION_ORDER = ['hero', 'apparel', 'footwear', 'accessories', 'dresses', 'electronics', 'home-living', 'how-it-works'];
 
 interface CategorySectionProps {
   id: string;
@@ -28,9 +30,12 @@ export default function CategorySection({
   imagePosition,
   isDark = false,
   zIndex,
+  product,
   categorySlug,
 }: CategorySectionProps) {
   const navigate = useNavigate();
+  const { addItem } = useCartStore();
+  const { isAuthenticated } = useAuthStore();
   const sectionRef = useRef<HTMLElement>(null);
   const headlineRef = useRef<HTMLHeadingElement>(null);
   const subheadlineRef = useRef<HTMLParagraphElement>(null);
@@ -38,6 +43,17 @@ export default function CategorySection({
   const imageRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLDivElement>(null);
   const glowRef = useRef<HTMLDivElement>(null);
+  const addButtonRef = useRef<HTMLButtonElement>(null);
+
+  const handleAddToCart = () => {
+    if (!product) return;
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+    addItem(product, 1);
+    toast.success(`${product.name} added to cart!`);
+  };
 
   const handleCategoryClick = () => {
     if (categorySlug) {
@@ -282,6 +298,22 @@ export default function CategorySection({
             </button>
           )}
         </div>
+
+        {/* Add to Cart Button */}
+        {product && (
+          <button
+            ref={addButtonRef}
+            onClick={handleAddToCart}
+            className="absolute z-10 w-14 h-14 rounded-full bg-gold hover:bg-gold-300 shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110 add-button"
+            style={{
+              [isLeft ? 'left' : 'right']: '8vw',
+              bottom: '26vh',
+            }}
+            aria-label={`Add ${product.name} to cart`}
+          >
+            <Plus className="w-6 h-6 text-bg-primary" />
+          </button>
+        )}
       </div>
     </section>
   );
