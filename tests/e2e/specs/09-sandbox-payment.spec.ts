@@ -102,10 +102,18 @@ const TEST_SHIPPING_ADDRESS = {
 
 /** Helper: ensure cart has an item via API (server-side cart required for order creation) */
 async function ensureCartHasItem(page: Page, token: string) {
-  await page.request.post(`${BASE_URL}/api/cart`, {
+  // Clear cart first to avoid stale state, then add a fresh item
+  await page.request.delete(`${BASE_URL}/api/cart`, {
+    headers: { 'Authorization': `Bearer ${token}` },
+  }).catch(() => {});
+
+  const res = await page.request.post(`${BASE_URL}/api/cart`, {
     headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
     data: { productId: 1, quantity: 1 },
   });
+  if (!res.ok()) {
+    console.log(`⚠️  ensureCartHasItem failed: ${res.status()} - ${await res.text().catch(() => '')}`);
+  }
 }
 
 test.describe('Sandbox Payment Flow (DirectPay)', () => {
