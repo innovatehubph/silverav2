@@ -125,7 +125,9 @@ export const adminApi = {
     headers: { 'Content-Type': 'multipart/form-data' },
   }),
   deleteProduct: (id: number) => api.delete(`/admin/products/${id}`),
-  
+  bulkDeleteProducts: (ids: number[]) => api.post('/admin/products/bulk-delete', { ids }),
+  bulkUpdateStock: (ids: number[], stock: number) => api.post('/admin/products/bulk-stock', { ids, stock }),
+
   // Orders CRUD
   getOrders: (params?: { status?: string; payment_status?: string; search?: string; start_date?: string; end_date?: string }) =>
     api.get('/admin/orders', { params }),
