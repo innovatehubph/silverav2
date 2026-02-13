@@ -1,6 +1,8 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { adminApi } from '../../utils/api';
 import { toast } from 'sonner';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import {
   ShoppingCart,
   Eye,
@@ -23,6 +25,8 @@ import {
   XCircle,
   AlertCircle,
   Timer,
+  Download,
+  FileText,
 } from 'lucide-react';
 
 interface OrderItem {
@@ -130,6 +134,8 @@ export default function AdminOrders() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [paymentFilter, setPaymentFilter] = useState('all');
   const [search, setSearch] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   
   // Detail modal state
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -153,13 +159,12 @@ export default function AdminOrders() {
   
   const printRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    loadOrders();
-  }, []);
-
-  const loadOrders = async () => {
+  const loadOrders = useCallback(async () => {
     try {
-      const res = await adminApi.getOrders();
+      const params: Record<string, string> = {};
+      if (startDate) params.start_date = startDate;
+      if (endDate) params.end_date = endDate;
+      const res = await adminApi.getOrders(params);
       setOrders(Array.isArray(res.data) ? res.data : []);
     } catch (error) {
       console.error('Failed to load orders:', error);
@@ -167,7 +172,11 @@ export default function AdminOrders() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [startDate, endDate]);
+
+  useEffect(() => {
+    loadOrders();
+  }, [loadOrders]);
 
   const handleStatusChange = async (orderId: number, newStatus: string) => {
     // Intercept "shipped" → open tracking modal first
