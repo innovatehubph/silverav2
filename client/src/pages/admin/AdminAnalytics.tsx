@@ -198,7 +198,37 @@ export default function AdminAnalytics() {
         </div>
       </div>
 
-      {/* Row 2: Category Revenue + Customer Growth */}
+      {/* Row 2: Orders Trend */}
+      <div className="mb-6">
+        <div className="card p-5">
+          <h2 className="text-lg font-semibold text-txt-primary mb-4">Orders per Day</h2>
+          {revenueData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={revenueData}>
+                <defs>
+                  <linearGradient id="ordersGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.2} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
+                <XAxis dataKey="date" tick={axisStyle} tickLine={false} axisLine={false} />
+                <YAxis tick={axisStyle} tickLine={false} axisLine={false} allowDecimals={false} />
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid rgba(59,130,246,0.3)', borderRadius: 8 }}
+                  labelStyle={{ color: '#9ca3af' }}
+                  formatter={(value) => [Number(value ?? 0), 'Orders']}
+                />
+                <Bar dataKey="orders" fill="url(#ordersGrad)" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="text-txt-secondary text-center py-16">No order data for this period</div>
+          )}
+        </div>
+      </div>
+
+      {/* Row 3: Category Revenue + Customer Growth */}
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Revenue by Category Donut */}
         <div className="card p-5">
