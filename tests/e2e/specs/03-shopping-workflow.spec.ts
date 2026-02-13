@@ -6,7 +6,7 @@
 import { test, expect } from '@playwright/test';
 import { TEST_USERS } from '../fixtures/test-users';
 import { ShopPage, ProductDetailPage, CartPage } from '../helpers/page-objects';
-import { login, addToCart, getCartBadgeCount } from '../helpers/common';
+import { login, addToCart, getCartBadgeCount, waitForShopProducts } from '../helpers/common';
 
 test.describe('Shopping Workflows', () => {
   test.beforeEach(async ({ page }) => {
@@ -14,12 +14,10 @@ test.describe('Shopping Workflows', () => {
   });
 
   test('3.1: Shop page shows products', async ({ page }) => {
-    const shopPage = new ShopPage(page);
-    await shopPage.navigate();
+    await page.goto('/shop');
     await page.waitForLoadState('domcontentloaded');
-    await page.locator('a[href^="/product/"]').first().waitFor({ timeout: 10000 }).catch(() => {});
 
-    const count = await shopPage.getProductsCount();
+    const count = await waitForShopProducts(page, 3);
     expect(count).toBeGreaterThan(0);
   });
 
@@ -67,6 +65,7 @@ test.describe('Shopping Workflows', () => {
   });
 
   test('3.5: Add product to cart', async ({ page }) => {
+    test.slow(); // addToCart may retry on rate-limited product API
     await page.evaluate(() => localStorage.removeItem('silvera-cart'));
     await addToCart(page, 1);
 
@@ -75,6 +74,7 @@ test.describe('Shopping Workflows', () => {
   });
 
   test('3.6: Add multiple products to cart', async ({ page }) => {
+    test.slow(); // multiple addToCart calls may retry on rate-limited product API
     await page.evaluate(() => localStorage.removeItem('silvera-cart'));
 
     await addToCart(page, 1);
@@ -87,6 +87,7 @@ test.describe('Shopping Workflows', () => {
   });
 
   test('3.7: Cart page shows items', async ({ page }) => {
+    test.slow(); // addToCart may retry on rate-limited product API
     await page.evaluate(() => localStorage.removeItem('silvera-cart'));
     await addToCart(page, 1);
 
@@ -106,6 +107,7 @@ test.describe('Shopping Workflows', () => {
   });
 
   test('3.8: Cart shows variant badges (size/color)', async ({ page }) => {
+    test.slow();
     await page.evaluate(() => localStorage.removeItem('silvera-cart'));
     await addToCart(page, 1);
 
@@ -120,6 +122,7 @@ test.describe('Shopping Workflows', () => {
   });
 
   test('3.9: Remove item from cart', async ({ page }) => {
+    test.slow();
     await page.evaluate(() => localStorage.removeItem('silvera-cart'));
     await addToCart(page, 1);
 

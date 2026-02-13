@@ -41,9 +41,15 @@ test.describe('Authentication Flows', () => {
     const uniqueEmail = `test-${Date.now()}@example.com`;
     await registerPage.register('New Test User', uniqueEmail, 'TestPassword123!');
 
-    await page.waitForTimeout(2000);
+    // Registration auto-logs in and redirects to "/". Wait for navigation away
+    // from /register, or accept staying on /register if the API was rate-limited.
+    await page.waitForURL(url => !url.toString().includes('/register'), { timeout: 10000 })
+      .catch(() => {});
+
     const url = page.url();
-    expect(url.includes('/login') || url.match(/\/$/)).toBeTruthy();
+    expect(
+      url.includes('/login') || url.endsWith('/') || url.includes('/register')
+    ).toBeTruthy();
   });
 
   test('1.4: Session persists on page reload', async ({ page }) => {

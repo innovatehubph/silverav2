@@ -74,8 +74,10 @@ export async function login(page: Page, email: string, password: string) {
     writeCache(freshCache);
   }
 
-  // Seed localStorage so the Zustand persist store and axios interceptor pick up the session
-  await page.goto('/');
+  // Seed localStorage so the Zustand persist store and axios interceptor pick up the session.
+  // Use /login (lightweight page) instead of / to avoid triggering product/category API calls
+  // that count against the 100 req/min rate limit.
+  await page.goto('/login');
   await page.evaluate(({ user, token }) => {
     localStorage.setItem('auth_token', token);
     localStorage.setItem('silvera-auth', JSON.stringify({
@@ -121,13 +123,27 @@ export async function getAuthUser(page: Page) {
 }
 
 export async function addToCart(page: Page, productId: number) {
-  await page.goto(`/product/${productId}`);
-  await page.waitForLoadState('domcontentloaded');
-  await page.waitForTimeout(2000);
-
-  // Wait for the Add to Cart button to appear (React render can be slow in CI)
   const addBtn = page.locator('button:has-text("Add to Cart")');
-  await addBtn.waitFor({ state: 'visible', timeout: 30000 });
+  const notFound = page.getByText(/Product Not Found/i);
+
+  // Retry up to 5 times — "Product Not Found" can appear transiently when the
+  // product API is rate-limited (429 → component treats error as "not found").
+  // Use 5s exponential backoff to let the 1-minute rate limit window cool down.
+  for (let attempt = 0; attempt < 5; attempt++) {
+    await page.goto(`/product/${productId}`);
+    await page.waitForLoadState('domcontentloaded');
+
+    await addBtn.or(notFound).first().waitFor({ state: 'visible', timeout: 30000 });
+
+    if (await addBtn.isVisible().catch(() => false)) break;
+
+    if (attempt < 4) {
+      // "Product Not Found" likely due to rate limit — wait and retry
+      await new Promise(r => setTimeout(r, 5000 * (attempt + 1)));
+    } else {
+      throw new Error(`Product ${productId} not found after ${attempt + 1} attempts`);
+    }
+  }
 
   const sizeBtn = page.locator('button').filter({ hasText: /^(XS|S|M|L|XL|XXL|Free Size|\d+)$/ }).first();
   if (await sizeBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
@@ -135,6 +151,29 @@ export async function addToCart(page: Page, productId: number) {
   }
   await addBtn.click();
   await page.locator('[data-sonner-toast]').waitFor({ timeout: 5000 }).catch(() => {});
+}
+
+/**
+ * Navigate to the shop page and wait for products to appear, retrying on rate-limit-induced
+ * empty results. Returns the count of visible product cards.
+ */
+export async function waitForShopProducts(page: Page, maxAttempts = 3): Promise<number> {
+  const productCards = page.locator('a[href^="/product/"]');
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    if (attempt > 0) {
+      await new Promise(r => setTimeout(r, 5000 * attempt));
+      await page.reload();
+      await page.waitForLoadState('domcontentloaded');
+    }
+
+    // Wait for product cards to appear (or timeout)
+    await productCards.first().waitFor({ state: 'attached', timeout: 20000 }).catch(() => {});
+    const count = await productCards.count();
+    if (count > 0) return count;
+  }
+
+  return 0;
 }
 
 export async function getCartBadgeCount(page: Page): Promise<number> {

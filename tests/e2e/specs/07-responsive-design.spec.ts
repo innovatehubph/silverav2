@@ -5,7 +5,7 @@
 
 import { test, expect } from '@playwright/test';
 import { TEST_USERS } from '../fixtures/test-users';
-import { login, addToCart } from '../helpers/common';
+import { login, addToCart, waitForShopProducts } from '../helpers/common';
 
 test.describe('Responsive Design - Mobile (375px)', () => {
   test.use({ viewport: { width: 375, height: 667 } });
@@ -76,17 +76,19 @@ test.describe('Responsive Design - Mobile (375px)', () => {
   });
 
   test('7.5: Mobile product cards display', async ({ page }) => {
+    test.slow(); // triple timeout — shop API may be rate-limited
+
     await page.goto('/shop');
     await page.waitForLoadState('domcontentloaded');
-    await page.locator('a[href^="/product/"]').first().waitFor({ timeout: 10000 }).catch(() => {});
 
-    const productCards = page.locator('a[href^="/product/"]');
-    const count = await productCards.count();
+    // Shop page fetches products via API then renders cards. On mobile with
+    // lazy-loaded chunks this can take longer. Use waitForShopProducts which
+    // retries on rate-limit-induced empty results.
+    const count = await waitForShopProducts(page, 4);
     expect(count).toBeGreaterThan(0);
 
-    if (count > 0) {
-      await expect(productCards.first()).toBeVisible();
-    }
+    const productCards = page.locator('a[href^="/product/"]');
+    await expect(productCards.first()).toBeVisible();
   });
 
   test('7.6: Mobile cart icon visible', async ({ page }) => {
@@ -117,10 +119,8 @@ test.describe('Responsive Design - Tablet (768px)', () => {
   test('7.8: Tablet product grid displays', async ({ page }) => {
     await page.goto('/shop');
     await page.waitForLoadState('domcontentloaded');
-    await page.locator('a[href^="/product/"]').first().waitFor({ timeout: 10000 }).catch(() => {});
 
-    const products = page.locator('a[href^="/product/"]');
-    const count = await products.count();
+    const count = await waitForShopProducts(page, 3);
     expect(count).toBeGreaterThan(0);
   });
 
@@ -134,6 +134,7 @@ test.describe('Responsive Design - Tablet (768px)', () => {
   });
 
   test('7.10: Tablet checkout form usable', async ({ page }) => {
+    test.slow(); // addToCart may retry on rate-limited product API
     await login(page, TEST_USERS.validUser.email, TEST_USERS.validUser.password);
     await page.evaluate(() => localStorage.removeItem('silvera-cart'));
     await addToCart(page, 1);
@@ -157,10 +158,8 @@ test.describe('Responsive Design - Desktop (1920px)', () => {
   test('7.11: Desktop multi-column product grid', async ({ page }) => {
     await page.goto('/shop');
     await page.waitForLoadState('domcontentloaded');
-    await page.locator('a[href^="/product/"]').first().waitFor({ timeout: 10000 }).catch(() => {});
 
-    const products = page.locator('a[href^="/product/"]');
-    const count = await products.count();
+    const count = await waitForShopProducts(page, 3);
     expect(count).toBeGreaterThan(0);
   });
 

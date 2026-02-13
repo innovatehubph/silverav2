@@ -28,6 +28,7 @@ test.describe('Payment Flows', () => {
   });
 
   test('4.1: Navigate to checkout from cart', async ({ page }) => {
+    test.slow(); // addToCart may retry on rate-limited product API
     await page.evaluate(() => localStorage.removeItem('silvera-cart'));
     await addToCart(page, 1);
 
@@ -44,6 +45,7 @@ test.describe('Payment Flows', () => {
   });
 
   test('4.2: Checkout page shows payment methods', async ({ page }) => {
+    test.slow();
     await page.evaluate(() => localStorage.removeItem('silvera-cart'));
     await addToCart(page, 1);
 
@@ -56,6 +58,7 @@ test.describe('Payment Flows', () => {
   });
 
   test('4.3: COD payment method can be selected', async ({ page }) => {
+    test.slow();
     await page.evaluate(() => localStorage.removeItem('silvera-cart'));
     await addToCart(page, 1);
 
@@ -68,6 +71,7 @@ test.describe('Payment Flows', () => {
   });
 
   test('4.4: Place order with COD', async ({ page }) => {
+    test.slow();
     await page.evaluate(() => localStorage.removeItem('silvera-cart'));
     await addToCart(page, 1);
 
@@ -97,6 +101,7 @@ test.describe('Payment Flows', () => {
   });
 
   test('4.5: GCash payment option available', async ({ page }) => {
+    test.slow();
     await page.evaluate(() => localStorage.removeItem('silvera-cart'));
     await addToCart(page, 1);
 
@@ -109,6 +114,7 @@ test.describe('Payment Flows', () => {
   });
 
   test('4.6: Card payment option available', async ({ page }) => {
+    test.slow();
     await page.evaluate(() => localStorage.removeItem('silvera-cart'));
     await addToCart(page, 1);
 

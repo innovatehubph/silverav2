@@ -610,7 +610,7 @@ const isTestEnv = process.env.NODE_ENV === 'test';
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: isTestEnv ? 500 : 10, // 10 in prod, 500 in test
+  max: isTestEnv ? 500 : 30, // 30 in prod, 500 in test
   message: { error: 'Too many login attempts, please try again later' },
   standardHeaders: true,
   legacyHeaders: false

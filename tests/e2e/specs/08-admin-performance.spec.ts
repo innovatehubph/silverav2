@@ -1,62 +1,12 @@
 import { test, expect } from '@playwright/test';
 import { TEST_USERS } from '../fixtures/test-users';
+import { login } from '../helpers/common';
 
 const BASE_URL = process.env.BASE_URL || (process.env.CI ? 'http://localhost:3865' : 'https://silvera.innoserver.cloud');
 
-// Shared admin auth state — login once, reuse across tests
-let adminToken: string | null = null;
-let adminUser: Record<string, unknown> | null = null;
-
-async function ensureAdminAuth(page: import('@playwright/test').Page) {
-  // Login via API only once, then seed localStorage from cache
-  if (!adminToken) {
-    let response;
-    for (let attempt = 0; attempt < 5; attempt++) {
-      response = await page.request.post(`${BASE_URL}/api/auth/login`, {
-        data: {
-          email: TEST_USERS.adminUser.email,
-          password: TEST_USERS.adminUser.password,
-        },
-      });
-      if (response.status() === 429) {
-        await new Promise(r => setTimeout(r, 3000 * (attempt + 1)));
-        continue;
-      }
-      break;
-    }
-
-    if (!response!.ok()) {
-      throw new Error(`Admin login failed (${response!.status()}): ${response!.statusText()}`);
-    }
-
-    const body = await response!.json();
-    const data = body.data ?? body;
-    adminToken = data.token;
-    adminUser = data.user;
-
-    if (!adminToken || !adminUser) throw new Error('Admin login returned empty user or token');
-    if ((adminUser as { role: string }).role !== 'admin') {
-      throw new Error(`Expected admin role, got: ${(adminUser as { role: string }).role}`);
-    }
-  }
-
-  // Seed localStorage and reload
-  await page.goto('/');
-  await page.evaluate(({ user, token }) => {
-    localStorage.setItem('auth_token', token);
-    localStorage.setItem('silvera-auth', JSON.stringify({
-      state: { user, token, isAuthenticated: true },
-      version: 0,
-    }));
-  }, { user: adminUser, token: adminToken });
-
-  await page.reload();
-  await page.waitForLoadState('domcontentloaded');
-}
-
 test.describe.serial('Admin Performance Monitoring', () => {
   test.beforeEach(async ({ page }) => {
-    await ensureAdminAuth(page);
+    await login(page, TEST_USERS.adminUser.email, TEST_USERS.adminUser.password);
   });
 
   test('8.1: Performance page loads and shows stat cards', async ({ page }) => {
@@ -119,9 +69,13 @@ test.describe.serial('Admin Performance Monitoring', () => {
   });
 
   test('8.5: Performance API returns valid metrics structure', async ({ page }) => {
+    // Retrieve token from localStorage (seeded by login() in beforeEach)
+    const token = await page.evaluate(() => localStorage.getItem('auth_token'));
+    expect(token).toBeTruthy();
+
     const response = await page.request.get(`${BASE_URL}/api/admin/performance/metrics`, {
       headers: {
-        Authorization: `Bearer ${adminToken}`,
+        Authorization: `Bearer ${token}`,
       },
     });
 
