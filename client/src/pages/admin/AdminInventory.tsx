@@ -404,7 +404,7 @@ export default function AdminInventory() {
                         <td className="py-2.5 px-4">
                           <div className="flex items-center gap-3">
                             {img ? (
-                              <img src={img} alt={product.name} className="w-8 h-8 rounded object-cover shrink-0" />
+                              <img src={img} alt={product.name} className="w-8 h-8 rounded object-cover shrink-0" width={32} height={32} />
                             ) : (
                               <div className="w-8 h-8 rounded bg-bg-secondary flex items-center justify-center shrink-0">
                                 <Package size={14} className="text-txt-tertiary" />

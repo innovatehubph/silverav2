@@ -314,6 +314,8 @@ export default function AdminCategories() {
                       src={imagePreview}
                       alt="Preview"
                       className="w-full h-full object-cover"
+                      width={128}
+                      height={128}
                     />
                     <button
                       onClick={() => {
@@ -377,6 +379,8 @@ export default function AdminCategories() {
                   src={category.image}
                   alt={category.name}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  width={400}
+                  height={225}
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">

@@ -95,6 +95,8 @@ export default function Wishlist() {
                   src={imageUrl}
                   alt={item.name}
                   className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                  width={400}
+                  height={192}
                 />
               </Link>
               <div className="p-4">
