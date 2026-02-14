@@ -1717,46 +1717,128 @@ app.get('/api/orders/:id', auth, (req, res) => {
 
 app.post('/api/orders', auth, (req, res) => {
   try {
-    const { shipping_address, payment_method } = req.body;
+    // Support multiple payload shapes for compatibility with different frontends
+    // shipping address may come as: shipping_address, shippingAddress, shipping, or address
+    let rawShipping = req.body.shipping_address \n      || req.body.shippingAddress \n      || req.body.shipping \n      || req.body.address;
+
+    if (typeof rawShipping === 'string') {
+      try {
+        rawShipping = JSON.parse(rawShipping);
+      } catch (e) {
+        return res.status(400).json({ error: 'Invalid shipping address format' });
+      }
+    }
+
+    const shipping_address = rawShipping;
 
     if (!shipping_address || typeof shipping_address !== 'object') {
       return res.status(400).json({ error: 'Shipping address required' });
     }
+
+    // payment method may come as: payment_method, paymentMethod, payment, or method
+    const rawPayment = req.body.payment_method \n      || req.body.paymentMethod \n      || req.body.payment \n      || req.body.method;
+
+    const payment_method = typeof rawPayment === 'string' ? rawPayment : (rawPayment && String(rawPayment));
+
     if (!payment_method || typeof payment_method !== 'string') {
       return res.status(400).json({ error: 'Payment method required' });
     }
 
-    const cartItems = db.prepare('SELECT c.*, p.price, p.sale_price, p.name FROM cart c JOIN products p ON c.product_id = p.id WHERE c.user_id = ?').all(req.user.id);
+    // Items can either come directly from the request body (preferred)
+    // or fall back to the server-side cart for backward compatibility.
+    const bodyItems = Array.isArray(req.body.items) ? req.body.items : null;
 
-    if (cartItems.length === 0) {
+    let items = [];
+    let usedCartTable = false;
+
+    if (bodyItems && bodyItems.length > 0) {
+      items = bodyItems;
+    } else {
+      const cartItems = db.prepare(
+        'SELECT c.*, p.price, p.sale_price, p.name FROM cart c JOIN products p ON c.product_id = p.id WHERE c.user_id = ?'
+      ).all(req.user.id);
+
+      if (cartItems.length > 0) {
+        items = cartItems;
+        usedCartTable = true;
+      }
+    }
+
+    if (!items || items.length === 0) {
       return res.status(400).json({ error: 'Cart is empty' });
     }
 
-    const total = cartItems.reduce((sum, item) => sum + (item.sale_price || item.price) * item.quantity, 0);
+    const total = items.reduce((sum, item) => {
+      const price = item.sale_price || item.price || 0;
+      const qty = item.quantity || 1;
+      return sum + price * qty;
+    }, 0);
 
-    // Wrap order creation, stock decrement, and cart clear in a transaction
-    const createOrder = db.transaction(() => {
-      const result = db.prepare('INSERT INTO orders (user_id, total, shipping_address, payment_method, items) VALUES (?, ?, ?, ?, ?)').run(
-        req.user.id, total, JSON.stringify(shipping_address), sanitizeString(payment_method), JSON.stringify(cartItems)
-      );
+    let result;
 
-      // Decrement stock for each item
-      const decrementStmt = db.prepare('UPDATE products SET stock = MAX(0, stock - ?) WHERE id = ?');
-      for (const item of cartItems) {
-        decrementStmt.run(item.quantity, item.product_id);
+    if (usedCartTable) {
+      // Original behavior: use cart table, decrement stock, and clear cart.
+      const createOrderWithCart = db.transaction(() => {
+        const r = db.prepare(
+          'INSERT INTO orders (user_id, total, shipping_address, payment_method, items) VALUES (?, ?, ?, ?, ?)'
+        ).run(
+          req.user.id,
+          total,
+          JSON.stringify(shipping_address),
+          sanitizeString(payment_method),
+          JSON.stringify(items)
+        );
+
+        const decrementStmt = db.prepare('UPDATE products SET stock = MAX(0, stock - ?) WHERE id = ?');
+        for (const item of items) {
+          if (item.product_id && item.quantity != null) {
+            decrementStmt.run(item.quantity, item.product_id);
+          }
+        }
+
+        db.prepare('DELETE FROM cart WHERE user_id = ?').run(req.user.id);
+
+        return r;
+      });
+
+      result = createOrderWithCart();
+
+      // Check low stock notifications outside the transaction for cart-based orders
+      for (const item of items) {
+        if (item.product_id) {
+          checkAndNotifyLowStock(item.product_id);
+        }
       }
+    } else {
+      // Body-provided items: create order and decrement stock (no cart table to clear).
+      const createOrderFromBody = db.transaction(() => {
+        const r = db.prepare(
+          'INSERT INTO orders (user_id, total, shipping_address, payment_method, items) VALUES (?, ?, ?, ?, ?)'
+        ).run(
+          req.user.id,
+          total,
+          JSON.stringify(shipping_address),
+          sanitizeString(payment_method),
+          JSON.stringify(items)
+        );
 
-      // Clear cart
-      db.prepare('DELETE FROM cart WHERE user_id = ?').run(req.user.id);
+        const decrementStmt = db.prepare('UPDATE products SET stock = MAX(0, stock - ?) WHERE id = ?');
+        for (const item of items) {
+          if (item.product_id && item.quantity != null) {
+            decrementStmt.run(item.quantity, item.product_id);
+          }
+        }
 
-      return result;
-    });
+        return r;
+      });
 
-    const result = createOrder();
+      result = createOrderFromBody();
 
-    // Check low stock notifications outside the transaction
-    for (const item of cartItems) {
-      checkAndNotifyLowStock(item.product_id);
+      for (const item of items) {
+        if (item.product_id) {
+          checkAndNotifyLowStock(item.product_id);
+        }
+      }
     }
 
     res.json({ order_id: result.lastInsertRowid, total });
@@ -1768,10 +1850,11 @@ app.post('/api/orders', auth, (req, res) => {
         console.error('COD order confirmation email failed:', err.message));
     }
   } catch (e) {
-    console.error('Order error:', e.message);
+    console.error('Error creating order', e);
     res.status(500).json({ error: 'Failed to create order' });
   }
 });
+
 
 // ==================== RETURN REQUESTS ====================
 

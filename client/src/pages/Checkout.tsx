@@ -24,7 +24,7 @@ interface Address {
 
 export default function Checkout() {
   const navigate = useNavigate();
-  const { items, getTotalPrice, clearCart } = useCartStore();
+  const { items, getTotalPrice } = useCartStore();
   const { user, isAuthenticated } = useAuthStore();
   const [cartHydrated, setCartHydrated] = useState(useCartStore.persist.hasHydrated());
   
@@ -239,9 +239,18 @@ export default function Checkout() {
       }
 
       // Step 1: Create the order
+      // Get fresh cart items from store to avoid stale closure issues
+      const currentItems = useCartStore.getState().items;
+      
+      if (!currentItems || currentItems.length === 0) {
+        toast.error('Your cart is empty. Please add items before checkout.');
+        navigate('/shop');
+        return;
+      }
+
       setProcessingStep('Creating order...');
       const orderResponse = await ordersApi.create({
-        items: items.map(item => ({ product_id: item.product_id, quantity: item.quantity })),
+        items: currentItems.map(item => ({ product_id: item.product_id, quantity: item.quantity })),
         shipping_address: shippingAddress,
         payment_method: formData.paymentMethod,
       });
@@ -250,7 +259,7 @@ export default function Checkout() {
 
       // Step 2: Handle payment based on method
       if (formData.paymentMethod === 'cod') {
-        clearCart();
+        useCartStore.getState().clearCart();
         navigate('/order-success');
         return;
       }
@@ -275,7 +284,7 @@ export default function Checkout() {
       });
 
       const paymentData = paymentResponse.data;
-      clearCart();
+      useCartStore.getState().clearCart();
 
       if (paymentData.success && paymentData.checkout_url) {
         const params = new URLSearchParams({
