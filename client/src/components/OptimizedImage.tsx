@@ -124,7 +124,10 @@ export default function OptimizedImage({
   }, [isLoaded]);
 
   const webpSrc = toWebP(currentSrc);
-  const hasWebPAlternative = webpSrc !== currentSrc;
+  // Skip WebP <source> for external URLs — we can't guarantee a .webp variant
+  // exists on the remote server, and a 404 adds a wasted round-trip before
+  // the browser falls back to the original format.
+  const hasWebPAlternative = !isExternalUrl(currentSrc) && webpSrc !== currentSrc;
   const srcSet = buildSrcSet(currentSrc);
 
   const placeholderBg = placeholderColor
