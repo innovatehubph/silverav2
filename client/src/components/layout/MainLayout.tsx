@@ -10,10 +10,12 @@ import ThemeToggle, { ThemeToggleCompact } from '../ThemeToggle';
 function SilveraLogo({ className = "h-10" }: { className?: string }) {
   const { theme } = useThemeStore();
   return (
-    <img 
+    <img
       src={theme === 'dark' ? '/images/branding/silvera-logo-dark.jpg' : '/images/branding/silvera-logo-light.jpg'}
-      alt="Silvera Luxury Brands" 
+      alt="Silvera Luxury Brands"
       className={`${className} w-auto object-contain`}
+      width={160}
+      height={40}
     />
   );
 }
@@ -226,6 +228,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
               <Link
                 to="/cart"
                 className="p-2 hover:bg-bg-hover rounded-lg transition-colors relative group"
+                aria-label="Shopping cart"
               >
                 <ShoppingBag className="w-5 h-5 text-txt-secondary group-hover:text-txt-primary transition-colors" />
                 {getTotalItems() > 0 && (
@@ -363,7 +366,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
                   placeholder="Search products..."
                   className="flex-1 bg-bg-tertiary border border-bdr rounded-xl px-4 py-3 text-sm text-txt-primary placeholder:text-txt-tertiary focus:border-gold/50 outline-none transition-colors"
                 />
-                <button type="submit" className="bg-gold hover:bg-gold-300 text-bg-primary rounded-xl px-4 transition-colors">
+                <button type="submit" className="bg-gold hover:bg-gold-300 text-bg-primary rounded-xl px-4 transition-colors" aria-label="Search">
                   <Search className="w-4 h-4" />
                 </button>
               </div>

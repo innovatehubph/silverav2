@@ -123,7 +123,7 @@ export default function HeroSection() {
 
         {/* Mobile Hero Image */}
         <div className="absolute inset-0 md:hidden opacity-20 pointer-events-none">
-          <img src={HERO_IMAGE} alt="" className="w-full h-full object-cover" />
+          <img src={HERO_IMAGE} alt="" className="w-full h-full object-cover" width={1920} height={1080} loading="eager" />
         </div>
       </div>
     </section>

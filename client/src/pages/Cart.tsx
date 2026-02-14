@@ -36,6 +36,8 @@ export default function Cart() {
                 src={item.images || 'assets/images/product-images/01.webp'}
                 alt={item.name}
                 className="w-24 h-24 object-cover rounded-lg"
+                width={96}
+                height={96}
               />
 
               <div className="flex-grow">
