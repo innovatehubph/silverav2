@@ -1719,7 +1719,10 @@ app.post('/api/orders', auth, (req, res) => {
   try {
     // Support multiple payload shapes for compatibility with different frontends
     // shipping address may come as: shipping_address, shippingAddress, shipping, or address
-    let rawShipping = req.body.shipping_address \n      || req.body.shippingAddress \n      || req.body.shipping \n      || req.body.address;
+    let rawShipping = req.body.shipping_address
+      || req.body.shippingAddress
+      || req.body.shipping
+      || req.body.address;
 
     if (typeof rawShipping === 'string') {
       try {
@@ -1736,7 +1739,10 @@ app.post('/api/orders', auth, (req, res) => {
     }
 
     // payment method may come as: payment_method, paymentMethod, payment, or method
-    const rawPayment = req.body.payment_method \n      || req.body.paymentMethod \n      || req.body.payment \n      || req.body.method;
+    const rawPayment = req.body.payment_method
+      || req.body.paymentMethod
+      || req.body.payment
+      || req.body.method;
 
     const payment_method = typeof rawPayment === 'string' ? rawPayment : (rawPayment && String(rawPayment));
 
