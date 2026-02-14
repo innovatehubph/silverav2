@@ -26,18 +26,21 @@ export default function Footer() {
               <a
                 href="#"
                 className="w-10 h-10 rounded-full glass-strong flex items-center justify-center hover:bg-gold/10 hover:border-gold/30 transition-all"
+                aria-label="Instagram"
               >
                 <Instagram className="w-5 h-5 text-txt-secondary" />
               </a>
               <a
                 href="#"
                 className="w-10 h-10 rounded-full glass-strong flex items-center justify-center hover:bg-gold/10 hover:border-gold/30 transition-all"
+                aria-label="Facebook"
               >
                 <Facebook className="w-5 h-5 text-txt-secondary" />
               </a>
               <a
                 href="mailto:hello@silveraph.com"
                 className="w-10 h-10 rounded-full glass-strong flex items-center justify-center hover:bg-gold/10 hover:border-gold/30 transition-all"
+                aria-label="Email us"
               >
                 <Mail className="w-5 h-5 text-txt-secondary" />
               </a>

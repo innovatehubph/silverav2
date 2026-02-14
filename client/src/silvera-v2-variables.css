@@ -28,7 +28,7 @@
      ------------------------------------------------------------------------- */
   --text-primary: #FAFAFA;
   --text-secondary: #A1A1AA;
-  --text-tertiary: #71717A;
+  --text-tertiary: #8B8B94;
   --text-inverse: #0A0A0B;
 
   /* -------------------------------------------------------------------------
@@ -92,7 +92,7 @@
 
   --text-primary: #09090B;
   --text-secondary: #52525B;
-  --text-tertiary: #A1A1AA;
+  --text-tertiary: #6B7280;
   --text-inverse: #FAFAFA;
 
   --border-subtle: rgba(0, 0, 0, 0.04);
@@ -379,7 +379,7 @@
     --border-default: rgba(255, 255, 255, 0.5);
     --border-strong: rgba(255, 255, 255, 0.8);
     --text-secondary: #D4D4D8;
-    --text-tertiary: #A1A1AA;
+    --text-tertiary: #8B8B94;
   }
 }
 

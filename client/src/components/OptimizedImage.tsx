@@ -167,6 +167,7 @@ export default function OptimizedImage({
             alt={alt}
             loading={eager ? 'eager' : 'lazy'}
             decoding={eager ? 'sync' : 'async'}
+            fetchPriority={eager ? 'high' : undefined}
             onLoad={handleLoad}
             onError={handleError}
             className={`w-full h-full object-cover transition-opacity duration-500 ${

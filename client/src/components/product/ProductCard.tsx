@@ -35,6 +35,7 @@ export default function ProductCard({ product, showWishlist = true, viewMode = '
               alt={product.name}
               className="w-full h-48 md:h-full"
               sizes="(max-width: 640px) 100vw, 200px"
+              aspectRatio="4/3"
             />
             
             {/* Discount Badge */}
@@ -59,6 +60,7 @@ export default function ProductCard({ product, showWishlist = true, viewMode = '
                       e.stopPropagation();
                     }}
                     className="p-2 rounded-full hover:bg-bg-hover transition-colors"
+                    aria-label="Add to wishlist"
                   >
                     <Heart className="w-5 h-5 text-txt-tertiary hover:text-gold transition-colors" />
                   </button>
@@ -113,6 +115,7 @@ export default function ProductCard({ product, showWishlist = true, viewMode = '
             alt={product.name}
             className="w-full h-48 md:h-64"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+            aspectRatio="3/4"
           />
 
           {/* Hover zoom overlay */}
@@ -151,6 +154,7 @@ export default function ProductCard({ product, showWishlist = true, viewMode = '
                   e.stopPropagation();
                 }}
                 className="w-10 h-10 glass-strong rounded-full flex items-center justify-center hover:bg-white/10 transition-colors"
+                aria-label="Add to wishlist"
               >
                 <Heart className="w-4 h-4 text-txt-primary" />
               </button>
@@ -158,6 +162,7 @@ export default function ProductCard({ product, showWishlist = true, viewMode = '
             <button
               onClick={handleAddToCart}
               className="w-10 h-10 bg-gold rounded-full flex items-center justify-center hover:bg-gold-300 transition-colors shadow-glow-gold"
+              aria-label="Add to cart"
             >
               <ShoppingCart className="w-4 h-4 text-bg-primary" />
             </button>
