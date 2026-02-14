@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowRight, ShoppingBag } from 'lucide-react';
 import OptimizedImage from '../components/OptimizedImage';
 
-const HERO_IMAGE = 'https://s3.innoserver.cloud/silvera/hero/hero-main.jpg';
+const HERO_IMAGE = 'https://s3.innoserver.cloud/silvera/hero/hero-main.webp';
 
 export default function HeroSection() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -117,7 +117,7 @@ export default function HeroSection() {
         <div ref={imageRef} className="absolute right-0 top-0 w-[50vw] h-full hidden md:block" style={{ perspective: '1000px' }}>
           <div className="absolute -inset-4 rounded-3xl opacity-40 blur-2xl pointer-events-none" style={{ background: 'radial-gradient(ellipse at center, rgba(212, 175, 55, 0.2) 0%, transparent 70%)' }} />
           <div className="relative w-full h-full overflow-hidden">
-            <OptimizedImage src={HERO_IMAGE} alt="Silvera Luxury Brands" className="w-full h-full object-cover object-center" sizes="50vw" eager />
+            <OptimizedImage src={HERO_IMAGE} alt="Silvera Luxury Brands" className="w-full h-full object-cover object-center" sizes="50vw" width={1280} height={853} eager />
           </div>
         </div>
 

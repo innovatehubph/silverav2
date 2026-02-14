@@ -954,7 +954,7 @@ export default function AdminOrders() {
                             <td className="py-2 px-3">
                               <div className="flex items-center gap-3">
                                 {item.image && (
-                                  <img src={item.image} alt={item.name} className="w-10 h-10 rounded object-cover" />
+                                  <img src={item.image} alt={item.name} className="w-10 h-10 rounded object-cover" width={40} height={40} />
                                 )}
                                 <div>
                                   <span className="text-txt-primary">{item.name}</span>

@@ -571,6 +571,8 @@ export default function Checkout() {
                     src={item.images || '/assets/images/product-images/01.webp'}
                     alt={item.name}
                     className="w-16 h-16 object-cover rounded-lg bg-bg-tertiary"
+                    width={64}
+                    height={64}
                   />
                   <div className="flex-1">
                     <p className="font-medium text-sm text-txt-primary line-clamp-1">{item.name}</p>

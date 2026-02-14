@@ -245,6 +245,8 @@ export default function OrderDetail() {
                     src={item.images || '/assets/images/product-images/01.webp'}
                     alt={item.name}
                     className="w-16 h-16 object-cover rounded-lg"
+                    width={64}
+                    height={64}
                   />
                   <div className="flex-1">
                     <p className="font-medium">{item.name}</p>

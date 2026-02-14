@@ -120,7 +120,7 @@ function DraggableImageList({
               dragIdx === idx ? 'border-accent-gold opacity-60' : 'border-bdr-subtle'
             }`}
           >
-            <img src={url} alt="" className="w-full h-full object-cover" />
+            <img src={url} alt="" className="w-full h-full object-cover" width={80} height={80} />
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
               <GripVertical size={14} className="text-white/80" />
               <button
@@ -638,7 +638,7 @@ export default function AdminProducts() {
                     </td>
                     <td className="py-2.5 px-4">
                       {imgUrl ? (
-                        <img src={imgUrl} alt="" className="w-10 h-10 rounded object-cover" />
+                        <img src={imgUrl} alt="" className="w-10 h-10 rounded object-cover" width={40} height={40} />
                       ) : (
                         <div className="w-10 h-10 rounded bg-bg-tertiary flex items-center justify-center">
                           <ImageIcon size={16} className="text-txt-tertiary" />
