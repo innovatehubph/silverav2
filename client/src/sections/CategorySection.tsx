@@ -95,6 +95,7 @@ export default function CategorySection({
             start: 'top top',
             end: '+=130%',
             pin: true,
+            pinSpacing: false,
             scrub: 0.6,
           },
         });

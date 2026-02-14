@@ -50,6 +50,7 @@ export default function HeroSection() {
             start: 'top top',
             end: '+=130%',
             pin: true,
+            pinSpacing: false,
             scrub: 0.6,
             onLeaveBack: () => {
               gsap.set([headlineRef.current, subheadlineRef.current, ctaRef.current, labelRef.current], { opacity: 1, x: 0, y: 0 });
