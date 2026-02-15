@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ShoppingBag, User, X, Search, LogOut, Home, ShoppingCart, Package, UserPlus, Heart, Phone, HelpCircle, Truck } from 'lucide-react';
 import { useCartStore, useAuthStore, useThemeStore, useWishlistStore } from '../../stores';
 import { useScrollDirection } from '../../hooks/useScrollDirection';
-import { wishlistApi } from '../../utils/api';
+// wishlistApi loaded dynamically to keep axios off the critical render path
 import ThemeToggle, { ThemeToggleCompact } from '../ThemeToggle';
 
 // Logo component that switches based on theme
@@ -42,9 +42,11 @@ export default function MainLayout({ children }: MainLayoutProps) {
   // Fetch wishlist count on mount when authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      wishlistApi.get()
-        .then(res => setWishlistCount((res.data || []).length))
-        .catch(() => {});
+      import('../../utils/api').then(({ wishlistApi }) =>
+        wishlistApi.get()
+          .then(res => setWishlistCount((res.data || []).length))
+          .catch(() => {})
+      );
     }
   }, [isAuthenticated, setWishlistCount]);
 

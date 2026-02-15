@@ -1,7 +1,6 @@
 import React, { useEffect, useState, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Sparkles } from 'lucide-react';
-import { productsApi } from '../utils/api';
 import type { Product } from '../types';
 import ProductCard from '../components/product/ProductCard';
 import { SEO, generateOrganizationStructuredData } from '../components/SEO';
@@ -35,6 +34,8 @@ export default function Home() {
   const loadProducts = async () => {
     try {
       setIsLoading(true);
+      // Dynamic import defers axios (~36KB gzip) off the critical render path
+      const { productsApi } = await import('../utils/api');
       const response = await productsApi.getAll({ limit: 50 });
       const products: Product[] = response.data;
 
