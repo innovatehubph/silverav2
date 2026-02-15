@@ -7,10 +7,10 @@ import ErrorBoundary from './components/ErrorBoundary';
 
 // Layouts
 import MainLayout from './components/layout/MainLayout';
-import AdminLayout from './components/layout/AdminLayout';
+const AdminLayout = lazy(() => import('./components/layout/AdminLayout'));
 
-// Pages - eagerly loaded (critical path)
-import Login from './pages/Login';
+// Pages - lazy loaded
+const Login = lazy(() => import('./pages/Login'));
 import NotFound from './pages/NotFound';
 
 // Home - lazy loaded (defers GSAP animations bundle to / route only)
@@ -126,7 +126,7 @@ function App() {
         <Route path="/product/:id" element={<MainLayout><LazyPage><ProductDetail /></LazyPage></MainLayout>} />
         <Route path="/cart" element={<MainLayout><LazyPage><Cart /></LazyPage></MainLayout>} />
         <Route path="/checkout" element={<RequireAuth><MainLayout><LazyPage><Checkout /></LazyPage></MainLayout></RequireAuth>} />
-        <Route path="/login" element={<Login />} />
+        <Route path="/login" element={<LazyPage><Login /></LazyPage>} />
         <Route path="/register" element={<LazyPage><Register /></LazyPage>} />
         <Route path="/forgot-password" element={<LazyPage><ForgotPassword /></LazyPage>} />
         <Route path="/profile" element={<RequireAuth><MainLayout><LazyPage><Profile /></LazyPage></MainLayout></RequireAuth>} />
@@ -140,7 +140,7 @@ function App() {
         <Route path="/shipping" element={<MainLayout><LazyPage><Shipping /></LazyPage></MainLayout>} />
 
         {/* Admin Routes - lazy loaded */}
-        <Route path="/admin" element={<RequireAdmin><AdminLayout /></RequireAdmin>}>
+        <Route path="/admin" element={<RequireAdmin><Suspense fallback={<AdminLoader />}><AdminLayout /></Suspense></RequireAdmin>}>
           <Route index element={<Suspense fallback={<AdminLoader />}><AdminDashboard /></Suspense>} />
           <Route path="products" element={<Suspense fallback={<AdminLoader />}><AdminProducts /></Suspense>} />
           <Route path="categories" element={<Suspense fallback={<AdminLoader />}><AdminCategories /></Suspense>} />

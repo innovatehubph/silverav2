@@ -77,7 +77,12 @@ export default function CategorySection({
     let ctx: any;
     let cancelled = false;
 
-    (async () => {
+    const hasRIC = 'requestIdleCallback' in window;
+    const idleId = hasRIC
+      ? window.requestIdleCallback(init)
+      : (setTimeout(init, 1) as unknown as number);
+
+    async function init() {
       const [{ gsap }, { ScrollTrigger }] = await Promise.all([
         import('gsap'),
         import('gsap/ScrollTrigger'),
@@ -178,10 +183,11 @@ export default function CategorySection({
           0.7
         );
       }, section);
-    })();
+    }
 
     return () => {
       cancelled = true;
+      hasRIC ? window.cancelIdleCallback(idleId) : clearTimeout(idleId);
       ctx?.revert();
     };
   }, [imagePosition]);

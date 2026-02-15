@@ -22,3 +22,7 @@ Thumbs.db
 # Data
 *.db
 data/
+
+# Lighthouse reports & server backups
+lighthouse-*.report*
+*.bak_*
