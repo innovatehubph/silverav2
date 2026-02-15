@@ -10,6 +10,9 @@ export default defineConfig({
         manualChunks: {
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
           'vendor-ui': ['sonner'],
+          'vendor-icons': ['lucide-react'],
+          'vendor-state': ['zustand'],
+          'vendor-http': ['axios'],
           'vendor-recharts': ['recharts'],
           'vendor-gsap': ['gsap', 'gsap/ScrollTrigger'],
         },
