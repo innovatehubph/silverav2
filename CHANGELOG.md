@@ -6,13 +6,18 @@ All notable changes to the Silvera V2 project are documented in this file.
 
 ### Performance & Accessibility Optimization
 
-Lighthouse scores improved from Performance 51 → 98, Accessibility 88 → 94. LCP reduced from 5.2s to 1.0s, CLS eliminated (0.495 → 0).
+Lighthouse scores improved from Performance 51 → **100**, Accessibility 88 → 94. LCP reduced from 5.2s to 0.7s, CLS eliminated (0.495 → 0). All four categories now green: Performance 100, Accessibility 94, Best Practices 100, SEO 100.
 
 - **GSAP Deferred to Idle** — Wrapped GSAP dynamic imports in `requestIdleCallback` so animation setup doesn't block LCP paint
 - **Lazy-Load Non-Critical Routes** — AdminLayout and Login page moved to `React.lazy()` to reduce main bundle on the critical path
-- **Font Waterfall Eliminated** — Moved Google Fonts from CSS `@import` (render-blocking waterfall) to `<link>` tags in HTML `<head>` with preconnect, saving ~766ms
+- **Font Waterfall Eliminated** — Replaced Google Fonts CDN with self-hosted woff2 files and inline `@font-face` with `font-display: swap`, eliminating render-blocking external requests
 - **CLS Fix: pinSpacing** — Added `pinSpacing: false` to all GSAP ScrollTrigger configs; 7 pinned sections were injecting pin-spacer DOM nodes that shifted the footer by 910vh
 - **Hero Image Preload** — Added `<link rel="preload">` with `fetchpriority="high"` for the hero WebP image
+- **Removed Unused .jpg Logos** — Deleted 4 legacy .jpg logo files (318KB); only .webp versions remain (23KB total)
+- **Vendor Bundle Splitting** — Extracted lucide-react, zustand, and axios into separate vendor chunks; main bundle 267KB → 243KB
+- **Default Logo Preload** — Added `<link rel="preload">` for dark theme logo (default) in index.html
+- **Static Hero Shell** — Added static HTML hero skeleton for instant LCP paint before React hydrates
+- **Deferred Sonner & Axios** — Moved toast library and HTTP client off the critical render path
 - **WCAG AA Contrast** — Increased `--text-tertiary` contrast ratio to meet 4.5:1 (dark: `#71717A` → `#8B8B94`, light: `#9CA3AF` → `#6B7280`)
 - **Aria Labels** — Added `aria-label` to all icon-only buttons and links (wishlist, add-to-cart, cart link, search, social icons)
 - **Image Dimensions** — Added explicit `width`/`height` to logo, cart item images, and mobile hero `<img>` tags to prevent layout shift
@@ -26,7 +31,7 @@ Lighthouse scores improved from Performance 51 → 98, Accessibility 88 → 94. 
 
 ### Full-Stack E-Commerce Platform
 
-Complete rewrite of Silvera Philippines — a premium luxury e-commerce platform built with React 19, Express, SQLite, and Docker Swarm. 137 commits, 85 E2E tests passing, Lighthouse scores: Performance 98, Accessibility 94, Best Practices 100, SEO 100.
+Complete rewrite of Silvera Philippines — a premium luxury e-commerce platform built with React 19, Express, SQLite, and Docker Swarm. 137 commits, 85 E2E tests passing, Lighthouse scores: Performance 100, Accessibility 94, Best Practices 100, SEO 100.
 
 ---
 
@@ -164,7 +169,7 @@ Complete rewrite of Silvera Philippines — a premium luxury e-commerce platform
 - **GSAP Deferred** — Animation library loaded via `requestIdleCallback` to avoid blocking LCP paint
 - **Hero Image WebP** — Converted hero from JPG (85KB) to WebP (68KB) with `fetchpriority="high"` preload
 - **CLS Eliminated** — 0.495 → 0 via `pinSpacing: false` on all ScrollTrigger configs and 230vh wrapper divs
-- **LCP Optimized** — 5.2s → 1.0s through font waterfall fix, `requestIdleCallback` deferral, lazy-loaded routes, hero preload, and removing opacity:0 from GSAP entrance
+- **LCP Optimized** — 5.2s → 0.7s through self-hosted fonts, `requestIdleCallback` deferral, lazy-loaded routes, vendor chunk splitting, hero preload, static hero shell, and removing opacity:0 from GSAP entrance
 - **Image Optimization** — OptimizedImage component with lazy loading, blur placeholders, `fetchPriority="high"` on eager images, explicit dimensions on all `<img>` tags
 - **jsPDF Lazy-Loaded** — 93% smaller AdminOrders chunk by deferring PDF library
 - **Font Loading** — Google Fonts moved from CSS `@import` to HTML `<link>` with preconnect for fonts.googleapis.com and fonts.gstatic.com
