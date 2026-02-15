@@ -66,7 +66,22 @@
     </script>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Static hero shell — painted instantly before JS loads (LCP optimisation).
+           React replaces this entire node tree on mount. -->
+      <div id="hero-shell" style="height:100vh;background:#0A0A0B;position:relative;overflow:hidden">
+        <div style="position:absolute;left:6vw;top:16vh;width:52vw">
+          <p style="font-family:Inter,sans-serif;font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:0.2em;color:#D4AF37;margin-bottom:1.5rem">Luxury Brands from USA</p>
+          <h1 style="font-family:'Playfair Display',serif;font-size:clamp(36px,7vw,100px);font-weight:700;line-height:1.1;letter-spacing:-0.02em;margin:0">
+            <span style="background:linear-gradient(135deg,#D4AF37 0%,#F5E6A3 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">SILVERA</span>
+            <br><span style="color:#FAFAFA">LUXURY</span>
+          </h1>
+        </div>
+        <div style="position:absolute;left:6vw;top:56vh;width:38vw">
+          <p style="font-family:Inter,sans-serif;font-size:1.125rem;color:#A1A1AA;line-height:1.75;margin-bottom:2rem">Your premium Filipino shopping experience. Authentic luxury brands, sourced directly from the United States.</p>
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
