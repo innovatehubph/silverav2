@@ -192,8 +192,8 @@ export default function AdminOrders() {
       await adminApi.updateOrder(orderId, { status: newStatus });
       setOrders(orders.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o)));
       toast.success(`Order #${orderId} updated to ${newStatus}`);
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Failed to update order');
+    } catch (error: unknown) {
+      toast.error((error as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Failed to update order');
     }
   };
 
@@ -245,8 +245,8 @@ export default function AdminOrders() {
         toast.success('Tracking info updated');
       }
       setShowTrackingModal(false);
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Failed to save tracking info');
+    } catch (error: unknown) {
+      toast.error((error as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Failed to save tracking info');
     } finally {
       setSavingTracking(false);
     }
@@ -272,8 +272,8 @@ export default function AdminOrders() {
       setOrderNotes([res.data, ...orderNotes]);
       setNewNote('');
       toast.success('Note added');
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Failed to add note');
+    } catch (error: unknown) {
+      toast.error((error as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Failed to add note');
     } finally {
       setSavingNote(false);
     }
@@ -302,7 +302,7 @@ export default function AdminOrders() {
           .join(', ');
         if (addr.zip_code) address += ` ${addr.zip_code}`;
       }
-    } catch {}
+    } catch { /* expected */ }
 
     printWindow.document.write(`
       <!DOCTYPE html>

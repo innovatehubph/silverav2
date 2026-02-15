@@ -25,7 +25,7 @@ export default function HowItWorksSection() {
   const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
 
   useEffect(() => {
-    let ctx: any;
+    let ctx: { revert: () => void } | undefined;
     let cancelled = false;
 
     (async () => {

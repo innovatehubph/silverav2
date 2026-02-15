@@ -155,8 +155,8 @@ export default function AdminCategories() {
 
       setShowForm(false);
       loadCategories();
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Failed to save category');
+    } catch (error: unknown) {
+      toast.error((error as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Failed to save category');
     } finally {
       setSaving(false);
     }
@@ -170,8 +170,8 @@ export default function AdminCategories() {
       await adminApi.deleteCategory(id);
       toast.success('Category deleted');
       setCategories(categories.filter((c) => c.id !== id));
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Failed to delete category');
+    } catch (error: unknown) {
+      toast.error((error as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Failed to delete category');
     } finally {
       setDeleting(null);
     }

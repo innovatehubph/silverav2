@@ -56,6 +56,7 @@ export default function AddressManager({
     fetchAddresses();
   }, []);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleSubmit = async (data: any) => {
     const token = localStorage.getItem('auth_token');
     const url = editingAddress 
@@ -82,7 +83,7 @@ export default function AddressManager({
         const error = await res.json();
         toast.error(error.error || 'Failed to save address');
       }
-    } catch (error) {
+    } catch {
       toast.error('Failed to save address');
     }
   };
@@ -102,7 +103,7 @@ export default function AddressManager({
       } else {
         toast.error('Failed to delete address');
       }
-    } catch (error) {
+    } catch {
       toast.error('Failed to delete address');
     }
   };
@@ -119,7 +120,7 @@ export default function AddressManager({
         toast.success('Default address updated');
         fetchAddresses();
       }
-    } catch (error) {
+    } catch {
       toast.error('Failed to set default');
     }
   };

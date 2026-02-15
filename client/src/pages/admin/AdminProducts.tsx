@@ -278,8 +278,8 @@ export default function AdminProducts() {
       }
       setShowForm(false);
       loadData();
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Failed to save product');
+    } catch (error: unknown) {
+      toast.error((error as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Failed to save product');
     } finally {
       setSaving(false);
     }
@@ -292,8 +292,8 @@ export default function AdminProducts() {
       toast.success('Product deleted');
       setProducts(products.filter((p) => p.id !== id));
       setSelected(prev => { const n = new Set(prev); n.delete(id); return n; });
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Failed to delete');
+    } catch (error: unknown) {
+      toast.error((error as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Failed to delete');
     }
   };
 
@@ -307,8 +307,8 @@ export default function AdminProducts() {
       toast.success(`${ids.length} product(s) deleted`);
       setSelected(new Set());
       loadData();
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Bulk delete failed');
+    } catch (error: unknown) {
+      toast.error((error as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Bulk delete failed');
     }
   };
 
@@ -327,8 +327,8 @@ export default function AdminProducts() {
       setBulkStockValue('');
       setSelected(new Set());
       loadData();
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Bulk stock update failed');
+    } catch (error: unknown) {
+      toast.error((error as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Bulk stock update failed');
     }
   };
 
@@ -528,7 +528,7 @@ export default function AdminProducts() {
                   <select
                     className="input-field w-full py-2 text-sm"
                     value={form.status}
-                    onChange={(e) => setForm({ ...form, status: e.target.value as any })}
+                    onChange={(e) => setForm({ ...form, status: e.target.value as 'active' | 'inactive' | 'draft' })}
                   >
                     <option value="active">Active</option>
                     <option value="inactive">Inactive</option>

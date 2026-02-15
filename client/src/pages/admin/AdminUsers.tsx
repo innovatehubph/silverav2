@@ -182,8 +182,8 @@ export default function AdminUsers() {
         setSelectedUser({ ...selectedUser, role: res.data.role });
       }
       toast.success(`Role updated to ${newRole}`);
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Failed to change role');
+    } catch (error: unknown) {
+      toast.error((error as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Failed to change role');
     }
   };
 
@@ -239,8 +239,8 @@ export default function AdminUsers() {
     setConfirming(true);
     try {
       await confirmAction.onConfirm();
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Action failed');
+    } catch (error: unknown) {
+      toast.error((error as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Action failed');
     } finally {
       setConfirming(false);
       setConfirmAction(null);

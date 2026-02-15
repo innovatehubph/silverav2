@@ -104,6 +104,7 @@ export default function Checkout() {
   // Store new/guest address data so handleSubmit can use it
   const [newAddressData, setNewAddressData] = useState<Record<string, string> | null>(null);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleAddressSubmit = async (data: any) => {
     if (!isAuthenticated) {
       // Guest checkout - store the address data and use it directly
@@ -136,7 +137,7 @@ export default function Checkout() {
         const error = await res.json();
         toast.error(error.error || 'Failed to save address');
       }
-    } catch (error) {
+    } catch {
       toast.error('Failed to save address');
     }
   };

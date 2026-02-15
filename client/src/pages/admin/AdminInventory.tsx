@@ -103,6 +103,7 @@ export default function AdminInventory() {
     if (activeTab === 'log' && logs.length === 0) {
       loadLogs();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
   const filtered = products.filter((p) => {
@@ -163,8 +164,8 @@ export default function AdminInventory() {
       ));
       setEditingId(null);
       toast.success(`Stock updated: ${res.data.previous_stock} → ${res.data.new_stock}`);
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Failed to update stock');
+    } catch (error: unknown) {
+      toast.error((error as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Failed to update stock');
     } finally {
       setSavingStock(false);
     }
@@ -208,8 +209,8 @@ export default function AdminInventory() {
       setBulkStock('');
       setBulkNote('');
       toast.success(`Updated stock for ${res.data.updated} products`);
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Failed to bulk update stock');
+    } catch (error: unknown) {
+      toast.error((error as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Failed to bulk update stock');
     } finally {
       setSavingBulk(false);
     }
