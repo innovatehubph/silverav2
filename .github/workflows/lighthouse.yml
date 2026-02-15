@@ -1,0 +1,140 @@
+name: Lighthouse CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  lighthouse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Lighthouse CI
+        run: npm install -g @lhci/cli
+
+      - name: Wait for deploy (main branch only)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          echo "Waiting 60s for deployment to complete..."
+          sleep 60
+          echo "Checking site health..."
+          for i in 1 2 3 4 5; do
+            if curl -sf https://silvera.innoserver.cloud/api/health > /dev/null; then
+              echo "Site is healthy!"
+              break
+            fi
+            echo "Attempt $i failed, retrying in 15s..."
+            sleep 15
+          done
+
+      - name: Run Lighthouse CI
+        run: lhci autorun
+        env:
+          LHCI_BUILD_CONTEXT__CURRENT_HASH: ${{ github.sha }}
+          LHCI_BUILD_CONTEXT__COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          LHCI_BUILD_CONTEXT__CURRENT_BRANCH: ${{ github.ref_name }}
+
+      - name: Upload Lighthouse results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-results
+          path: ./lighthouse-results/
+          retention-days: 30
+
+      - name: Parse and display results
+        if: always()
+        run: |
+          echo "## Lighthouse CI Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Find the manifest file
+          MANIFEST="./lighthouse-results/manifest.json"
+          if [ -f "$MANIFEST" ]; then
+            node -e "
+              const manifest = require('$MANIFEST');
+              const runs = manifest.map(m => JSON.parse(require('fs').readFileSync(m.jsonPath, 'utf8')));
+
+              // Calculate medians
+              const median = arr => { arr.sort((a,b) => a-b); return arr[Math.floor(arr.length/2)]; };
+              const perf = median(runs.map(r => r.categories.performance.score * 100));
+              const a11y = median(runs.map(r => r.categories.accessibility.score * 100));
+              const bp = median(runs.map(r => r.categories['best-practices'].score * 100));
+              const seo = median(runs.map(r => r.categories.seo.score * 100));
+              const fcp = median(runs.map(r => r.audits['first-contentful-paint'].numericValue));
+              const lcp = median(runs.map(r => r.audits['largest-contentful-paint'].numericValue));
+              const cls = median(runs.map(r => r.audits['cumulative-layout-shift'].numericValue));
+              const tbt = median(runs.map(r => r.audits['total-blocking-time'].numericValue));
+
+              const row = (label, val, unit='') => '| ' + label + ' | ' + val.toFixed(unit === 'ms' ? 0 : unit === 's' ? 1 : 2) + (unit ? ' ' + unit : '') + ' |';
+
+              console.log('| Metric | Value |');
+              console.log('|--------|-------|');
+              console.log(row('Performance', perf));
+              console.log(row('Accessibility', a11y));
+              console.log(row('Best Practices', bp));
+              console.log(row('SEO', seo));
+              console.log(row('FCP', fcp / 1000, 's'));
+              console.log(row('LCP', lcp / 1000, 's'));
+              console.log(row('CLS', cls));
+              console.log(row('TBT', tbt, 'ms'));
+            " >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "Could not parse results" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "No manifest found" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Comment PR with Lighthouse results
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const manifestPath = './lighthouse-results/manifest.json';
+
+            if (!fs.existsSync(manifestPath)) {
+              console.log('No Lighthouse results found');
+              return;
+            }
+
+            const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+            const runs = manifest.map(m => JSON.parse(fs.readFileSync(m.jsonPath, 'utf8')));
+
+            const median = arr => { arr.sort((a,b) => a-b); return arr[Math.floor(arr.length/2)]; };
+            const perf = median(runs.map(r => r.categories.performance.score * 100));
+            const fcp = median(runs.map(r => r.audits['first-contentful-paint'].numericValue / 1000));
+            const lcp = median(runs.map(r => r.audits['largest-contentful-paint'].numericValue / 1000));
+            const cls = median(runs.map(r => r.audits['cumulative-layout-shift'].numericValue));
+            const tbt = median(runs.map(r => r.audits['total-blocking-time'].numericValue));
+
+            const icon = (val, budget) => val <= budget ? ':white_check_mark:' : ':warning:';
+
+            const body = `## Lighthouse CI Results
+
+            | Metric | Value | Budget | Status |
+            |--------|-------|--------|--------|
+            | Performance | ${perf.toFixed(0)} | >= 70 | ${icon(70, perf)} |
+            | FCP | ${fcp.toFixed(1)}s | < 1.8s | ${icon(fcp, 1.8)} |
+            | LCP | ${lcp.toFixed(1)}s | < 2.5s | ${icon(lcp, 2.5)} |
+            | CLS | ${cls.toFixed(3)} | < 0.1 | ${icon(cls, 0.1)} |
+            | TBT | ${tbt.toFixed(0)}ms | < 300ms | ${icon(tbt, 300)} |
+
+            _Median of 3 runs on desktop preset_`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
