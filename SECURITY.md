@@ -1,6 +1,6 @@
 # Silvera V2 - Security Posture
 
-**Last Updated**: February 12, 2026
+**Last Updated**: February 15, 2026
 
 ---
 
@@ -107,15 +107,159 @@ Rate limits use `express-rate-limit` with `trust proxy` enabled for correct clie
 | Secrets via environment variables | Yes (all secrets read from `process.env`) |
 | Docker Compose uses `${VAR}` references | Yes (no hardcoded values) |
 
-### Credential Rotation Required
+### Git History Remediation (2026-02-15)
 
-> **WARNING**: This repository was previously public with hardcoded credentials in git history. The following credentials are exposed in git history and **must be rotated**:
+On 2026-02-15, BFG Repo-Cleaner was used to purge 7 hardcoded secrets from all 151 commits in the repository history. A force push replaced the entire history with scrubbed versions. The secrets below were exposed and **must be rotated** even though they no longer appear in git.
 
-- [ ] `JWT_SECRET` - Rotate and update `.env`
-- [ ] `SMTP_PASSWORD` - Rotate via Hostinger email admin
-- [ ] `NEXUSPAY_PASSWORD` / `NEXUSPAY_KEY` - Rotate via NexusPay/DirectPay dashboard
-- [ ] `ADMIN_PASSWORD` - Rotate and update bcrypt hash in database
-- [ ] `MINIO_ACCESS_KEY` / `MINIO_SECRET_KEY` - Rotate via MinIO admin console
+### Credential Rotation Checklist
+
+- [ ] JWT secret
+- [ ] SMTP password
+- [ ] NexusPay API password
+- [ ] NexusPay merchant key
+- [ ] MinIO access key
+- [ ] MinIO secret key
+- [ ] Admin password
+
+---
+
+## Credential Rotation Guide
+
+### 1. JWT Secret
+
+**Risk**: Anyone with the old secret can forge authentication tokens for any user, including admin.
+
+```bash
+# 1. Generate a new 64-byte hex secret
+openssl rand -hex 64
+
+# 2. Update the .env file on the server
+#    SSH into the server or update via Dokploy environment variables
+JWT_SECRET=<paste-new-value>
+
+# 3. Restart the application
+#    All existing user sessions will be invalidated (users must re-login)
+docker restart silverav2-app
+```
+
+**Verify**: Try logging in — a new JWT should be issued. Old tokens should return 401.
+
+---
+
+### 2. SMTP Password (Hostinger Email)
+
+**Risk**: Attacker could send emails as your domain, read mailbox, or use it for phishing.
+
+```
+1. Log in to Hostinger control panel → Email Accounts
+2. Select the SMTP account (e.g. noreply@silvera.ph)
+3. Change the password to a strong random value (20+ chars)
+4. Update .env on the server:
+   SMTP_PASSWORD=<new-password>
+5. Restart the application
+```
+
+**Verify**: Trigger a password reset or place an order — confirm the email is delivered.
+
+---
+
+### 3. NexusPay API Password
+
+**Risk**: Attacker could authenticate to the NexusPay API and initiate transactions on your merchant account.
+
+```
+1. Log in to NexusPay / DirectPay merchant dashboard
+2. Navigate to API Settings → Credentials
+3. Regenerate the API password
+4. Update .env on the server:
+   NEXUSPAY_PASSWORD=<new-password>
+5. Restart the application
+```
+
+**Verify**: Place a test order with GCash/Maya payment — confirm the payment session is created.
+
+---
+
+### 4. NexusPay Merchant Key
+
+**Risk**: Attacker could forge webhook signatures, marking fake payments as completed.
+
+```
+1. Log in to NexusPay / DirectPay merchant dashboard
+2. Navigate to API Settings → Webhook Configuration
+3. Regenerate the merchant key (HMAC signing key)
+4. Update .env on the server:
+   NEXUSPAY_KEY=<new-key>
+   DIRECTPAY_MERCHANT_KEY=<new-key>
+5. Restart the application
+```
+
+**Verify**: Process a sandbox payment end-to-end — confirm webhook signature verification passes.
+
+---
+
+### 5. MinIO Access Key
+
+**Risk**: Attacker could read, upload, or delete any file in the S3 bucket (product images, category images).
+
+```
+1. Access MinIO admin console (e.g. https://s3.innoserver.cloud/console)
+2. Navigate to Identity → Users or Access Keys
+3. Create a new access key pair for the silvera service account
+4. Revoke/delete the old access key
+5. Update .env on the server:
+   MINIO_ACCESS_KEY=<new-access-key>
+   MINIO_SECRET_KEY=<new-secret-key>
+6. Restart the application
+```
+
+**Verify**: Upload a product image via Admin → Products — confirm the image appears at the public URL.
+
+---
+
+### 6. MinIO Secret Key
+
+Rotated together with the access key in step 5 above. They are a pair — always rotate both.
+
+---
+
+### 7. Admin Password
+
+**Risk**: Attacker could log in as admin and access all admin functionality (orders, users, settings, products).
+
+```bash
+# 1. Log in to the admin panel at /admin
+# 2. Or reset via the API directly:
+
+# Generate a new bcrypt hash
+node -e "console.log(require('bcryptjs').hashSync('YourNewStrongPassword123!', 10))"
+
+# Update the database directly (SSH into server)
+sqlite3 /data/silvera.db "UPDATE users SET password='<bcrypt-hash>' WHERE role='admin';"
+
+# 3. Also update .env so the seed script uses the new password on fresh deploys:
+ADMIN_PASSWORD=<new-plaintext-password>
+
+# 4. Restart the application
+```
+
+**Verify**: Log in to `/admin` with the new password. Confirm the old password no longer works.
+
+---
+
+### Post-Rotation Verification
+
+After rotating all credentials, run this checklist:
+
+```
+[ ] JWT:      Log in → receive token → access protected route
+[ ] SMTP:     Trigger password reset email → email received
+[ ] NexusPay: Create GCash test payment → payment URL returned
+[ ] Webhook:  Complete sandbox payment → webhook accepted (200)
+[ ] MinIO:    Upload product image via admin → image loads publicly
+[ ] Admin:    Log in to /admin with new password → dashboard loads
+[ ] E2E:      npx playwright test --project=chromium → all tests pass
+```
 
 ---
 
