@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { type ReactNode, useEffect, lazy, Suspense } from 'react';
 import { useAuthStore, useAuthHydrated, useThemeStore } from './stores';
+import { setSentryUser } from './utils/sentry';
 
 // Lazy-load Toaster — toast notifications aren't needed for first paint
 const LazyToaster = lazy(() => import('sonner').then(m => ({ default: m.Toaster })));
@@ -112,6 +113,7 @@ function App() {
       try {
         const user = JSON.parse(userStr);
         login(user, token);
+        setSentryUser(user);
       } catch {
         console.error('Failed to parse user data');
       }

@@ -11,6 +11,24 @@ const _savedNodeEnv = process.env.NODE_ENV;
 require('dotenv').config();
 if (_savedNodeEnv) process.env.NODE_ENV = _savedNodeEnv;
 
+// Sentry error monitoring (no-op when SENTRY_DSN is not set)
+let Sentry = null;
+if (process.env.SENTRY_DSN) {
+  Sentry = require('@sentry/node');
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    environment: process.env.NODE_ENV || 'production',
+    tracesSampleRate: 0.1,
+    beforeSend(event) {
+      if (event.request && event.request.headers) {
+        delete event.request.headers['authorization'];
+        delete event.request.headers['cookie'];
+      }
+      return event;
+    },
+  });
+}
+
 const express = require('express');
 const cors = require('cors');
 const compression = require('compression');
@@ -525,7 +543,8 @@ app.use(helmet({
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "data:", "https:"],
       scriptSrc: ["'self'", "'unsafe-inline'", "https://www.googletagmanager.com"],
-      connectSrc: ["'self'", "https://silvera.innoserver.cloud", "https://nexuspay.cloud", "https://sandbox.directpayph.com", "https://www.google-analytics.com"],
+      connectSrc: ["'self'", "https://silvera.innoserver.cloud", "https://nexuspay.cloud", "https://sandbox.directpayph.com", "https://www.google-analytics.com", "https://*.ingest.sentry.io"],
+      workerSrc: ["'self'", "blob:"],
     },
   },
   crossOriginEmbedderPolicy: false, // Allow external images
@@ -4462,9 +4481,15 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', app: 'Silvera V2', version: '2.0.3', timestamp: new Date().toISOString() });
 });
 
+// Sentry error handler (must be before custom error handler)
+if (Sentry) {
+  Sentry.setupExpressErrorHandler(app);
+}
+
 // Global error handler
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err.message);
+  if (Sentry) Sentry.captureException(err);
   res.status(500).json({ error: 'Internal server error' });
 });
 
