@@ -590,12 +590,12 @@ export default function MainLayout({ children }: MainLayoutProps) {
       </nav>
 
       {/* Main Content */}
-      <main className="flex-grow pt-20 pb-20 md:pb-0">
+      <main className="flex-grow min-h-screen pt-20 pb-20 md:pb-0">
         {children}
       </main>
 
-      {/* Footer — min-h prevents CLS when content above shifts from GSAP pin-spacers */}
-      <footer className="bg-bg-secondary border-t border-bdr-subtle py-12" style={{ minHeight: '320px', contain: 'layout' }}>
+      {/* Footer */}
+      <footer className="bg-bg-secondary border-t border-bdr-subtle py-12">
         <div className="container-custom">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>

@@ -64,98 +64,84 @@ export default function Home() {
         structuredData={generateOrganizationStructuredData()}
       />
       <div className="animate-fade-in">
-        {/* Hero Section — 230vh reserve = 100vh section + 130% GSAP pin-spacer */}
-        <div style={{ minHeight: '230vh' }}>
-          <HeroSection />
-        </div>
+        {/* Hero Section */}
+        <HeroSection />
 
-        {/* Category Sections — each wrapped in 230vh reserve for GSAP pin-spacer */}
-        <Suspense fallback={<div style={{ minHeight: '1380vh' }} />}>
-          <div style={{ minHeight: '230vh' }}>
-            <CategorySection
-              id="apparel"
-              headline="APPAREL"
-              subheadline="Crisp shirts, premium denim, and elevated basics shipped from the U.S. to your door."
-              cta="Shop Apparel"
-              image={categoryFallbackImages.apparel}
-              imagePosition="right"
-              zIndex={20}
-              product={categoryProducts[0] ?? undefined}
-              categorySlug="apparel"
-            />
-          </div>
+        {/* Category Sections */}
+        <Suspense fallback={<div style={{ minHeight: '100vh' }} />}>
+          <CategorySection
+            id="apparel"
+            headline="APPAREL"
+            subheadline="Crisp shirts, premium denim, and elevated basics shipped from the U.S. to your door."
+            cta="Shop Apparel"
+            image={categoryFallbackImages.apparel}
+            imagePosition="right"
+            zIndex={20}
+            product={categoryProducts[0] ?? undefined}
+            categorySlug="apparel"
+          />
 
-          <div style={{ minHeight: '230vh' }}>
-            <CategorySection
-              id="footwear"
-              headline="FOOTWEAR"
-              subheadline="Box-fresh sneakers, loafers, and boots — authentic and sourced direct."
-              cta="Shop Footwear"
-              image={categoryFallbackImages.footwear}
-              imagePosition="left"
-              zIndex={30}
-              product={categoryProducts[1] ?? undefined}
-              categorySlug="footwear"
-            />
-          </div>
+          <CategorySection
+            id="footwear"
+            headline="FOOTWEAR"
+            subheadline="Box-fresh sneakers, loafers, and boots — authentic and sourced direct."
+            cta="Shop Footwear"
+            image={categoryFallbackImages.footwear}
+            imagePosition="left"
+            zIndex={30}
+            product={categoryProducts[1] ?? undefined}
+            categorySlug="footwear"
+          />
 
-          <div style={{ minHeight: '230vh' }}>
-            <CategorySection
-              id="accessories"
-              headline="ACCESSORIES"
-              subheadline="Wallets, belts, and small leather goods that complete the look."
-              cta="Shop Accessories"
-              image={categoryFallbackImages.accessories}
-              imagePosition="right"
-              zIndex={40}
-              product={categoryProducts[2] ?? undefined}
-              categorySlug="accessories"
-            />
-          </div>
+          <CategorySection
+            id="accessories"
+            headline="ACCESSORIES"
+            subheadline="Wallets, belts, and small leather goods that complete the look."
+            cta="Shop Accessories"
+            image={categoryFallbackImages.accessories}
+            imagePosition="right"
+            zIndex={40}
+            product={categoryProducts[2] ?? undefined}
+            categorySlug="accessories"
+          />
 
-          <div style={{ minHeight: '230vh' }}>
-            <CategorySection
-              id="dresses"
-              headline="DRESSES"
-              subheadline="Day-to-evening dresses for every occasion — shipped direct to Manila."
-              cta="Shop Dresses"
-              image={categoryFallbackImages.dresses}
-              imagePosition="left"
-              isDark={true}
-              zIndex={50}
-              product={categoryProducts[3] ?? undefined}
-              categorySlug="dresses"
-            />
-          </div>
+          <CategorySection
+            id="dresses"
+            headline="DRESSES"
+            subheadline="Day-to-evening dresses for every occasion — shipped direct to Manila."
+            cta="Shop Dresses"
+            image={categoryFallbackImages.dresses}
+            imagePosition="left"
+            isDark={true}
+            zIndex={50}
+            product={categoryProducts[3] ?? undefined}
+            categorySlug="dresses"
+          />
 
-          <div style={{ minHeight: '230vh' }}>
-            <CategorySection
-              id="electronics"
-              headline="ELECTRONICS"
-              subheadline="Premium gadgets, laptops, headphones and tech accessories — authentic and sourced from the U.S."
-              cta="Shop Electronics"
-              image={categoryFallbackImages.electronics}
-              imagePosition="right"
-              zIndex={60}
-              product={categoryProducts[4] ?? undefined}
-              categorySlug="electronics"
-            />
-          </div>
+          <CategorySection
+            id="electronics"
+            headline="ELECTRONICS"
+            subheadline="Premium gadgets, laptops, headphones and tech accessories — authentic and sourced from the U.S."
+            cta="Shop Electronics"
+            image={categoryFallbackImages.electronics}
+            imagePosition="right"
+            zIndex={60}
+            product={categoryProducts[4] ?? undefined}
+            categorySlug="electronics"
+          />
 
-          <div style={{ minHeight: '230vh' }}>
-            <CategorySection
-              id="home-living"
-              headline="HOME & LIVING"
-              subheadline="Elevate your space with premium home essentials, decor, and lifestyle products."
-              cta="Shop Home & Living"
-              image={categoryFallbackImages.homeLiving}
-              imagePosition="left"
-              isDark={true}
-              zIndex={70}
-              product={categoryProducts[5] ?? undefined}
-              categorySlug="home-living"
-            />
-          </div>
+          <CategorySection
+            id="home-living"
+            headline="HOME & LIVING"
+            subheadline="Elevate your space with premium home essentials, decor, and lifestyle products."
+            cta="Shop Home & Living"
+            image={categoryFallbackImages.homeLiving}
+            imagePosition="left"
+            isDark={true}
+            zIndex={70}
+            product={categoryProducts[5] ?? undefined}
+            categorySlug="home-living"
+          />
         </Suspense>
 
         {/* How It Works */}
