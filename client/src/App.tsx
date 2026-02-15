@@ -13,8 +13,9 @@ const AdminLayout = lazy(() => import('./components/layout/AdminLayout'));
 const Login = lazy(() => import('./pages/Login'));
 import NotFound from './pages/NotFound';
 
-// Home - lazy loaded (defers GSAP animations bundle to / route only)
-const Home = lazy(() => import('./pages/Home'));
+// Home eagerly imported — it's the landing page and only 5KB; lazy-loading
+// adds an extra chunk round-trip that delays hero text paint (LCP).
+import Home from './pages/Home';
 
 // Pages - lazy loaded for bundle splitting
 const Shop = lazy(() => import('./pages/Shop'));
@@ -121,7 +122,7 @@ function App() {
       <RouteChangeTracker />
       <Toaster position="top-right" richColors />
       <Routes>
-        <Route path="/" element={<MainLayout><LazyPage><Home /></LazyPage></MainLayout>} />
+        <Route path="/" element={<MainLayout><Home /></MainLayout>} />
         <Route path="/shop" element={<MainLayout><LazyPage><Shop /></LazyPage></MainLayout>} />
         <Route path="/product/:id" element={<MainLayout><LazyPage><ProductDetail /></LazyPage></MainLayout>} />
         <Route path="/cart" element={<MainLayout><LazyPage><Cart /></LazyPage></MainLayout>} />
