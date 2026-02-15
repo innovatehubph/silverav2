@@ -1,7 +1,9 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { type ReactNode, useEffect, lazy, Suspense } from 'react';
-import { Toaster } from 'sonner';
 import { useAuthStore, useAuthHydrated, useThemeStore } from './stores';
+
+// Lazy-load Toaster — toast notifications aren't needed for first paint
+const LazyToaster = lazy(() => import('sonner').then(m => ({ default: m.Toaster })));
 import RouteChangeTracker from './components/RouteChangeTracker';
 import ErrorBoundary from './components/ErrorBoundary';
 
@@ -120,7 +122,7 @@ function App() {
     <ErrorBoundary>
     <Router>
       <RouteChangeTracker />
-      <Toaster position="top-right" richColors />
+      <Suspense fallback={null}><LazyToaster position="top-right" richColors /></Suspense>
       <Routes>
         <Route path="/" element={<MainLayout><Home /></MainLayout>} />
         <Route path="/shop" element={<MainLayout><LazyPage><Shop /></LazyPage></MainLayout>} />
