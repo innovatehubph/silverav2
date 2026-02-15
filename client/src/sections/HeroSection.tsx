@@ -20,7 +20,13 @@ export default function HeroSection() {
     let ctx: any;
     let cancelled = false;
 
-    (async () => {
+    // Defer GSAP load until browser is idle so it doesn't block LCP paint
+    const hasRIC = 'requestIdleCallback' in window;
+    const idleId = hasRIC
+      ? window.requestIdleCallback(init)
+      : (setTimeout(init, 1) as unknown as number);
+
+    async function init() {
       const [{ gsap }, { ScrollTrigger }] = await Promise.all([
         import('gsap'),
         import('gsap/ScrollTrigger'),
@@ -66,10 +72,11 @@ export default function HeroSection() {
         scrollTl.fromTo(ctaRef.current, { y: 0, opacity: 1 }, { y: '10vh', opacity: 0, ease: 'power2.in' }, 0.72);
         scrollTl.fromTo([goldGlowRef.current, accentGlowRef.current], { opacity: 0.3 }, { opacity: 0, ease: 'power2.in' }, 0.7);
       }, section);
-    })();
+    }
 
     return () => {
       cancelled = true;
+      hasRIC ? window.cancelIdleCallback(idleId) : clearTimeout(idleId);
       ctx?.revert();
     };
   }, []);
