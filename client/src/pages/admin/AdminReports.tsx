@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { adminApi } from '../../utils/api';
 import {
   BarChart3,
@@ -180,19 +180,18 @@ function LineChart({ data, height = 200 }: { data: RevenueData[]; height?: numbe
 // Pie/Donut Chart Component
 function DonutChart({ data }: { data: { label: string; value: number; color: string }[] }) {
   const total = data.reduce((sum, item) => sum + item.value, 0);
-  if (total === 0) return <div className="text-txt-secondary text-center py-8">No data</div>;
 
-  let cumulativePercent = 0;
-  const segments = data.map(item => {
-    const percent = (item.value / total) * 100;
-    const segment = {
-      ...item,
-      percent,
-      offset: cumulativePercent,
-    };
-    cumulativePercent += percent;
-    return segment;
-  });
+  const segments = useMemo(() => {
+    const result: { label: string; value: number; color: string; percent: number; offset: number }[] = [];
+    data.reduce((offset, item) => {
+      const percent = (item.value / total) * 100;
+      result.push({ ...item, percent, offset });
+      return offset + percent;
+    }, 0);
+    return result;
+  }, [data, total]);
+
+  if (total === 0) return <div className="text-txt-secondary text-center py-8">No data</div>;
 
   return (
     <div className="flex items-center gap-6">
@@ -310,6 +309,7 @@ export default function AdminReports() {
 
   useEffect(() => {
     loadReports();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [period]);
 
   const loadReports = async () => {
