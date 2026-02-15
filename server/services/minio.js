@@ -15,16 +15,20 @@ class MinIOService {
     this.endpoint = process.env.MINIO_INTERNAL_ENDPOINT || 'http://innobase-minio-vu1n6w-minio-1:9000';
     this.publicUrl = process.env.MINIO_PUBLIC_URL || 'https://s3.innoserver.cloud';
     
+    if (!process.env.MINIO_ACCESS_KEY || !process.env.MINIO_SECRET_KEY) {
+      console.warn('⚠️  MINIO_ACCESS_KEY or MINIO_SECRET_KEY not set — image uploads will fail');
+    }
+
     this.client = new S3Client({
       endpoint: this.endpoint,
       region: 'us-east-1', // MinIO doesn't care about region
       credentials: {
-        accessKeyId: process.env.MINIO_ACCESS_KEY || '***REMOVED***',
-        secretAccessKey: process.env.MINIO_SECRET_KEY || '***REMOVED***',
+        accessKeyId: process.env.MINIO_ACCESS_KEY || '',
+        secretAccessKey: process.env.MINIO_SECRET_KEY || '',
       },
       forcePathStyle: true, // Required for MinIO
     });
-    
+
     console.log(`✅ MinIO service initialized: ${this.endpoint}/${this.bucket}`);
   }
 
