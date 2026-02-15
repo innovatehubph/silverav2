@@ -53,7 +53,7 @@ export default function OrderDetail() {
       .then(res => {
         const data = res.data;
         if (data.items && typeof data.items === 'string') {
-          try { data.items = JSON.parse(data.items); } catch {}
+          try { data.items = JSON.parse(data.items); } catch { /* expected */ }
         }
         setOrder(data);
       })
@@ -78,8 +78,9 @@ export default function OrderDetail() {
       setShowReturnModal(false);
       setReturnReason('');
       toast.success('Return request submitted');
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Failed to submit return request');
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Failed to submit return request';
+      toast.error((error as { response?: { data?: { error?: string } } })?.response?.data?.error || msg);
     } finally {
       setSubmittingReturn(false);
     }

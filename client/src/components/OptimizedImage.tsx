@@ -74,7 +74,16 @@ export default function OptimizedImage({
   const [isInView, setIsInView] = useState(eager);
   const [currentSrc, setCurrentSrc] = useState(src);
   const [hasFailed, setHasFailed] = useState(false);
+  const [prevSrc, setPrevSrc] = useState(src);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Reset state when src changes (derived state pattern)
+  if (src !== prevSrc) {
+    setPrevSrc(src);
+    setCurrentSrc(src);
+    setIsLoaded(false);
+    setHasFailed(false);
+  }
 
   // IntersectionObserver for lazy loading
   useEffect(() => {
@@ -96,13 +105,6 @@ export default function OptimizedImage({
     observer.observe(el);
     return () => observer.disconnect();
   }, [eager, isInView]);
-
-  // Reset state when src changes
-  useEffect(() => {
-    setCurrentSrc(src);
-    setIsLoaded(false);
-    setHasFailed(false);
-  }, [src]);
 
   const handleLoad = () => {
     setIsLoaded(true);

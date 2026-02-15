@@ -84,8 +84,8 @@ export default function AdminReturns() {
       ));
       toast.success(`Return #${dialogReturn.id} ${dialogAction}`);
       setShowDialog(false);
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Failed to process return');
+    } catch (error: unknown) {
+      toast.error((error as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Failed to process return');
     } finally {
       setProcessing(false);
     }

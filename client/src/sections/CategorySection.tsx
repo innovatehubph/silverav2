@@ -74,7 +74,7 @@ export default function CategorySection({
   };
 
   useEffect(() => {
-    let ctx: any;
+    let ctx: { revert: () => void } | undefined;
     let cancelled = false;
 
     const hasRIC = 'requestIdleCallback' in window;
@@ -187,7 +187,11 @@ export default function CategorySection({
 
     return () => {
       cancelled = true;
-      hasRIC ? window.cancelIdleCallback(idleId) : clearTimeout(idleId);
+      if (hasRIC) {
+        window.cancelIdleCallback(idleId);
+      } else {
+        clearTimeout(idleId);
+      }
       ctx?.revert();
     };
   }, [imagePosition]);

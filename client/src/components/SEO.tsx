@@ -116,6 +116,7 @@ export function SEO({
 }
 
 // Helper function to generate product structured data
+// eslint-disable-next-line react-refresh/only-export-components
 export function generateProductStructuredData(product: {
   name: string;
   description: string;
@@ -161,6 +162,7 @@ export function generateProductStructuredData(product: {
 }
 
 // Helper function to generate breadcrumb structured data
+// eslint-disable-next-line react-refresh/only-export-components
 export function generateBreadcrumbStructuredData(items: Array<{ name: string; url: string }>) {
   return {
     '@context': 'https://schema.org',
@@ -175,6 +177,7 @@ export function generateBreadcrumbStructuredData(items: Array<{ name: string; ur
 }
 
 // Helper function to generate organization structured data
+// eslint-disable-next-line react-refresh/only-export-components
 export function generateOrganizationStructuredData() {
   return {
     '@context': 'https://schema.org',

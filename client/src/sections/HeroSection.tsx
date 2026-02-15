@@ -17,7 +17,7 @@ export default function HeroSection() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    let ctx: any;
+    let ctx: { revert: () => void } | undefined;
     let cancelled = false;
 
     // Defer GSAP load until browser is idle so it doesn't block LCP paint
@@ -76,7 +76,11 @@ export default function HeroSection() {
 
     return () => {
       cancelled = true;
-      hasRIC ? window.cancelIdleCallback(idleId) : clearTimeout(idleId);
+      if (hasRIC) {
+        window.cancelIdleCallback(idleId);
+      } else {
+        clearTimeout(idleId);
+      }
       ctx?.revert();
     };
   }, []);

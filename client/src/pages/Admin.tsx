@@ -37,6 +37,7 @@ export default function Admin() {
       return;
     }
     loadDashboard();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, user, navigate]);
 
   const loadDashboard = async () => {

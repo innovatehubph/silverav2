@@ -128,8 +128,8 @@ export default function ProductDetail() {
       setReviewComment('');
       const res = await productsApi.getReviews(parseInt(id));
       setReviews(Array.isArray(res.data) ? res.data : []);
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Failed to post review');
+    } catch (error: unknown) {
+      toast.error((error as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Failed to post review');
     } finally {
       setSubmittingReview(false);
     }

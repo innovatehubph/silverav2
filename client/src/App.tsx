@@ -112,7 +112,7 @@ function App() {
       try {
         const user = JSON.parse(userStr);
         login(user, token);
-      } catch (e) {
+      } catch {
         console.error('Failed to parse user data');
       }
     }

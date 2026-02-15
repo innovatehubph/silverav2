@@ -138,8 +138,8 @@ export default function AdminCoupons() {
       }
 
       setShowForm(false);
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Failed to save coupon');
+    } catch (error: unknown) {
+      toast.error((error as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Failed to save coupon');
     } finally {
       setSaving(false);
     }
@@ -153,8 +153,8 @@ export default function AdminCoupons() {
       await api.delete(`/admin/coupons/${id}`);
       toast.success('Coupon deleted');
       setCoupons(coupons.filter((c) => c.id !== id));
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Failed to delete coupon');
+    } catch (error: unknown) {
+      toast.error((error as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Failed to delete coupon');
     } finally {
       setDeleting(null);
     }
@@ -168,8 +168,8 @@ export default function AdminCoupons() {
       });
       setCoupons(coupons.map(c => c.id === coupon.id ? res.data : c));
       toast.success(`Coupon ${res.data.is_active ? 'activated' : 'deactivated'}`);
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Failed to update coupon');
+    } catch (error: unknown) {
+      toast.error((error as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Failed to update coupon');
     }
   };
 

@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { CheckCircle, XCircle, Clock, ExternalLink, Copy, Loader2, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
@@ -21,55 +21,52 @@ export default function PaymentStatus() {
 
   const [status, setStatus] = useState<PaymentState>('loading');
   const [hasRedirected, setHasRedirected] = useState(false);
-  const pollStartTime = useRef(Date.now());
+  const pollStartTime = useRef(0);
   const pollTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
-
-  const pollPaymentStatus = useCallback(async () => {
-    if (!ref) return;
-
-    try {
-      const response = await paymentsApi.getStatus(ref);
-      const paymentStatus = response.data.status;
-
-      if (paymentStatus === 'paid') {
-        setStatus('paid');
-        return; // Stop polling
-      } else if (paymentStatus === 'failed') {
-        setStatus('failed');
-        return;
-      }
-
-      // Check if we've been polling too long
-      if (Date.now() - pollStartTime.current > MAX_POLL_TIME) {
-        setStatus('expired');
-        return;
-      }
-
-      // Continue polling
-      setStatus('pending');
-      pollTimerRef.current = setTimeout(pollPaymentStatus, POLL_INTERVAL);
-    } catch {
-      // On 404 or network error, keep polling for a bit
-      if (Date.now() - pollStartTime.current > MAX_POLL_TIME) {
-        setStatus('error');
-      } else {
-        setStatus('pending');
-        pollTimerRef.current = setTimeout(pollPaymentStatus, POLL_INTERVAL);
-      }
-    }
-  }, [ref]);
 
   // Start polling on mount
   useEffect(() => {
+    if (!ref) return;
     pollStartTime.current = Date.now();
-    pollPaymentStatus();
+
+    async function poll() {
+      try {
+        const response = await paymentsApi.getStatus(ref!);
+        const paymentStatus = response.data.status;
+
+        if (paymentStatus === 'paid') {
+          setStatus('paid');
+          return;
+        } else if (paymentStatus === 'failed') {
+          setStatus('failed');
+          return;
+        }
+
+        if (Date.now() - pollStartTime.current > MAX_POLL_TIME) {
+          setStatus('expired');
+          return;
+        }
+
+        setStatus('pending');
+        pollTimerRef.current = setTimeout(poll, POLL_INTERVAL);
+      } catch {
+        if (Date.now() - pollStartTime.current > MAX_POLL_TIME) {
+          setStatus('error');
+        } else {
+          setStatus('pending');
+          pollTimerRef.current = setTimeout(poll, POLL_INTERVAL);
+        }
+      }
+    }
+
+    poll();
 
     return () => {
       if (pollTimerRef.current) {
         clearTimeout(pollTimerRef.current);
       }
     };
-  }, [pollPaymentStatus]);
+  }, [ref]);
 
   // Auto-redirect to orders on success after delay
   useEffect(() => {
