@@ -1,10 +1,6 @@
-import { useRef, useLayoutEffect, useState } from 'react';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { useRef, useEffect, useState } from 'react';
 import { Send, Check } from 'lucide-react';
 import { toast } from 'sonner';
-
-gsap.registerPlugin(ScrollTrigger);
 
 export default function RequestSection() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -19,46 +15,67 @@ export default function RequestSection() {
     message: '',
   });
 
-  useLayoutEffect(() => {
-    const section = sectionRef.current;
-    if (!section) return;
+  useEffect(() => {
+    let ctx: { revert: () => void } | undefined;
+    let cancelled = false;
 
-    const ctx = gsap.context(() => {
-      gsap.fromTo(
-        [headlineRef.current, bodyRef.current],
-        { y: 24, opacity: 0 },
-        {
-          y: 0,
-          opacity: 1,
-          duration: 0.8,
-          stagger: 0.1,
-          ease: 'power2.out',
-          scrollTrigger: {
-            trigger: headlineRef.current,
-            start: 'top 80%',
-            toggleActions: 'play none none reverse',
-          },
-        }
-      );
+    const hasRIC = 'requestIdleCallback' in window;
+    const idleId = hasRIC
+      ? window.requestIdleCallback(init)
+      : (setTimeout(init, 1) as unknown as number);
 
-      gsap.fromTo(
-        formRef.current,
-        { y: 40, opacity: 0 },
-        {
-          y: 0,
-          opacity: 1,
-          duration: 0.8,
-          ease: 'power2.out',
-          scrollTrigger: {
-            trigger: formRef.current,
-            start: 'top 85%',
-            toggleActions: 'play none none reverse',
-          },
-        }
-      );
-    }, section);
+    async function init() {
+      const [{ gsap }, { ScrollTrigger }] = await Promise.all([
+        import('gsap'),
+        import('gsap/ScrollTrigger'),
+      ]);
+      if (cancelled) return;
+      gsap.registerPlugin(ScrollTrigger);
 
-    return () => ctx.revert();
+      const section = sectionRef.current;
+      if (!section) return;
+
+      ctx = gsap.context(() => {
+        gsap.fromTo(
+          [headlineRef.current, bodyRef.current],
+          { y: 24, opacity: 0 },
+          {
+            y: 0,
+            opacity: 1,
+            duration: 0.8,
+            stagger: 0.1,
+            ease: 'power2.out',
+            scrollTrigger: {
+              trigger: headlineRef.current,
+              start: 'top 80%',
+              toggleActions: 'play none none reverse',
+            },
+          }
+        );
+
+        gsap.fromTo(
+          formRef.current,
+          { y: 40, opacity: 0 },
+          {
+            y: 0,
+            opacity: 1,
+            duration: 0.8,
+            ease: 'power2.out',
+            scrollTrigger: {
+              trigger: formRef.current,
+              start: 'top 85%',
+              toggleActions: 'play none none reverse',
+            },
+          }
+        );
+      }, section);
+    }
+
+    return () => {
+      cancelled = true;
+      if (hasRIC) { window.cancelIdleCallback(idleId); } else { clearTimeout(idleId); }
+      ctx?.revert();
+    };
   }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
