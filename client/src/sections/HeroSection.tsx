@@ -32,16 +32,17 @@ export default function HeroSection() {
       if (!section) return;
 
       ctx = gsap.context(() => {
-        // Load animation
+        // Load animation — elements start visible (no opacity:0) to avoid blocking LCP.
+        // Only animate position for a subtle slide-in effect.
         const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
 
-        tl.fromTo(goldGlowRef.current, { opacity: 0, scale: 0.8 }, { opacity: 0.3, scale: 1, duration: 1.2 }, 0);
-        tl.fromTo(accentGlowRef.current, { opacity: 0, scale: 0.9 }, { opacity: 0.2, scale: 1, duration: 1 }, 0.2);
-        tl.fromTo(labelRef.current, { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6 }, 0.1);
-        tl.fromTo(headlineRef.current, { y: 60, opacity: 0 }, { y: 0, opacity: 1, duration: 1 }, 0.2);
-        tl.fromTo(subheadlineRef.current, { y: 24, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7 }, 0.5);
-        tl.fromTo(ctaRef.current, { y: 18, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6 }, 0.6);
-        tl.fromTo(imageRef.current, { x: '8vw', opacity: 0, scale: 0.92 }, { x: 0, opacity: 1, scale: 1, duration: 1.2 }, 0.3);
+        tl.fromTo(goldGlowRef.current, { scale: 0.8 }, { scale: 1, duration: 1.2 }, 0);
+        tl.fromTo(accentGlowRef.current, { scale: 0.9 }, { scale: 1, duration: 1 }, 0.2);
+        tl.fromTo(labelRef.current, { y: 20 }, { y: 0, duration: 0.6 }, 0.1);
+        tl.fromTo(headlineRef.current, { y: 60 }, { y: 0, duration: 1 }, 0.2);
+        tl.fromTo(subheadlineRef.current, { y: 24 }, { y: 0, duration: 0.7 }, 0.5);
+        tl.fromTo(ctaRef.current, { y: 18 }, { y: 0, duration: 0.6 }, 0.6);
+        tl.fromTo(imageRef.current, { x: '8vw', scale: 0.92 }, { x: 0, scale: 1, duration: 1.2 }, 0.3);
 
         // Scroll-driven exit animation
         const scrollTl = gsap.timeline({
@@ -76,10 +77,10 @@ export default function HeroSection() {
   return (
     <section ref={sectionRef} id="hero" className="section-pinned bg-bg-primary z-10">
       {/* Ambient Gold Glow */}
-      <div ref={goldGlowRef} className="absolute w-[700px] h-[700px] rounded-full pointer-events-none" style={{ top: '-15%', right: '5%', background: 'radial-gradient(circle, rgba(212, 175, 55, 0.15) 0%, transparent 70%)', filter: 'blur(60px)' }} />
+      <div ref={goldGlowRef} className="absolute w-[700px] h-[700px] rounded-full pointer-events-none" style={{ top: '-15%', right: '5%', opacity: 0.3, background: 'radial-gradient(circle, rgba(212, 175, 55, 0.15) 0%, transparent 70%)', filter: 'blur(60px)' }} />
 
       {/* Secondary Violet Glow */}
-      <div ref={accentGlowRef} className="absolute w-[400px] h-[400px] rounded-full pointer-events-none" style={{ bottom: '10%', left: '5%', background: 'radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%)', filter: 'blur(80px)' }} />
+      <div ref={accentGlowRef} className="absolute w-[400px] h-[400px] rounded-full pointer-events-none" style={{ bottom: '10%', left: '5%', opacity: 0.2, background: 'radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%)', filter: 'blur(80px)' }} />
 
       {/* Grid Pattern */}
       <div className="absolute inset-0 pointer-events-none opacity-[0.03]" style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)', backgroundSize: '60px 60px' }} />
