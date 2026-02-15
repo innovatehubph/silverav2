@@ -11,7 +11,7 @@ function SilveraLogo({ className = "h-10" }: { className?: string }) {
   const { theme } = useThemeStore();
   return (
     <img
-      src={theme === 'dark' ? '/images/branding/silvera-logo-dark.jpg' : '/images/branding/silvera-logo-light.jpg'}
+      src={theme === 'dark' ? '/images/branding/silvera-logo-dark.webp' : '/images/branding/silvera-logo-light.webp'}
       alt="Silvera Luxury Brands"
       className={`${className} w-auto object-contain`}
       width={160}
